@@ -1,0 +1,1 @@
+electron-packager . cam2ocr2speech --platform=win32 --arch=x64 --out=dist --overwrite
