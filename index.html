@@ -5,15 +5,14 @@
   <style src="index.css"></style>
 </head>
 <body>
-  <h2>📄 Webcam Document Scanner</h2>
-  <video id="video" autoplay muted playsinline></video>
   <button id="scanBtn">🧾 Scan Document</button>
+  <video id="video" height="100%" autoplay muted playsinline></video>
   <button id="reScanBtn" onclick="showScan();" style="display:none;" >🧾 Scan Another Document</button>
   <canvas id="canvasInput" style="display:none;"></canvas>
   <canvas id="canvasOutput"></canvas>
-  <iframe id="pdfViewer" style="display:none;" width="100%" height="600px"></iframe>
-  <textarea id="textArea" readonly rows="8" cols="80" style="display:none;">Upload an image file</textarea>
-  <div id="html"></div>
+  <iframe id="pdfViewer" height="100%" style="display:none;" width="100%"></iframe>
+  <div id="htmlOcr" width="100%" height="100%"  ></div>
+  <textarea id="textArea" readonly rows="10" cols="200" width="100%" height="10%" style="display:none;">No text</textarea>
 
   <!-- Libraries -->
   <script async src="./third-parties/docs.opencv.org/4.x/opencv.js" onload="onOpenCvReady();"></script>
