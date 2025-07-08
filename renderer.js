@@ -95,28 +95,78 @@ const pageContainer = document.getElementById("pageContainer");
 pageContainer.style.display = "none";
 
 const webcamSelect = document.getElementById("webcamSelect");
+const webcamPreview = document.getElementById("webcamPreview");
 const video = document.getElementById("video");
-const scanBtn = document.getElementById("scanBtn");
+const webcam2Img = document.getElementById("webcam2Img");
+const webcam2Pdf = document.getElementById("webcam2Pdf");
 const img2PdfBtn = document.getElementById("img2PdfBtn");
 const reScanBtn = document.getElementById("reScanBtn");
+const openImage = document.getElementById("openImage");
 const showPdfBtn = document.getElementById("showPdfBtn");
 const canvasInput = document.getElementById("canvasInput");
-// const canvasOutput = document.getElementById("canvasOutput");
 const ctxInput = canvasInput.getContext("2d");
-const ctxOutput = canvasInput.getContext("2d");
+// const canvasOutput = document.getElementById("canvasOutput");
+// const ctxOutput = canvasOutput.getContext("2d");
 
 // plug document elements to action callbacks
+webcamPreview.onclick = showScanPreview;
 reScanBtn.onclick = showScanPreview;
 showPdfBtn.onclick = showPdf;
-img2PdfBtn.onclick = selectImage;
+img2PdfBtn.onclick = imageToPdf;
+openImage.onclick = selectImage;
 
 // diable buttons until OpenCV is ready
 showPdfBtn.disabled = false;
 img2PdfBtn.disabled = false;
+openImage.disabled = false;
 
 function enableWebcamScan() {
-  scanBtn.onclick = scanWebcam;
-  scanBtn.disabled = false;
+  webcam2Img.onclick = webcamCapture;
+  webcam2Img.disabled = false;
+  webcam2Pdf.onclick = () => {webcamCapture().then(imageToPdf);};
+  webcam2Pdf.disabled = false;
+  showScanPreview();
+}
+// switch to scan from video preview mode
+function showScanPreview()
+{
+  // toolbar update
+  webcamPreview.style.visibility = "hidden";
+  webcamSelect.style.visibility = "visible";
+  webcam2Img.style.visibility = "visible";
+  webcam2Pdf.style.visibility = "visible";
+  img2PdfBtn.style.visibility = "hidden";
+  // display update
+  video.style.display = "block";
+  canvasInput.style.display = "none";
+  // layout update
+  preview.style.display = "block";
+  pageContainer.style.display = "none";
+}
+
+// switch to image view mode
+function showImagePreview()
+{
+  // toolbar update
+  webcamPreview.style.visibility = "visible";
+  webcamSelect.style.visibility = "hidden";
+  webcam2Img.style.visibility = "hidden";
+  webcam2Pdf.style.visibility = "hidden";
+  img2PdfBtn.style.visibility = "visible";
+  // display update
+  video.style.display = "none";
+  canvasInput.style.display = "block";
+  // layout update
+  preview.style.display = "block";
+  pageContainer.style.display = "none";
+}
+
+// switch to pdf view mode
+function showPdf()
+{
+  // layout update
+  preview.style.display = "none";
+  pageContainer.style.display = "block";
 }
 
 // retrieve webcam devices and populate the select element
@@ -158,24 +208,6 @@ await listWebcams();
 const defaultDeviceId = webcamSelect.value;
 if (defaultDeviceId) {
   startStream(defaultDeviceId);
-}
-
-// request webcam access and show video preview
-// navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-//     .then(stream => video.srcObject = stream);
-
-// switch to scan from video preview mode
-function showScanPreview()
-{
-    preview.style.display = "block";
-    pageContainer.style.display = "none";
-}
-
-// switch to pdf view mode
-function showPdf()
-{
-    preview.style.display = "none";
-    pageContainer.style.display = "block";
 }
 
 // findNonZeroJS is missing from OpenCV.js, so we implement it in JavaScript
@@ -293,26 +325,44 @@ function selectImage() {
   myAPI.showOpenDialog("Images", ["png", "jpg", "jpeg"]).then(result => {
     if (!result.canceled) {
       const filePath = result.filePaths[0];
-      myAPI.readFile(filePath, (err, data) => {
-        if (!err)
-        {
-          const imgBlob = new Blob([new Uint8Array(data)], { type: "application/image" });
-          const imgUrl = URL.createObjectURL(imgBlob);
-          processImage(imgUrl);
-        }
-      });
+      // Create an Image object
+      const img = new Image();
+      img.onload = function() {
+        // Draw the image to fill the entire canvas
+        ctxInput.drawImage(img, 0, 0, canvasInput.width, canvasInput.height);
+
+        // Add text to canvas
+        ctxInput.font = "24px Arial";
+        ctxInput.fillStyle = "white";
+        ctxInput.textAlign = "center";
+        ctxInput.textBaseline = "top";
+        const text = filePath;
+        ctxInput.fillText(text, canvasInput.width / 2, 10); // Centered at top
+
+        showImagePreview();
+      };
+      // Set the image source (can be a URL, data URL, or blob URL)
+      img.src = filePath;
     }
   });
 }
 
 
-async function scanWebcam() {
+async function webcamCapture() {
 
-  // 1️⃣ Capture frame
   canvasInput.width = video.videoWidth;
   canvasInput.height = video.videoHeight;
   ctxInput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
 
+  // Set text styles
+  ctxInput.font = "24px Arial";
+  ctxInput.fillStyle = "white";
+  ctxInput.textAlign = "center";
+  ctxInput.textBaseline = "top";
+
+  // Add text to canvas
+  const text = "Live Capture";
+  ctxInput.fillText(text, canvasInput.width / 2, 10); // Centered at top
   // 2️⃣ Deskew with OpenCV.js
   // let src = cv.imread(canvasInput);
   // let gray = new cv.Mat();
@@ -329,18 +379,17 @@ async function scanWebcam() {
   // let dst = new cv.Mat();
   // cv.warpAffine(src, dst, rotMat, src.size(), cv.INTER_CUBIC, cv.BORDER_CONSTANT, new cv.Scalar());
   // cv.imshow(canvasOutput, dst);
-  ctxOutput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
+  // ctxOutput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
   // src.delete(); gray.delete(); binary.delete(); dst.delete();
 
-  // 3️⃣ OCR with Tesseract.js
-  let processedImg = canvasInput.toDataURL("image/png");
-  processImage(processedImg);
+  showImagePreview();
 }
 
 
 // OCR recognition
 async function recognize(image, langs, options, output)
 {
+  // OCR with Tesseract.js
   const worker = await createWorker(langs, 1, options);
   return worker.recognize(image, {}, output)
     .finally(async () => {
@@ -349,7 +398,8 @@ async function recognize(image, langs, options, output)
 };
 
 // process imoage with OCR and display PDF
-async function processImage(processedImg) {
+async function imageToPdf() {
+  let processedImg = canvasInput.toDataURL("image/png");
   const { data: { text, pdf, hocr } } = await recognize(processedImg, "fra", {
           workerPath: "./third-parties/tesseract.js@6.0.1/worker.min.js",
           langPath: "./tessdata",
