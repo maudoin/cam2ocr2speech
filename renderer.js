@@ -71,6 +71,7 @@ window.fetch = async (url) => {
 const preview = document.getElementById('preview');
 const video = document.getElementById('video');
 const scanBtn = document.getElementById('scanBtn');
+const img2PdfBtn = document.getElementById('img2PdfBtn');
 const reScanBtn = document.getElementById('reScanBtn');
 const showPdfBtn = document.getElementById('showPdfBtn');
 const canvasInput = document.getElementById('canvasInput');
@@ -82,9 +83,10 @@ pageContainer.style.display = 'none';
 
 reScanBtn.onclick = showScanPreview;
 showPdfBtn.onclick = showPdf;
+img2PdfBtn.onclick = selectImage;
 
-scanBtn.disabled = false;
 showPdfBtn.disabled = false;
+img2PdfBtn.disabled = false;
 
 navigator.mediaDevices.getUserMedia({ video: true })
     .then(stream => video.srcObject = stream);
@@ -226,57 +228,82 @@ return worker.recognize(image, {}, output)
     });
 };
 
-function onOpenCvReady() {
-  document.getElementById('scanBtn').onclick = async () => {
 
-    // 1️⃣ Capture frame
-    canvasInput.width = video.videoWidth;
-    canvasInput.height = video.videoHeight;
-    ctxInput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
-
-    // 2️⃣ Deskew with OpenCV.js
-    // let src = cv.imread(canvasInput);
-    // let gray = new cv.Mat();
-    // let binary = new cv.Mat();
-    // cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-    // cv.threshold(gray, binary, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
-
-    // let coords = findNonZeroJS(binary);
-    // let rect = cv.minAreaRect(coords);
-    // let angle = rect.angle;
-
-    // let center = new cv.Point(src.cols / 2, src.rows / 2);
-    // let rotMat = cv.getRotationMatrix2D(center, angle, 1);
-    // let dst = new cv.Mat();
-    // cv.warpAffine(src, dst, rotMat, src.size(), cv.INTER_CUBIC, cv.BORDER_CONSTANT, new cv.Scalar());
-    // cv.imshow(canvasOutput, dst);
-    ctxOutput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
-    // src.delete(); gray.delete(); binary.delete(); dst.delete();
-
-    // 3️⃣ OCR with Tesseract.js
-    let processedImg = canvasInput.toDataURL('image/png');
-    const { data: { text, pdf, hocr } } = await recognize(processedImg, 'fra', {
-            workerPath: './third-parties/tesseract.js@6.0.1/worker.min.js',
-            langPath: './tessdata',
-            corePath: './third-parties/tesseract.js@6.0.1',
-            gzip : false,
-            logger: m => console.log(m),
-            errorHandler: err => console.error(err)
-        },
-        { text: true, pdf: true , hocr: true}
-    );
-
-    // 5️⃣ Display PDF
-    const pdfBlob = new Blob([new Uint8Array(pdf)], { type: 'application/pdf' });
-    const blobUrl = URL.createObjectURL(pdfBlob);
-    PDFViewerApplication.open({ url: blobUrl });
-
-    showPdf();
-
-  };
-
+function selectImage() {
+  myAPI.showOpenDialog('Images', ['png', 'jpg', 'jpeg']).then(result => {
+    if (!result.canceled) {
+      const filePath = result.filePaths[0];
+      myAPI.readFile(filePath, (err, data) => {
+        if (!err)
+        {
+          const imgBlob = new Blob([new Uint8Array(data)], { type: 'application/image' });
+          const imgUrl = URL.createObjectURL(imgBlob);
+          processImage(imgUrl);
+        }
+      });
+    }
+  });
 }
 
+
+function onOpenCvReady() {
+  scanBtn.onclick = scanWebcam;
+  scanBtn.disabled = false;
+}
+
+
+async function scanWebcam() {
+
+  // 1️⃣ Capture frame
+  canvasInput.width = video.videoWidth;
+  canvasInput.height = video.videoHeight;
+  ctxInput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
+
+  // 2️⃣ Deskew with OpenCV.js
+  // let src = cv.imread(canvasInput);
+  // let gray = new cv.Mat();
+  // let binary = new cv.Mat();
+  // cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+  // cv.threshold(gray, binary, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
+
+  // let coords = findNonZeroJS(binary);
+  // let rect = cv.minAreaRect(coords);
+  // let angle = rect.angle;
+
+  // let center = new cv.Point(src.cols / 2, src.rows / 2);
+  // let rotMat = cv.getRotationMatrix2D(center, angle, 1);
+  // let dst = new cv.Mat();
+  // cv.warpAffine(src, dst, rotMat, src.size(), cv.INTER_CUBIC, cv.BORDER_CONSTANT, new cv.Scalar());
+  // cv.imshow(canvasOutput, dst);
+  ctxOutput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
+  // src.delete(); gray.delete(); binary.delete(); dst.delete();
+
+  // 3️⃣ OCR with Tesseract.js
+  let processedImg = canvasInput.toDataURL('image/png');
+  processImage(processedImg);
+}
+
+
+async function processImage(processedImg) {
+  const { data: { text, pdf, hocr } } = await recognize(processedImg, 'fra', {
+          workerPath: './third-parties/tesseract.js@6.0.1/worker.min.js',
+          langPath: './tessdata',
+          corePath: './third-parties/tesseract.js@6.0.1',
+          gzip : false,
+          logger: m => console.log(m),
+          errorHandler: err => console.error(err)
+      },
+      { text: true, pdf: true , hocr: true}
+  );
+
+  // 5️⃣ Display PDF
+  const pdfBlob = new Blob([new Uint8Array(pdf)], { type: 'application/pdf' });
+  const blobUrl = URL.createObjectURL(pdfBlob);
+  PDFViewerApplication.open({ url: blobUrl });
+
+  showPdf();
+
+};
 
 function speakWithPiper(text) {
     const voice = 'fr_FR-siwis-medium';
