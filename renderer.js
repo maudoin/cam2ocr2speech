@@ -1,6 +1,3 @@
-const information = document.getElementById('info')
-information.innerText = `This app is using Chrome (v${versions.chrome()}), Node.js (v${versions.node()}), and Electron (v${versions.electron()})`
-
 const { createWorker } = Tesseract;
 
 const pdfjsLib = window.pdfjsLib;
@@ -81,6 +78,8 @@ const ctxOutput = canvasInput.getContext('2d');
 const pdfViewer = document.getElementById('pdfViewer');
 const textArea = document.getElementById('textArea');
 const htmlOcr = document.getElementById('htmlOcr');
+
+reScanBtn.onclick = showScan;
 
 navigator.mediaDevices.getUserMedia({ video: true })
     .then(stream => video.srcObject = stream);
