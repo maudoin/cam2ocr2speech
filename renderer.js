@@ -1,6 +1,7 @@
 const { createWorker } = Tesseract;
 const { PDFViewerApplication } = await import('./web/viewer.mjs');
 const { PiperWebEngine } = await import('./third-parties/piper-tts-web/piper-tts-web.js');
+
 const piperWebEngine = new PiperWebEngine();
 
 const loadOpenCv = () => {
@@ -71,6 +72,7 @@ const preview = document.getElementById('preview');
 const video = document.getElementById('video');
 const scanBtn = document.getElementById('scanBtn');
 const reScanBtn = document.getElementById('reScanBtn');
+const showPdfBtn = document.getElementById('showPdfBtn');
 const canvasInput = document.getElementById('canvasInput');
 // const canvasOutput = document.getElementById('canvasOutput');
 const ctxInput = canvasInput.getContext('2d');
@@ -79,6 +81,10 @@ const pageContainer = document.getElementById("pageContainer");
 pageContainer.style.display = 'none';
 
 reScanBtn.onclick = showScanPreview;
+showPdfBtn.onclick = showPdf;
+
+scanBtn.disabled = false;
+showPdfBtn.disabled = false;
 
 navigator.mediaDevices.getUserMedia({ video: true })
     .then(stream => video.srcObject = stream);
