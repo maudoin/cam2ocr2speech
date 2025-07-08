@@ -15,19 +15,26 @@
 <body tabindex="1">
 
   <div id="preview">
-    <div id="topBar">
-      <button id="showPdfBtn">📂📑 Open PDF</button>
-      <button id="openImage">📂🖼️ Open Image</button>
-      <button id="webcamPreview">📷 Webcam</button>
-      <select id="webcamSelect"></select>
-      <button id="webcam2Img">📷 Webcam -> 🖼️ Image</button>
-      <button id="webcam2Pdf">📷 Webcam -> 📑 Image</button>
-      <button id="img2PdfBtn">🖼️ Image -> 📑 PDF</button>
-    </div>
-    <div id="mainContent">
-      <video id="video" autoplay muted playsinline></video>
-      <canvas id="canvasInput"></canvas>
-      <canvas id="canvasOutput" display="none;"></canvas>
+    <div class="topBar">
+      <div class="topBar">
+        <button id="showPdfBtn">📂📑 PDF...</button>
+        <button id="openImage">📂🖼️ Image...</button>
+      </div>
+      <div id="webcamToolbar" class="topBar">
+        <select id="webcamSelect"></select>
+        <button id="webcam2Img">📷 Webcam -> 🖼️ Image</button>
+        <button id="webcam2Pdf">📷 Webcam -> 📑 PDF</button>
+      </div>
+      <div id="imgToolbar" class="topBar">
+        <button id="webcamPreview">📷 Webcam</button>
+        <label style="margin-left:10px;" id="deskewImageLabel"><input type="checkbox" id="deskewImage" checked>Page detection</label>
+        <button id="img2PdfBtn">🖼️ Image -> 📑 PDF</button>
+      </div>
+      <div id="mainContent">
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="canvasInput"></canvas>
+        <canvas id="canvasOutput" display="none;"></canvas>
+      </div>
     </div>
   </div>
 
@@ -85,6 +92,7 @@
                   <span data-l10n-id="pdfjs-toggle-sidebar-button-label"></span>
                 </button>
                 <button id="reScanBtn" class="toolbarButton" type="button" tabindex="0">🧾 Scan</button>
+                <label style="margin-left:10px;"><input type="checkbox" id="voiceOption" checked>💬 Voix</label>
                 <div class="toolbarButtonSpacer"></div>
                 <div class="toolbarButtonWithContainer">
                   <button id="viewFindButton" class="toolbarButton" type="button" tabindex="0" data-l10n-id="pdfjs-findbar-button" aria-expanded="false" aria-controls="findbar">
