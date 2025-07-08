@@ -1,6 +1,10 @@
 const { createWorker } = Tesseract;
 
-const pdfjsLib = window.pdfjsLib;
+import * as pdfjsLib from "./node_modules/pdfjs-dist/build/pdf.min.mjs";
+pdfjsLib.GlobalWorkerOptions.workerSrc = 
+  `./node_modules/pdfjs-dist/build/pdf.worker.mjs`;
+
+const { PDFViewerApplication } = await import('./web/viewer.mjs');
 
 const loadOpenCv = () => {
   return new Promise((resolve, reject) => {
@@ -72,9 +76,13 @@ const video = document.getElementById('video');
 const scanBtn = document.getElementById('scanBtn');
 const reScanBtn = document.getElementById('reScanBtn');
 const canvasInput = document.getElementById('canvasInput');
-const canvasOutput = document.getElementById('canvasOutput');
+// const canvasOutput = document.getElementById('canvasOutput');
 const ctxInput = canvasInput.getContext('2d');
 const ctxOutput = canvasInput.getContext('2d');
+const pdfCanvas = document.getElementById('pdfCanvas');
+const ctxPdf = pdfCanvas.getContext('2d');
+const pageContainer = document.getElementById("pageContainer");
+    pageContainer.style.display = 'none';
 const pdfViewer = document.getElementById('pdfViewer');
 const textArea = document.getElementById('textArea');
 const htmlOcr = document.getElementById('htmlOcr');
@@ -88,8 +96,9 @@ function showScan() {
     video.style.display = 'block';
     scanBtn.style.display = 'block';
     reScanBtn.style.display = 'none';
-    pdfViewer.style.display = 'none';
     pdfCanvas.style.display = 'none';
+    pageContainer.style.display = 'none';
+    pdfViewer.style.display = 'none';
     htmlOcr.style.display = 'none';
     textArea.style.display = 'none';
 }
@@ -97,8 +106,9 @@ function hideScan() {
     video.style.display = 'none';
     scanBtn.style.display = 'none';
     reScanBtn.style.display = 'block';
-    pdfViewer.style.display = 'block';
     pdfCanvas.style.display = 'block';
+    pageContainer.style.display = 'block';
+    pdfViewer.style.display = 'block';
     htmlOcr.style.display = 'block';
     textArea.style.display = 'block';
 }
@@ -232,7 +242,7 @@ return worker.recognize(image, {}, output)
 };
 
 function onOpenCvReady() {
-    document.getElementById('scanBtn').onclick = async () => {
+  document.getElementById('scanBtn').onclick = async () => {
     // 1️⃣ Capture frame
     canvasInput.width = video.videoWidth;
     canvasInput.height = video.videoHeight;
@@ -261,7 +271,7 @@ function onOpenCvReady() {
 
     // 3️⃣ OCR with Tesseract.js
     let processedImg = canvasInput.toDataURL('image/png');
-    
+
     // const worker = await createWorker('fra', 1, {legacyCore: true, legacyLang: true}
     //   workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@v5.0.0/dist/worker.min.js',
     //   langPath: 'https://tessdata.projectnaptha.com/4.0.0',
@@ -307,33 +317,65 @@ function onOpenCvReady() {
     // 🔗 Create object URL
     const blobUrl = URL.createObjectURL(pdfBlob);
 
+    hideScan();
 
     // 5️⃣ Display PDF
     pdfViewer.src = blobUrl;
-    pdfViewer.style.display = 'block';
-    hideScan();
 
     // 6️⃣ Display text
     textArea.value =hocr;
     htmlOcr.innerHTML=hocr;
 
-    // const loadingTask = pdfjsLib.getDocument(blobUrl);
-    // loadingTask.promise.then(pdf => {
-    // pdf.getPage(1).then(page => {
-    //     const scale = 1.5;
-    //     const viewport = page.getViewport({ scale });
+    // 7️⃣ Render PDF in canvas
+    // Load PDF document
+    pdfjsLib.getDocument(blobUrl).promise.then(pdf => {
+    // Fetch first page
+    pdf.getPage(1).then(page => {
+            const viewport = page.getViewport({ scale: 1.5 });
+            pdfCanvas.height = viewport.height;
+            pdfCanvas.width = viewport.width;
 
-    //     const canvas = document.getElementById('pdfCanvas');
-    //     const context = canvas.getContext('2d');
+            // Render page into canvas context
+            page.render({
+                canvasContext: ctxPdf,
+                viewport: viewport
+            });
+        });
+        }).catch(err => {
+            console.error('Error loading PDF:', err.message);
+        });
 
-    //     canvas.height = viewport.height;
-    //     canvas.width = viewport.width;
+    PDFViewerApplication.open({ url: blobUrl });
 
-    //     page.render({ canvasContext: context, viewport });
+    // Some PDFs need external cmaps.
+    //
+    // const PAGE_TO_VIEW = 1;
+    // const SCALE = 1.0;
+
+    // const eventBus = new pdfjsViewer.EventBus();
+    // // Loading document.
+    // const loadingTask = pdfjsLib.getDocument({
+    //     url: blobUrl,
+    //     cMapUrl: "./node_modules/pdfjs-dist/cmaps/",
+    //     cMapPacked: true,
+    //     enableXfa: true,
     // });
+    // const pdfDocument = await loadingTask.promise;
+    // // Document loaded, retrieving the page.
+    // const pdfPage = await pdfDocument.getPage(PAGE_TO_VIEW);
+    // // Creating the page view with default parameters.
+    // const pdfPageView = new pdfjsViewer.PDFPageView({
+    //     pageContainer,
+    //     id: PAGE_TO_VIEW,
+    //     scale: SCALE,
+    //     defaultViewport: pdfPage.getViewport({ scale: SCALE }),
+    //     eventBus,
     // });
+    // // Associate the actual page with the view, and draw it.
+    // pdfPageView.setPdfPage(pdfPage);
+    // pdfPageView.draw();
+  };
 
-    };
 }
 
 
@@ -358,7 +400,7 @@ document.addEventListener("mouseup", () => {
 function getSelectedText() {
     if (window.getSelection) {
     return window.getSelection().toString();
-    } 
+    }
     else if (document.selection) {
         return document.selection.createRange().text;
     }
