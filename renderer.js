@@ -28,9 +28,20 @@ loadOpenCv().then(() => {
 // Save original fetch if needed
 const originalFetch = window.fetch;
 window.fetch = async (url) => {
-  if (typeof url === 'string' && !url.startsWith('https:') && !url.startsWith('file:') && !url.startsWith('blob:')) {
+  let overridePath = null;
+  if (typeof url === 'string')
+  {
+    if (url.startsWith("/piper/") || url.startsWith("/onnx/") || url.startsWith("/worker/")){
+        overridePath = 'third-parties/piper-tts-web';
+    }
+    else if (url.startsWith("https://huggingface.co/rhasspy/piper-voices/resolve/main/")){
+        url = url.substring("https://huggingface.co/rhasspy/piper-voices/resolve/main/".length);
+        overridePath = 'tts_models';
+    }
+  };
+  if (overridePath !== null) {
     console.log(`Intercepted fetch request for: ${url}`);
-    const basePath = myAPI.joinPath(myAPI.dirname(), 'third-parties/piper-tts-web'); // adjust as needed
+    const basePath = myAPI.joinPath(myAPI.dirname(), overridePath); // adjust as needed
     const fullPath = myAPI.joinPath(basePath, url);
     console.log(`Path resolved to: ${fullPath}`);
 
