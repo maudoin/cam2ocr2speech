@@ -14,16 +14,19 @@
 </head>
 <body tabindex="1">
 
-  <div id='preview'>
+  <div id="preview">
     <div id="topBar">
+      <button id="showPdfBtn">📂📑 Open PDF</button>
+      <button id="openImage">📂🖼️ Open Image</button>
+      <button id="webcamPreview">📷 Webcam</button>
       <select id="webcamSelect"></select>
-      <button id="scanBtn" disabled>🧾 Scan Document</button>
-      <button id="img2PdfBtn" disabled>🖼️ Image -> PDF</button>
-      <button id="showPdfBtn" disabled>📂 Open PDF</button>
+      <button id="webcam2Img">📷 Webcam -> 🖼️ Image</button>
+      <button id="webcam2Pdf">📷 Webcam -> 📑 Image</button>
+      <button id="img2PdfBtn">🖼️ Image -> 📑 PDF</button>
     </div>
     <div id="mainContent">
       <video id="video" autoplay muted playsinline></video>
-      <canvas id="canvasInput" style="display:none;"></canvas>
+      <canvas id="canvasInput"></canvas>
       <!-- <canvas id="canvasOutput"></canvas> -->
     </div>
   </div>
