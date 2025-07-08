@@ -67,6 +67,7 @@ window.fetch = async (url) => {
   return originalFetch(url);
 };
 
+const preview = document.getElementById('preview');
 const video = document.getElementById('video');
 const scanBtn = document.getElementById('scanBtn');
 const reScanBtn = document.getElementById('reScanBtn');
@@ -83,15 +84,11 @@ navigator.mediaDevices.getUserMedia({ video: true })
     .then(stream => video.srcObject = stream);
 
 function showScanPreview() {
-    video.style.display = 'block';
-    scanBtn.style.display = 'block';
-    reScanBtn.style.display = 'none';
+    preview.style.display = 'block';
     pageContainer.style.display = 'none';
 }
 function showPdf() {
-    video.style.display = 'none';
-    scanBtn.style.display = 'none';
-    reScanBtn.style.display = 'block';
+    preview.style.display = 'none';
     pageContainer.style.display = 'block';
 }
 
