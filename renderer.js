@@ -5,10 +5,28 @@ const { createWorker } = Tesseract;
 
 const pdfjsLib = window.pdfjsLib;
 
+const loadOpenCv = () => {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "./third-parties/docs.opencv.org/4.x/opencv.js";
+    script.async = true;
+    script.onload = () => {
+      cv['onRuntimeInitialized'] = () => {
+        console.log("OpenCV is initialized inside module");
+        resolve();
+      };
+    };
+    script.onerror = reject;
+    document.body.appendChild(script);
+  });
+};
+
+loadOpenCv().then(() => {
+  onOpenCvReady();
+});
+// Override fetch globally to fix piper-tts-web loading issues
 // Save original fetch if needed
 const originalFetch = window.fetch;
-
-// Override fetch globally
 window.fetch = async (url) => {
   if (typeof url === 'string' && !url.startsWith('https:') && !url.startsWith('file:') && !url.startsWith('blob:')) {
     console.log(`Intercepted fetch request for: ${url}`);
