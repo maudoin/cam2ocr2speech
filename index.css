@@ -30,11 +30,11 @@ html, body {
 video, canvas {
     width: 100%;
     height: auto;
-    max-height: 100%;
+    max-height: calc(100% - 10px);
     object-fit: contain;
-    border: #fff0f0 1px solid;display: block;
+    border: #fff0f0 1px solid;
 }
 
-#scanBtn { padding: 10px 20px; margin-top: 10px; font-size: 20px; color:brown;display: block;}
-#reScanBtn { padding: 10px 20px; margin-top: 10px; font-size: 20px; color:white;display:none;}
+#scanBtn { padding: 10px 20px; margin-top: 10px; font-size: 20px; color:brown;}
+#reScanBtn { padding: 10px 20px; margin-top: 10px; font-size: 20px; color:white;}
 #canvasInput { width: 100%;display:none;}
