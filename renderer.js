@@ -328,6 +328,8 @@ function selectImage() {
       // Create an Image object
       const img = new Image();
       img.onload = function() {
+        canvasInput.width = img.naturalWidth;
+        canvasInput.height = img.naturalHeight;
         // Draw the image to fill the entire canvas
         ctxInput.drawImage(img, 0, 0, canvasInput.width, canvasInput.height);
 

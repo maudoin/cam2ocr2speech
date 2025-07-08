@@ -11,6 +11,8 @@ html, body {
     height: 100%;
     overflow: hidden;
     position: relative;
+    max-width: 100vw;
+    max-height: 100vh;
 }
 
 #topBar {
@@ -35,6 +37,9 @@ video, canvas {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  display: block;
+  max-width: 100vw;
+  max-height: 100vh;
 }
 
 #canvasInput {
