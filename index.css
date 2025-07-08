@@ -27,7 +27,7 @@ html, body {
     background: black;
 }
 
-video, canvas, iframe, #htmlOcr, #textArea {
+video, canvas {
     width: 100%;
     height: auto;
     max-height: 100%;
@@ -37,5 +37,4 @@ video, canvas, iframe, #htmlOcr, #textArea {
 
 #scanBtn { padding: 10px 20px; margin-top: 10px; font-size: 20px; color:brown;display: block;}
 #reScanBtn { padding: 10px 20px; margin-top: 10px; font-size: 20px; color:white;display:none;}
-#htmlOcr { width: 100%;display: fixed}
-#canvasInput,#pdfCanvas { width: 100%;display:none;}
+#canvasInput { width: 100%;display:none;}
