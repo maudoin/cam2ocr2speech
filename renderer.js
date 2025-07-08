@@ -1,16 +1,23 @@
+// import ocr engine
 const { createWorker } = Tesseract;
-const { PDFViewerApplication } = await import('./web/viewer.mjs');
-const { PiperWebEngine } = await import('./third-parties/piper-tts-web/piper-tts-web.js');
+// import pdf controller
+const { PDFViewerApplication } = await import("./web/viewer.mjs");
+// import tts engine
+const { PiperWebEngine } = await import("./third-parties/piper-tts-web/piper-tts-web.js");
 
+// prepare tts generation
 const piperWebEngine = new PiperWebEngine();
+// use single audio instance to avoid overlapping sounds
+const audio = new Audio();
 
+// import opencv asynchronously
 const loadOpenCv = () => {
   return new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src = "./third-parties/docs.opencv.org/4.x/opencv.js";
     script.async = true;
     script.onload = () => {
-      cv['onRuntimeInitialized'] = () => {
+      cv["onRuntimeInitialized"] = () => {
         console.log("OpenCV is initialized inside module");
         resolve();
       };
@@ -19,28 +26,39 @@ const loadOpenCv = () => {
     document.body.appendChild(script);
   });
 };
-
+// enable scan button when OpenCV is ready
 loadOpenCv().then(() => {
-  onOpenCvReady();
+  enableWebcamScan();
 });
+
 // Override fetch globally to fix piper-tts-web loading issues
-// Save original fetch if needed
+// or force local loading instead of remote loading
+// Save original fetch as fallback for regular requests
 const originalFetch = window.fetch;
+const PIPER_HUGGINGFACE_BASE = "https://huggingface.co/rhasspy/piper-voices/resolve/main/";
+const PIPER_LOCAL_CODE_PATH = "third-parties/piper-tts-web";
+const PIPER_LOCAL_MODEL_PATH = "tts_models";
 window.fetch = async (url) => {
   let overridePath = null;
-  if (typeof url === 'string')
+  if (typeof url === "string")
   {
-    if (url.startsWith("/piper/") || url.startsWith("/onnx/") || url.startsWith("/worker/")){
-        overridePath = 'third-parties/piper-tts-web';
+    if (url.startsWith("/piper/") || url.startsWith("/onnx/") || url.startsWith("/worker/"))
+    {
+      // piper-tts-web request
+      overridePath = PIPER_LOCAL_CODE_PATH;
     }
-    else if (url.startsWith("https://huggingface.co/rhasspy/piper-voices/resolve/main/")){
-        url = url.substring("https://huggingface.co/rhasspy/piper-voices/resolve/main/".length);
-        overridePath = 'tts_models';
+    else if (url.startsWith(PIPER_HUGGINGFACE_BASE))
+    {
+      // piper-tts-web voice request
+      overridePath = PIPER_LOCAL_MODEL_PATH;
+      // strip the base URL to get the voice file sub path only
+      url = url.substring(PIPER_HUGGINGFACE_BASE.length);
     }
   };
-  if (overridePath !== null) {
+  if (overridePath !== null)
+  {
     console.log(`Intercepted fetch request for: ${url}`);
-    const basePath = myAPI.joinPath(myAPI.dirname(), overridePath); // adjust as needed
+    const basePath = myAPI.joinPath(myAPI.dirname(), overridePath);
     const fullPath = myAPI.joinPath(basePath, url);
     console.log(`Path resolved to: ${fullPath}`);
 
@@ -49,15 +67,18 @@ window.fetch = async (url) => {
         if (err) {
           resolve(new Response(null, {
             status: 404,
-            statusText: 'File Not Found'
+            statusText: "File Not Found"
           }));
-        } else {
+        }
+        else
+        {
+          // Warning: only js, wasm and binary files support is required for piper-tts-web requests
           resolve(new Response(data, {
             status: 200,
-            statusText: 'OK',
-            headers: { 'Content-Type': url.endsWith('.js')?'application/javascript' : 
-                url.endsWith('.wasm')?'application/wasm':
-                'application/octet-stream'
+            statusText: "OK",
+            headers: { "Content-Type": url.endsWith(".js")?"application/javascript" :
+                url.endsWith(".wasm")?"application/wasm":
+                "application/octet-stream"
             }
           }));
         }
@@ -68,38 +89,96 @@ window.fetch = async (url) => {
   return originalFetch(url);
 };
 
-const preview = document.getElementById('preview');
-const video = document.getElementById('video');
-const scanBtn = document.getElementById('scanBtn');
-const img2PdfBtn = document.getElementById('img2PdfBtn');
-const reScanBtn = document.getElementById('reScanBtn');
-const showPdfBtn = document.getElementById('showPdfBtn');
-const canvasInput = document.getElementById('canvasInput');
-// const canvasOutput = document.getElementById('canvasOutput');
-const ctxInput = canvasInput.getContext('2d');
-const ctxOutput = canvasInput.getContext('2d');
+// prepare document elements access
+const preview = document.getElementById("preview");
 const pageContainer = document.getElementById("pageContainer");
-pageContainer.style.display = 'none';
+pageContainer.style.display = "none";
 
+const webcamSelect = document.getElementById("webcamSelect");
+const video = document.getElementById("video");
+const scanBtn = document.getElementById("scanBtn");
+const img2PdfBtn = document.getElementById("img2PdfBtn");
+const reScanBtn = document.getElementById("reScanBtn");
+const showPdfBtn = document.getElementById("showPdfBtn");
+const canvasInput = document.getElementById("canvasInput");
+// const canvasOutput = document.getElementById("canvasOutput");
+const ctxInput = canvasInput.getContext("2d");
+const ctxOutput = canvasInput.getContext("2d");
+
+// plug document elements to action callbacks
 reScanBtn.onclick = showScanPreview;
 showPdfBtn.onclick = showPdf;
 img2PdfBtn.onclick = selectImage;
 
+// diable buttons until OpenCV is ready
 showPdfBtn.disabled = false;
 img2PdfBtn.disabled = false;
 
-navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => video.srcObject = stream);
-
-function showScanPreview() {
-    preview.style.display = 'block';
-    pageContainer.style.display = 'none';
-}
-function showPdf() {
-    preview.style.display = 'none';
-    pageContainer.style.display = 'block';
+function enableWebcamScan() {
+  scanBtn.onclick = scanWebcam;
+  scanBtn.disabled = false;
 }
 
+// retrieve webcam devices and populate the select element
+async function listWebcams() {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  const videoSelect = document.getElementById("webcamSelect");
+
+  // Clear existing options
+  videoSelect.innerHTML = "";
+
+  devices
+    .filter(device => device.kind === "videoinput")
+    .forEach((device, index) => {
+      const option = document.createElement("option");
+      option.value = device.deviceId;
+      option.text = device.label || `Camera ${index + 1}`;
+      videoSelect.appendChild(option);
+    });
+}
+
+// handle webcam device selection change
+webcamSelect.addEventListener("change", (event) => {
+  startStream(event.target.value);
+});
+
+// start webcam stream with selected device
+async function startStream(deviceId) {
+  const constraints = {
+    video: { deviceId: { exact: deviceId } }
+  };
+
+  const stream = await navigator.mediaDevices.getUserMedia(constraints);
+  video.srcObject = stream;
+}
+
+
+// setup webcam stream on page load
+await listWebcams();
+const defaultDeviceId = webcamSelect.value;
+if (defaultDeviceId) {
+  startStream(defaultDeviceId);
+}
+
+// request webcam access and show video preview
+// navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+//     .then(stream => video.srcObject = stream);
+
+// switch to scan from video preview mode
+function showScanPreview()
+{
+    preview.style.display = "block";
+    pageContainer.style.display = "none";
+}
+
+// switch to pdf view mode
+function showPdf()
+{
+    preview.style.display = "none";
+    pageContainer.style.display = "block";
+}
+
+// findNonZeroJS is missing from OpenCV.js, so we implement it in JavaScript
 function findNonZeroJS(mat) {
     if (!(mat instanceof cv.Mat)) {
         throw new Error("Input must be an OpenCV Mat.");
@@ -118,7 +197,7 @@ function findNonZeroJS(mat) {
     return nonZeroPoints;
 }
 
-
+// Read the image from the canvas and perform skewed sheet detection
 function scanDetection() {
 
     let src = cv.imread(canvasInput);
@@ -166,6 +245,7 @@ function scanDetection() {
     contoursToDraw.delete(); src.delete(); documentContour.delete();
 }
 
+// apply detected skewed sheet to the original image to get a straightened image
 // pts: array of 4 cv.Points in order [top-left, top-right, bottom-right, bottom-left]
 function fourPointTransform(srcMat, pts) {
 
@@ -207,48 +287,22 @@ function fourPointTransform(srcMat, pts) {
     return dst;
 }
 
-const readFromBlobOrFile = (blob) => (
-    new Promise((resolve, reject) => {
-    const fileReader = new FileReader();
-    fileReader.onload = () => {
-        resolve(fileReader.result);
-    };
-    fileReader.onerror = ({ target: { error: { code } } }) => {
-        reject(Error(`File could not be read! Code=${code}`));
-    };
-    fileReader.readAsArrayBuffer(blob);
-    })
-);
 
-const recognize = async (image, langs, options, output) => {
-const worker = await createWorker(langs, 1, options);
-return worker.recognize(image, {}, output)
-    .finally(async () => {
-    await worker.terminate();
-    });
-};
-
-
+// Select an image file using file open dialog and create a pdf with text layer via ocr
 function selectImage() {
-  myAPI.showOpenDialog('Images', ['png', 'jpg', 'jpeg']).then(result => {
+  myAPI.showOpenDialog("Images", ["png", "jpg", "jpeg"]).then(result => {
     if (!result.canceled) {
       const filePath = result.filePaths[0];
       myAPI.readFile(filePath, (err, data) => {
         if (!err)
         {
-          const imgBlob = new Blob([new Uint8Array(data)], { type: 'application/image' });
+          const imgBlob = new Blob([new Uint8Array(data)], { type: "application/image" });
           const imgUrl = URL.createObjectURL(imgBlob);
           processImage(imgUrl);
         }
       });
     }
   });
-}
-
-
-function onOpenCvReady() {
-  scanBtn.onclick = scanWebcam;
-  scanBtn.disabled = false;
 }
 
 
@@ -279,16 +333,27 @@ async function scanWebcam() {
   // src.delete(); gray.delete(); binary.delete(); dst.delete();
 
   // 3️⃣ OCR with Tesseract.js
-  let processedImg = canvasInput.toDataURL('image/png');
+  let processedImg = canvasInput.toDataURL("image/png");
   processImage(processedImg);
 }
 
 
+// OCR recognition
+async function recognize(image, langs, options, output)
+{
+  const worker = await createWorker(langs, 1, options);
+  return worker.recognize(image, {}, output)
+    .finally(async () => {
+    await worker.terminate();
+    });
+};
+
+// process imoage with OCR and display PDF
 async function processImage(processedImg) {
-  const { data: { text, pdf, hocr } } = await recognize(processedImg, 'fra', {
-          workerPath: './third-parties/tesseract.js@6.0.1/worker.min.js',
-          langPath: './tessdata',
-          corePath: './third-parties/tesseract.js@6.0.1',
+  const { data: { text, pdf, hocr } } = await recognize(processedImg, "fra", {
+          workerPath: "./third-parties/tesseract.js@6.0.1/worker.min.js",
+          langPath: "./tessdata",
+          corePath: "./third-parties/tesseract.js@6.0.1",
           gzip : false,
           logger: m => console.log(m),
           errorHandler: err => console.error(err)
@@ -297,7 +362,7 @@ async function processImage(processedImg) {
   );
 
   // 5️⃣ Display PDF
-  const pdfBlob = new Blob([new Uint8Array(pdf)], { type: 'application/pdf' });
+  const pdfBlob = new Blob([new Uint8Array(pdf)], { type: "application/pdf" });
   const blobUrl = URL.createObjectURL(pdfBlob);
   PDFViewerApplication.open({ url: blobUrl });
 
@@ -305,17 +370,20 @@ async function processImage(processedImg) {
 
 };
 
-function speakWithPiper(text) {
-    const voice = 'fr_FR-siwis-medium';
+
+// TTS speech synthesis
+function speakWithPiper(text) 
+{
+    const voice = "fr_FR-siwis-medium";
     const speaker = 0;
     piperWebEngine.generate(text, voice, speaker).then((res) => {
-        const audio = new Audio();
         audio.src = URL.createObjectURL(res.file);
         audio.play();
     });
     piperWebEngine.terminate();
 }
 
+// Add event listener for text selection and trigger speach automatically
 document.addEventListener("mouseup", () => {
     const selectedText = getSelectedText();
     if (selectedText && selectedText.length > 1) {
@@ -323,13 +391,14 @@ document.addEventListener("mouseup", () => {
     }
 });
 
-
-function getSelectedText() {
+// Retrieve selected text from the document
+function getSelectedText()
+{
     if (window.getSelection) {
     return window.getSelection().toString();
     }
     else if (document.selection) {
         return document.selection.createRange().text;
     }
-    return '';
+    return "";
 }
