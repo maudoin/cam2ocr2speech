@@ -7,16 +7,20 @@
 </head>
 <body>
   <p id="info"></p>
-  <button id="scanBtn">🧾 Scan Document</button>
-  <video id="video" height="100%" autoplay muted playsinline></video>
-  <button id="reScanBtn" onclick="showScan();" style="display:none;" >🧾 Scan Another Document</button>
-  <canvas id="canvasInput" style="display:none;"></canvas>
-  <canvas id="canvasOutput"></canvas>
-  <canvas id="pdfCanvas" style="display:none;"></canvas>
-  <iframe id="pdfViewer" height="100%" style="display:none;" width="100%"></iframe>
-  <div id="htmlOcr" width="100%" height="100%"  ></div>
-  <textarea id="textArea" readonly rows="10" cols="200" width="100%" height="10%" style="display:none;">No text</textarea>
+  <div id="topBar">
+    <button id="scanBtn">🧾 Scan Document</button>
+    <button id="reScanBtn" style="display:none;" >🧾 Scan Another Document</button>
+  </div>
 
+  <div id="mainContent">
+    <video id="video" height="100%" autoplay muted playsinline></video>
+    <canvas id="canvasInput" style="display:none;"></canvas>
+    <canvas id="canvasOutput"></canvas>
+    <canvas id="pdfCanvas" style="display:none;"></canvas>
+    <iframe id="pdfViewer" style="display:none;"></iframe>
+    <div id="htmlOcr" style="display:none;"></div>
+    <textarea id="textArea" readonly rows="10" cols="200" width="100%" height="10%" style="display:none;">No text</textarea>
+  </div>
   <!-- Libraries -->
   <script src="./third-parties/tesseract.js@6.0.1/tesseract.min.js" type="application/javascript"></script>
   <script src="./third-parties/jspdf/2.5.1/jspdf.umd.min.js"></script>
