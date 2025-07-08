@@ -105,8 +105,8 @@ const openImage = document.getElementById("openImage");
 const showPdfBtn = document.getElementById("showPdfBtn");
 const canvasInput = document.getElementById("canvasInput");
 const ctxInput = canvasInput.getContext("2d");
-// const canvasOutput = document.getElementById("canvasOutput");
-// const ctxOutput = canvasOutput.getContext("2d");
+const canvasOutput = document.getElementById("canvasOutput");
+const ctxOutput = canvasOutput.getContext("2d");
 
 // plug document elements to action callbacks
 webcamPreview.onclick = showScanPreview;
@@ -249,19 +249,27 @@ function scanDetection() {
     let documentContour = new cv.Mat();
 
     for (let i = 0; i < contours.size(); i++) {
-    let cnt = contours.get(i);
-    let area = cv.contourArea(cnt, false);
-    if (area > 1000) {
-        let peri = cv.arcLength(cnt, true);
-        let approx = new cv.Mat();
-        cv.approxPolyDP(cnt, approx, 0.015 * peri, true);
-        if (area > maxArea && approx.rows === 4) {
-        documentContour = approx;
-        maxArea = area;
-        }
-        approx.delete();
-    }
-    cnt.delete();
+      let cnt = contours.get(i);
+      let area = cv.contourArea(cnt, false);
+      if (area > 1000) {
+          let peri = cv.arcLength(cnt, true);
+          let approx = new cv.Mat();
+          cv.approxPolyDP(cnt, approx, 0.015 * peri, true);
+          if (area > maxArea && approx.rows === 4) {
+            // may delete previous
+            if (documentContour) documentContour.delete();
+            documentContour = approx;
+            // approx does not need to be deleted, documentContour holds it
+            maxArea = area;
+          }
+          else
+          {
+            // only delete here otherwise it has been assigned to documentContour
+            // and documentContour would be invalid
+            approx.delete();
+          }
+      }
+      cnt.delete();
     }
 
     // Draw the detected contour
@@ -275,6 +283,8 @@ function scanDetection() {
     gray.delete(); blur.delete(); threshold.delete();
     contours.delete(); hierarchy.delete();
     contoursToDraw.delete(); src.delete(); documentContour.delete();
+
+    canvasOutput.style.display = "block";
 }
 
 // apply detected skewed sheet to the original image to get a straightened image
@@ -319,9 +329,31 @@ function fourPointTransform(srcMat, pts) {
     return dst;
 }
 
+// Deskew from canvasInput to canvasOutput with open cv
+function deskewCanvas()
+{
+  let src = cv.imread(canvasInput);
+  let gray = new cv.Mat();
+  let binary = new cv.Mat();
+  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+  cv.threshold(gray, binary, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
+
+  let coords = findNonZeroJS(binary);
+  let rect = cv.minAreaRect(coords);
+  let angle = rect.angle;
+
+  let center = new cv.Point(src.cols / 2, src.rows / 2);
+  let rotMat = cv.getRotationMatrix2D(center, angle, 1);
+  let dst = new cv.Mat();
+  cv.warpAffine(src, dst, rotMat, src.size(), cv.INTER_CUBIC, cv.BORDER_CONSTANT, new cv.Scalar());
+  cv.imshow(canvasOutput, dst);
+  ctxOutput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
+  src.delete(); gray.delete(); binary.delete(); dst.delete();
+}
 
 // Select an image file using file open dialog and create a pdf with text layer via ocr
-function selectImage() {
+function selectImage()
+{
   myAPI.showOpenDialog("Images", ["png", "jpg", "jpeg"]).then(result => {
     if (!result.canceled) {
       const filePath = result.filePaths[0];
@@ -342,6 +374,8 @@ function selectImage() {
         ctxInput.fillText(text, canvasInput.width / 2, 10); // Centered at top
 
         showImagePreview();
+
+        scanDetection();
       };
       // Set the image source (can be a URL, data URL, or blob URL)
       img.src = filePath;
@@ -350,8 +384,9 @@ function selectImage() {
 }
 
 
-async function webcamCapture() {
-
+// webcam to canevas capture
+async function webcamCapture()
+{
   canvasInput.width = video.videoWidth;
   canvasInput.height = video.videoHeight;
   ctxInput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
@@ -365,24 +400,6 @@ async function webcamCapture() {
   // Add text to canvas
   const text = "Live Capture";
   ctxInput.fillText(text, canvasInput.width / 2, 10); // Centered at top
-  // 2️⃣ Deskew with OpenCV.js
-  // let src = cv.imread(canvasInput);
-  // let gray = new cv.Mat();
-  // let binary = new cv.Mat();
-  // cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-  // cv.threshold(gray, binary, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
-
-  // let coords = findNonZeroJS(binary);
-  // let rect = cv.minAreaRect(coords);
-  // let angle = rect.angle;
-
-  // let center = new cv.Point(src.cols / 2, src.rows / 2);
-  // let rotMat = cv.getRotationMatrix2D(center, angle, 1);
-  // let dst = new cv.Mat();
-  // cv.warpAffine(src, dst, rotMat, src.size(), cv.INTER_CUBIC, cv.BORDER_CONSTANT, new cv.Scalar());
-  // cv.imshow(canvasOutput, dst);
-  // ctxOutput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
-  // src.delete(); gray.delete(); binary.delete(); dst.delete();
 
   showImagePreview();
 }
@@ -424,7 +441,7 @@ async function imageToPdf() {
 
 
 // TTS speech synthesis
-function speakWithPiper(text) 
+function speakWithPiper(text)
 {
     const voice = "fr_FR-siwis-medium";
     const speaker = 0;
@@ -436,7 +453,8 @@ function speakWithPiper(text)
 }
 
 // Add event listener for text selection and trigger speach automatically
-document.addEventListener("mouseup", () => {
+document.addEventListener("mouseup", () =>
+  {
     const selectedText = getSelectedText();
     if (selectedText && selectedText.length > 1) {
         speakWithPiper(selectedText);
