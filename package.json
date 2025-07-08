@@ -14,7 +14,12 @@
     "electron-builder": "^26.0.12"
   },
   "win": {
-    "target": ["portable"],
+    "target": [
+      "portable"
+    ],
     "icon": "icon.ico"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^5.3.93"
   }
 }

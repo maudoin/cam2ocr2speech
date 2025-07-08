@@ -3,13 +3,16 @@
 <head>
   <title>Document Scanner</title>
   <style src="index.css"></style>
+  <base href=".">
 </head>
 <body>
+  <p id="info"></p>
   <button id="scanBtn">🧾 Scan Document</button>
   <video id="video" height="100%" autoplay muted playsinline></video>
   <button id="reScanBtn" onclick="showScan();" style="display:none;" >🧾 Scan Another Document</button>
   <canvas id="canvasInput" style="display:none;"></canvas>
   <canvas id="canvasOutput"></canvas>
+  <canvas id="pdfCanvas" style="display:none;"></canvas>
   <iframe id="pdfViewer" height="100%" style="display:none;" width="100%"></iframe>
   <div id="htmlOcr" width="100%" height="100%"  ></div>
   <textarea id="textArea" readonly rows="10" cols="200" width="100%" height="10%" style="display:none;">No text</textarea>
@@ -18,7 +21,8 @@
   <script async src="./third-parties/docs.opencv.org/4.x/opencv.js" onload="onOpenCvReady();"></script>
   <script src="./third-parties/tesseract.js@6.0.1/tesseract.min.js" type="application/javascript"></script>
   <script src="./third-parties/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script type="module" src="./third-parties/piper-tts-web/piper-tts-web.js"></script>
 
-  <script src="script.js"></script>
+  <script type="module" src="./renderer.js"></script>
 </body>
 </html>
