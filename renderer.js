@@ -1,10 +1,7 @@
 const { createWorker } = Tesseract;
-
-import * as pdfjsLib from "./node_modules/pdfjs-dist/build/pdf.min.mjs";
-pdfjsLib.GlobalWorkerOptions.workerSrc = 
-  `./node_modules/pdfjs-dist/build/pdf.worker.mjs`;
-
 const { PDFViewerApplication } = await import('./web/viewer.mjs');
+const { PiperWebEngine } = await import('./third-parties/piper-tts-web/piper-tts-web.js');
+const piperWebEngine = new PiperWebEngine();
 
 const loadOpenCv = () => {
   return new Promise((resolve, reject) => {
@@ -69,8 +66,6 @@ window.fetch = async (url) => {
 
   return originalFetch(url);
 };
-const { PiperWebEngine } = await import('./third-parties/piper-tts-web/piper-tts-web.js');
-const engine = new PiperWebEngine();
 
 const video = document.getElementById('video');
 const scanBtn = document.getElementById('scanBtn');
@@ -79,38 +74,25 @@ const canvasInput = document.getElementById('canvasInput');
 // const canvasOutput = document.getElementById('canvasOutput');
 const ctxInput = canvasInput.getContext('2d');
 const ctxOutput = canvasInput.getContext('2d');
-const pdfCanvas = document.getElementById('pdfCanvas');
-const ctxPdf = pdfCanvas.getContext('2d');
 const pageContainer = document.getElementById("pageContainer");
-    pageContainer.style.display = 'none';
-const pdfViewer = document.getElementById('pdfViewer');
-const textArea = document.getElementById('textArea');
-const htmlOcr = document.getElementById('htmlOcr');
+pageContainer.style.display = 'none';
 
-reScanBtn.onclick = showScan;
+reScanBtn.onclick = showScanPreview;
 
 navigator.mediaDevices.getUserMedia({ video: true })
     .then(stream => video.srcObject = stream);
 
-function showScan() {
+function showScanPreview() {
     video.style.display = 'block';
     scanBtn.style.display = 'block';
     reScanBtn.style.display = 'none';
-    pdfCanvas.style.display = 'none';
     pageContainer.style.display = 'none';
-    pdfViewer.style.display = 'none';
-    htmlOcr.style.display = 'none';
-    textArea.style.display = 'none';
 }
-function hideScan() {
+function showPdf() {
     video.style.display = 'none';
     scanBtn.style.display = 'none';
     reScanBtn.style.display = 'block';
-    pdfCanvas.style.display = 'block';
     pageContainer.style.display = 'block';
-    pdfViewer.style.display = 'block';
-    htmlOcr.style.display = 'block';
-    textArea.style.display = 'block';
 }
 
 function findNonZeroJS(mat) {
@@ -243,6 +225,7 @@ return worker.recognize(image, {}, output)
 
 function onOpenCvReady() {
   document.getElementById('scanBtn').onclick = async () => {
+
     // 1️⃣ Capture frame
     canvasInput.width = video.videoWidth;
     canvasInput.height = video.videoHeight;
@@ -265,36 +248,10 @@ function onOpenCvReady() {
     // cv.warpAffine(src, dst, rotMat, src.size(), cv.INTER_CUBIC, cv.BORDER_CONSTANT, new cv.Scalar());
     // cv.imshow(canvasOutput, dst);
     ctxOutput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
-
-
     // src.delete(); gray.delete(); binary.delete(); dst.delete();
 
     // 3️⃣ OCR with Tesseract.js
     let processedImg = canvasInput.toDataURL('image/png');
-
-    // const worker = await createWorker('fra', 1, {legacyCore: true, legacyLang: true}
-    //   workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@v5.0.0/dist/worker.min.js',
-    //   langPath: 'https://tessdata.projectnaptha.com/4.0.0',
-    //   corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@v5.0.0',
-    // });{
-    // const result = await worker.detect(processedImg);
-    // console.log(data);
-    // }
-
-    // const worker = await createWorker('fra', 1,  {
-    //         langPath: './tessdata',
-    //         gzip : false,
-    //         logger: m => console.log(m),
-    //         errorHandler: err => console.error(err)
-    //     });
-    // const { data: { text, pdf } } = worker.recognize(canvasInput.toBlob(async (blob) => {
-    //   data = await readFromBlobOrFile(blob);
-    //   resolve();
-    // }),
-    //       {pdfTitle: "Example PDF"}, { text: true, pdf: true }
-    //     );
-    //     // .finally(async () => {await worker.terminate();});
-
     const { data: { text, pdf, hocr } } = await recognize(processedImg, 'fra', {
             workerPath: './third-parties/tesseract.js@6.0.1/worker.min.js',
             langPath: './tessdata',
@@ -305,88 +262,28 @@ function onOpenCvReady() {
         },
         { text: true, pdf: true , hocr: true}
     );
-    const pdfBlob = new Blob([new Uint8Array(pdf)], { type: 'application/pdf' });
-    // await worker.terminate();
-
-    // 4️⃣ Export to PDF with jsPDF
-    // const { jsPDF } = window.jspdf;
-    // const doc = new jsPDF();
-    // doc.text(text, 10, 10);
-    // // doc.save("scanned_document.pdf");
-    // const pdfBlob = doc.output("blob");
-    // 🔗 Create object URL
-    const blobUrl = URL.createObjectURL(pdfBlob);
-
-    hideScan();
 
     // 5️⃣ Display PDF
-    pdfViewer.src = blobUrl;
-
-    // 6️⃣ Display text
-    textArea.value =hocr;
-    htmlOcr.innerHTML=hocr;
-
-    // 7️⃣ Render PDF in canvas
-    // Load PDF document
-    pdfjsLib.getDocument(blobUrl).promise.then(pdf => {
-    // Fetch first page
-    pdf.getPage(1).then(page => {
-            const viewport = page.getViewport({ scale: 1.5 });
-            pdfCanvas.height = viewport.height;
-            pdfCanvas.width = viewport.width;
-
-            // Render page into canvas context
-            page.render({
-                canvasContext: ctxPdf,
-                viewport: viewport
-            });
-        });
-        }).catch(err => {
-            console.error('Error loading PDF:', err.message);
-        });
-
+    const pdfBlob = new Blob([new Uint8Array(pdf)], { type: 'application/pdf' });
+    const blobUrl = URL.createObjectURL(pdfBlob);
     PDFViewerApplication.open({ url: blobUrl });
 
-    // Some PDFs need external cmaps.
-    //
-    // const PAGE_TO_VIEW = 1;
-    // const SCALE = 1.0;
+    showPdf();
 
-    // const eventBus = new pdfjsViewer.EventBus();
-    // // Loading document.
-    // const loadingTask = pdfjsLib.getDocument({
-    //     url: blobUrl,
-    //     cMapUrl: "./node_modules/pdfjs-dist/cmaps/",
-    //     cMapPacked: true,
-    //     enableXfa: true,
-    // });
-    // const pdfDocument = await loadingTask.promise;
-    // // Document loaded, retrieving the page.
-    // const pdfPage = await pdfDocument.getPage(PAGE_TO_VIEW);
-    // // Creating the page view with default parameters.
-    // const pdfPageView = new pdfjsViewer.PDFPageView({
-    //     pageContainer,
-    //     id: PAGE_TO_VIEW,
-    //     scale: SCALE,
-    //     defaultViewport: pdfPage.getViewport({ scale: SCALE }),
-    //     eventBus,
-    // });
-    // // Associate the actual page with the view, and draw it.
-    // pdfPageView.setPdfPage(pdfPage);
-    // pdfPageView.draw();
   };
 
 }
 
 
-async function speakWithPiper(text) {
+function speakWithPiper(text) {
     const voice = 'fr_FR-siwis-medium';
     const speaker = 0;
-    engine.generate(text, voice, speaker).then((res) => {
+    piperWebEngine.generate(text, voice, speaker).then((res) => {
         const audio = new Audio();
         audio.src = URL.createObjectURL(res.file);
         audio.play();
     });
+    piperWebEngine.terminate();
 }
 
 document.addEventListener("mouseup", () => {
