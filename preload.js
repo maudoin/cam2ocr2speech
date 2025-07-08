@@ -7,7 +7,3 @@ contextBridge.exposeInMainWorld('myAPI', {
   joinPath: (...args) => path.join(...args),
   dirname: () => __dirname,
 });
-
-const pdfjsLib = require('pdfjs-dist');
-// pdfjsLib.GlobalWorkerOptions.workerSrc = require('pdfjs-dist/build/pdf.worker.entry');
-window.pdfjsLib = pdfjsLib;
