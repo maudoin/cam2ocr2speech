@@ -108,12 +108,19 @@ const ctxInput = canvasInput.getContext("2d");
 const canvasOutput = document.getElementById("canvasOutput");
 const ctxOutput = canvasOutput.getContext("2d");
 
+const voiceOption = document.getElementById("voiceOption");
+const deskewImage = document.getElementById("deskewImage");
+const deskewImageLabel = document.getElementById("deskewImageLabel");
+
 // plug document elements to action callbacks
-webcamPreview.onclick = showScanPreview;
-reScanBtn.onclick = showScanPreview;
-showPdfBtn.onclick = showPdf;
+webcamPreview.onclick = switchToWebcamMode;
+reScanBtn.onclick = switchToWebcamMode;
+showPdfBtn.onclick = switchToPdfMode;
 img2PdfBtn.onclick = imageToPdf;
 openImage.onclick = selectImage;
+deskewImage.addEventListener("click", processImage);
+voiceOption.addEventListener("click", speakSelectedText);
+document.addEventListener("mouseup", speakSelectedText);
 
 // diable buttons until OpenCV is ready
 showPdfBtn.disabled = false;
@@ -121,14 +128,14 @@ img2PdfBtn.disabled = false;
 openImage.disabled = false;
 
 function enableWebcamScan() {
-  webcam2Img.onclick = webcamCapture;
+  webcam2Img.onclick = webcamCaptureToImage;
   webcam2Img.disabled = false;
-  webcam2Pdf.onclick = () => {webcamCapture().then(imageToPdf);};
+  webcam2Pdf.onclick = webcamCaptureToPdf;
   webcam2Pdf.disabled = false;
-  showScanPreview();
+  switchToWebcamMode();
 }
 // switch to scan from video preview mode
-function showScanPreview()
+function switchToWebcamMode()
 {
   // toolbar update
   webcamPreview.style.visibility = "hidden";
@@ -136,16 +143,18 @@ function showScanPreview()
   webcam2Img.style.visibility = "visible";
   webcam2Pdf.style.visibility = "visible";
   img2PdfBtn.style.visibility = "hidden";
+  deskewImageLabel.style.visibility = "hidden";
   // display update
   video.style.display = "block";
   canvasInput.style.display = "none";
+  canvasOutput.style.display = "none";
   // layout update
   preview.style.display = "block";
   pageContainer.style.display = "none";
 }
 
 // switch to image view mode
-function showImagePreview()
+function switchToImagePreviewMode()
 {
   // toolbar update
   webcamPreview.style.visibility = "visible";
@@ -153,16 +162,18 @@ function showImagePreview()
   webcam2Img.style.visibility = "hidden";
   webcam2Pdf.style.visibility = "hidden";
   img2PdfBtn.style.visibility = "visible";
+  deskewImageLabel.style.visibility = "visible";
   // display update
   video.style.display = "none";
   canvasInput.style.display = "block";
+  canvasOutput.style.display = "none";
   // layout update
   preview.style.display = "block";
   pageContainer.style.display = "none";
 }
 
 // switch to pdf view mode
-function showPdf()
+function switchToPdfMode()
 {
   // layout update
   preview.style.display = "none";
@@ -210,86 +221,145 @@ if (defaultDeviceId) {
   startStream(defaultDeviceId);
 }
 
-// findNonZeroJS is missing from OpenCV.js, so we implement it in JavaScript
-function findNonZeroJS(mat) {
-    if (!(mat instanceof cv.Mat)) {
-        throw new Error("Input must be an OpenCV Mat.");
-    }
-    const nonZeroPoints = [];
-
-    for (let y = 0; y < mat.rows; y++) {
-        for (let x = 0; x < mat.cols; x++) {
-        const pixel = mat.ucharPtr(y, x)[0];
-        if (pixel > 0) {
-            nonZeroPoints.push(new cv.Point(x, y));
-        }
-        }
-    }
-
-    return nonZeroPoints;
-}
 
 // Read the image from the canvas and perform skewed sheet detection
-function scanDetection() {
+function detectContourPoints(canvas) {
 
-    let src = cv.imread(canvasInput);
-    let gray = new cv.Mat();
-    let blur = new cv.Mat();
-    let threshold = new cv.Mat();
+  let src = cv.imread(canvas);
+  let gray = new cv.Mat();
+  let blur = new cv.Mat();
+  let threshold = new cv.Mat();
 
-    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
-    cv.GaussianBlur(gray, blur, new cv.Size(5, 5), 0, 0);
-    cv.threshold(blur, threshold, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
+  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+  cv.GaussianBlur(gray, blur, new cv.Size(5, 5), 0, 0);
 
-    let contours = new cv.MatVector();
-    let hierarchy = new cv.Mat();
-    cv.findContours(threshold, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+  // --- Gamma correction ---
+  let gamma = 1.5; // You can adjust this value as needed
+  let lookUpTable = new cv.Mat(1, 256, cv.CV_8U);
+  for (let i = 0; i < 256; i++) {
+    lookUpTable.ucharPtr(0, i)[0] = Math.min(255, Math.pow(i / 255.0, 1.0 / gamma) * 255.0);
+  }
+  cv.LUT(blur, lookUpTable, blur);
+  lookUpTable.delete();
+  // --- End gamma correction ---
 
-    let maxArea = 0;
-    let documentContour = new cv.Mat();
+  cv.threshold(blur, threshold, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
 
-    for (let i = 0; i < contours.size(); i++) {
-      let cnt = contours.get(i);
-      let area = cv.contourArea(cnt, false);
-      if (area > 1000) {
-          let peri = cv.arcLength(cnt, true);
-          let approx = new cv.Mat();
-          cv.approxPolyDP(cnt, approx, 0.015 * peri, true);
-          if (area > maxArea && approx.rows === 4) {
-            // may delete previous
-            if (documentContour) documentContour.delete();
-            documentContour = approx;
-            // approx does not need to be deleted, documentContour holds it
-            maxArea = area;
-          }
-          else
-          {
-            // only delete here otherwise it has been assigned to documentContour
-            // and documentContour would be invalid
-            approx.delete();
-          }
-      }
-      cnt.delete();
+  // Debug Display threshold img : cv.imshow(canvasInput, threshold);
+
+  let contours = new cv.MatVector();
+  let hierarchy = new cv.Mat();
+  cv.findContours(threshold, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+
+  let maxArea = 0;
+  let documentContour = new cv.Mat();
+
+  for (let i = 0; i < contours.size(); i++)
+  {
+    let cnt = contours.get(i);
+
+    let area = cv.contourArea(cnt, false);
+    // Remove close points from cnt
+    let filteredCnt = new cv.Mat();
+    if (area > 1000 && cnt.rows > 1) {
+        let points = [];
+        let prev = cnt.intPtr(0);
+        points.push([prev[0], prev[1]]);
+        for (let j = 1; j < cnt.rows; j++) {
+            let curr = cnt.intPtr(j);
+            let dx = curr[0] - prev[0];
+            let dy = curr[1] - prev[1];
+            if (Math.sqrt(dx * dx + dy * dy) > 2) { // threshold: 2 pixels
+                // Colinearity check: keep only if not nearly colinear with previous two
+                if (points.length >= 2) {
+                    let [x1, y1] = points[points.length - 2];
+                    let [x2, y2] = points[points.length - 1];
+                    let [x3, y3] = [curr[0], curr[1]];
+                    // Calculate area of triangle (x1,y1)-(x2,y2)-(x3,y3)
+                    let area = Math.abs((x2 - x1)*(y3 - y1) - (y2 - y1)*(x3 - x1));
+                    // If area is small, points are nearly colinear (threshold: 1.5)
+                    if (area > 1.5) {
+                        points.push([curr[0], curr[1]]);
+                        prev = curr;
+                    }
+                } else {
+                    points.push([curr[0], curr[1]]);
+                    prev = curr;
+                }
+            }
+        }
+        // Convert filtered points back to Mat
+        if (points.length > 1) {
+            console.log(cnt.rows + " --filtered-> " + points.length);
+            filteredCnt = cv.matFromArray(points.length, 1, cv.CV_32SC2, points.flat());
+        } else {
+            filteredCnt = cnt.clone();
+        }
+    } else {
+        filteredCnt = cnt.clone();
     }
 
-    // Draw the detected contour
-    let contoursToDraw = new cv.MatVector();
-    contoursToDraw.push_back(documentContour);
-    cv.drawContours(src, contoursToDraw, -1, new cv.Scalar(0, 255, 0), 3);
+    area = cv.contourArea(cnt, false);
+    if (area > 1000) {
+        let peri = cv.arcLength(cnt, true);
+        let approx = new cv.Mat();
+        cv.approxPolyDP(cnt, approx, 0.015 * peri, true);
+        if (area > maxArea && approx.rows === 4) {
+          // may delete previous
+          if (documentContour) documentContour.delete();
+          documentContour = approx;
+          // approx does not need to be deleted, documentContour holds it
+          maxArea = area;
+        }
+        else
+        {
+          // only delete here otherwise it has been assigned to documentContour
+          // and documentContour would be invalid
+          approx.delete();
+        }
+    }
+    cnt.delete();
+    filteredCnt.delete();
+  }
+  let points = [];
+  if (documentContour) {
+    // Get the points from documentContour
+    for (let i = 0; i < documentContour.rows; i++) {
+        let pt = documentContour.intPtr(i);
+        points.push({ x: pt[0], y: pt[1] });
+    }
+  }
+  // Cleanup
+  gray.delete(); blur.delete(); threshold.delete();
+  contours.delete(); hierarchy.delete();
+  src.delete(); documentContour.delete();
 
-    cv.imshow(canvasOutput, src);
+  return points;
+}
 
-    // Cleanup
-    gray.delete(); blur.delete(); threshold.delete();
-    contours.delete(); hierarchy.delete();
-    contoursToDraw.delete(); src.delete(); documentContour.delete();
 
-    canvasOutput.style.display = "block";
+// Display points directly in cavas context
+function addCoutourOverlay(canvasContext, points)
+{
+  canvasContext.save();
+  canvasContext.globalAlpha = 0.3; // Set transparency
+  canvasContext.beginPath();
+  canvasContext.moveTo(points[0].x, points[0].y);
+  for (let i = 1; i < points.length; i++) {
+      canvasContext.lineTo(points[i].x, points[i].y);
+  }
+  canvasContext.closePath();
+  canvasContext.fillStyle = "lime"; // or "rgba(0,255,0,0.3)"
+  canvasContext.fill();
+  canvasContext.restore();
+
 }
 
 // apply detected skewed sheet to the original image to get a straightened image
+// canvas: input canvas element with the image to be straightened
 // pts: array of 4 cv.Points in order [top-left, top-right, bottom-right, bottom-left]
-function fourPointTransform(srcMat, pts) {
+// return opencv image Mat instance of the straightened image
+function fourPointTransform(canvas, pts) {
 
     // Compute width and height of the new image
     const widthA = Math.hypot(pts[2].x - pts[3].x, pts[2].y - pts[3].y);
@@ -318,37 +388,54 @@ function fourPointTransform(srcMat, pts) {
     // Get perspective transform matrix
     const M = cv.getPerspectiveTransform(srcPts, dstPts);
 
+    // Cleanup
+    srcPts.delete(); dstPts.delete(); 
+
+    // Return the matrix and the computed dimensions
+    let dsize = new cv.Size(Math.round(maxWidth), Math.round(maxHeight));
+    let src = cv.imread(canvas);
     // Apply warp
     const dst = new cv.Mat();
-    const dsize = new cv.Size(maxWidth, maxHeight);
-    cv.warpPerspective(srcMat, dst, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+    cv.warpPerspective(src, dst, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
 
     // Cleanup
-    srcPts.delete(); dstPts.delete(); M.delete();
-
+    M.delete();
+    src.delete();
     return dst;
 }
 
-// Deskew from canvasInput to canvasOutput with open cv
-function deskewCanvas()
+// Process the image from the input canvas
+function processImage()
 {
-  let src = cv.imread(canvasInput);
-  let gray = new cv.Mat();
-  let binary = new cv.Mat();
-  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-  cv.threshold(gray, binary, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
 
-  let coords = findNonZeroJS(binary);
-  let rect = cv.minAreaRect(coords);
-  let angle = rect.angle;
+  let copyOriginalImage = true;
+  if (deskewImage.checked)
+  {
+    const pts = detectContourPoints(canvasInput);
+    if (pts.length === 4)
+    {
+      const cvImageMat = fourPointTransform(canvasInput, pts);
+      // add contour after transformation so the strainghtened image does not show the overlay
+      addCoutourOverlay(ctxInput, pts);
 
-  let center = new cv.Point(src.cols / 2, src.rows / 2);
-  let rotMat = cv.getRotationMatrix2D(center, angle, 1);
-  let dst = new cv.Mat();
-  cv.warpAffine(src, dst, rotMat, src.size(), cv.INTER_CUBIC, cv.BORDER_CONSTANT, new cv.Scalar());
-  cv.imshow(canvasOutput, dst);
-  ctxOutput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
-  src.delete(); gray.delete(); binary.delete(); dst.delete();
+      // Display the result in the output canvas
+      canvasOutput.width = cvImageMat.cols;
+      canvasOutput.height = cvImageMat.rows;
+      cv.imshow(canvasOutput, cvImageMat);
+
+      copyOriginalImage = false;
+
+    }
+  }
+
+  if (copyOriginalImage)
+  {
+    // copy input canvas to output canvas
+    canvasOutput.width = canvasInput.width;
+    canvasOutput.height = canvasInput.height;
+    ctxOutput.drawImage(canvasInput, 0, 0, canvasInput.width, canvasInput.height);
+  }
+
 }
 
 // Select an image file using file open dialog and create a pdf with text layer via ocr
@@ -365,17 +452,8 @@ function selectImage()
         // Draw the image to fill the entire canvas
         ctxInput.drawImage(img, 0, 0, canvasInput.width, canvasInput.height);
 
-        // Add text to canvas
-        ctxInput.font = "24px Arial";
-        ctxInput.fillStyle = "white";
-        ctxInput.textAlign = "center";
-        ctxInput.textBaseline = "top";
-        const text = filePath;
-        ctxInput.fillText(text, canvasInput.width / 2, 10); // Centered at top
-
-        showImagePreview();
-
-        scanDetection();
+        processImage();
+        switchToImagePreviewMode();
       };
       // Set the image source (can be a URL, data URL, or blob URL)
       img.src = filePath;
@@ -385,23 +463,24 @@ function selectImage()
 
 
 // webcam to canevas capture
-async function webcamCapture()
+async function webcamCaptureToImage()
 {
   canvasInput.width = video.videoWidth;
   canvasInput.height = video.videoHeight;
   ctxInput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
 
-  // Set text styles
-  ctxInput.font = "24px Arial";
-  ctxInput.fillStyle = "white";
-  ctxInput.textAlign = "center";
-  ctxInput.textBaseline = "top";
+  processImage();
+  switchToImagePreviewMode();
+}
 
-  // Add text to canvas
-  const text = "Live Capture";
-  ctxInput.fillText(text, canvasInput.width / 2, 10); // Centered at top
+async function webcamCaptureToPdf()
+{
+  canvasInput.width = video.videoWidth;
+  canvasInput.height = video.videoHeight;
+  ctxInput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
 
-  showImagePreview();
+  processImage();
+  imageToPdf();
 }
 
 
@@ -418,7 +497,7 @@ async function recognize(image, langs, options, output)
 
 // process imoage with OCR and display PDF
 async function imageToPdf() {
-  let processedImg = canvasInput.toDataURL("image/png");
+  let processedImg = canvasOutput.toDataURL("image/png");
   const { data: { text, pdf, hocr } } = await recognize(processedImg, "fra", {
           workerPath: "./third-parties/tesseract.js@6.0.1/worker.min.js",
           langPath: "./tessdata",
@@ -435,7 +514,7 @@ async function imageToPdf() {
   const blobUrl = URL.createObjectURL(pdfBlob);
   PDFViewerApplication.open({ url: blobUrl });
 
-  showPdf();
+  switchToPdfMode();
 
 };
 
@@ -453,13 +532,20 @@ function speakWithPiper(text)
 }
 
 // Add event listener for text selection and trigger speach automatically
-document.addEventListener("mouseup", () =>
+function speakSelectedText()
+{
+  if (voiceOption.checked)
   {
     const selectedText = getSelectedText();
     if (selectedText && selectedText.length > 1) {
         speakWithPiper(selectedText);
     }
-});
+  }
+  else
+  {
+    audio.pause();
+  }
+}
 
 // Retrieve selected text from the document
 function getSelectedText()
