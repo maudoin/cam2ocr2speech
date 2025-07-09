@@ -6,17 +6,31 @@
     "start": "electron ."
   },
   "keywords": [],
-  "author": "",
+  "author": "MAudoin",
   "license": "ISC",
   "description": "",
   "devDependencies": {
     "electron": "^37.2.0",
     "electron-builder": "^26.0.12"
   },
-  "win": {
-    "target": [
-      "portable"
+  "build": {
+    "productName": "VocalImage",
+    "appId": "com.maudoin.vocalimage",
+    "icon": "resources/icon256px.ico",
+    "win": {
+      "target": "portable",
+      "artifactName": "${productName}-${version}-portable.${ext}"
+    },
+    "files": [
+      "**/*",
+      "!dist/**",
+      "!scripts/**",
+      "!third-parties/pdf.js/v5.3.93/web/compressed.tracemonkey-pldi-09.pdf",
+      "!.gitignore",
+      "!package-lock.json"
     ],
-    "icon": "icon.ico"
+    "directories": {
+      "output": "dist"
+    }
   }
 }
