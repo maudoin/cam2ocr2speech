@@ -27,10 +27,11 @@ const pdfToImagePreview = document.getElementById("pdfToImagePreview");
 const openPdfBtn = document.getElementById("openPdfBtn");
 const pdfOpenButton = document.getElementById("pdfOpenButton");
 const openImage = document.getElementById("openImage");
+const rotateImgClockwise = document.getElementById("rotateImgClockwise");
+const rotateImgCounterClockwise = document.getElementById("rotateImgCounterClockwise");
 const showPdfBtn = document.getElementById("showPdfBtn");
 const canvasInput = document.getElementById("canvasInput");
 const ctxInput = canvasInput.getContext("2d");
-const canvasOutput = document.getElementById("canvasOutput");
 const svgOverlay = document.getElementById("svgOverlay");
 
 const voiceOption = document.getElementById("voiceOption");
@@ -51,6 +52,8 @@ pdfToImagePreview.onclick = switchToImagePreviewMode;
 showPdfBtn.onclick = switchToPdfMode;
 openPdfBtn.onclick = selectPdf;
 pdfOpenButton.onclick = selectPdf;
+rotateImgClockwise.onclick = rotateClockwise;
+rotateImgCounterClockwise.onclick = rotateCounterClockwise;
 document.addEventListener("mouseup", speakSelectedText);
 
 // diable buttons until OpenCV is ready
@@ -86,11 +89,12 @@ function switchToWebcamMode()
   webcam2Pdf.style.display = "block";
   img2PdfBtn.style.display = "none";
   deskewImageLabel.style.display = "none";
-  svgOverlay.style.display = "none";
+  rotateImgClockwise.style.display = "none";
+  rotateImgCounterClockwise.style.display = "none";
   // display update
   video.style.display = "block";
   canvasInput.style.display = "none";
-  canvasOutput.style.display = "none";
+  svgOverlay.style.display = "none";
   // layout update
   preview.style.display = "block";
   pageContainer.style.display = "none";
@@ -107,11 +111,12 @@ function switchToImagePreviewMode()
   webcam2Pdf.style.display = "none";
   img2PdfBtn.style.display = "block";
   deskewImageLabel.style.display = "block";
-  svgOverlay.style.display = "block";
+  rotateImgClockwise.style.display = "block";
+  rotateImgCounterClockwise.style.display = "block";
   // display update
   video.style.display = "none";
   canvasInput.style.display = "block";
-  canvasOutput.style.display = "none";
+  svgOverlay.style.display = "block";
   // layout update
   preview.style.display = "block";
   pageContainer.style.display = "none";
@@ -204,20 +209,33 @@ async function webcamCaptureToPdf()
   imageToPdf();
 }
 
+function rotateClockwise()
+{
+  ImageProcessing.rotate(canvasInput, true);
+  findImageContour();
+}
+
+function rotateCounterClockwise()
+{
+  ImageProcessing.rotate(canvasInput, false);
+  findImageContour();
+}
+
 // process image with OCR and display PDF
 async function imageToPdf()
 {
   // prepare image by using contour points to deskey image
   let processedImg;
+  let tempCanvas = document.createElement("canvas");
   if (currentContourPoints.length)
   {
     const cvImageMat = ImageProcessing.fourPointTransform(canvasInput, currentContourPoints);
-
-    // Display the result in the output canvas
-    canvasOutput.width = cvImageMat.cols;
-    canvasOutput.height = cvImageMat.rows;
-    cv.imshow(canvasOutput, cvImageMat);
-    processedImg = canvasOutput.toDataURL("image/png");
+    // Display the result in a temp canvas
+    tempCanvas = document.createElement("canvas");
+    tempCanvas.width = cvImageMat.cols;
+    tempCanvas.height = cvImageMat.rows;
+    cv.imshow(tempCanvas, cvImageMat);
+    processedImg = tempCanvas.toDataURL("image/png");
   }
   else
   {

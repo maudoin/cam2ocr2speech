@@ -93,11 +93,6 @@ html, body {
   pointer-events: none;   /* allow clicks through to the canvas if needed */
 }
 
-#canvasOutput
-{
-  z-index: 4;
-}
-
 button, select, label {
   -webkit-user-select: none; /* Safari */
   -moz-user-select: none;    /* Firefox */

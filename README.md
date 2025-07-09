@@ -1,4 +1,4 @@
-# 📘 Application pour la lecture et la manipulation de documents accessibles
+# 📘 Application pour la lecture vocale de document PDF et creation de PDF textuel à partir d'imae
 
 ## 📄 Présentation
 
@@ -13,7 +13,7 @@ Cette application est conçue pour aider les personnes atteintes de troubles "dy
 
 ---
 
-# 📘 Document Reader & Editor App
+# 📘 PDF Document Voice Reader & PDF text creation from image
 
 ## 📄 Overview
 

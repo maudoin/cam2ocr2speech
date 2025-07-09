@@ -16,7 +16,8 @@ export class ImageProcessing
             script.onerror = reject;
             document.body.appendChild(script);
         });
-    };
+    }
+
     // Read the image from the canvas and perform skewed sheet detection
     static detectContourPoints(canvas)
     {
@@ -180,6 +181,33 @@ export class ImageProcessing
         M.delete();
         src.delete();
         return dst;
+    }
+
+    static rotate(canvas, clockwise)
+    {
+        const ctx = canvas.getContext("2d");
+
+        // Get current canvas content
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+        // Put image data on temp canvas
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+
+        // Put image data on temp canvas
+        const tempCtx = tempCanvas.getContext("2d");
+        tempCtx.putImageData(imageData, 0, 0);
+
+        // Resize original canvas and copy back
+        canvas.width = tempCanvas.height;
+        canvas.height = tempCanvas.width;
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate((clockwise ? 1 : -1) * Math.PI / 2); // 90°
+        ctx.translate(-canvas.height / 2, -canvas.width / 2);
+        ctx.drawImage(tempCanvas, 0, 0);
+        ctx.restore();
     }
 }
 // Assign static property and static method at the end
