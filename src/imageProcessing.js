@@ -3,7 +3,7 @@
 export class ImageProcessing
 {
     // import opencv asynchronously
-    static import()
+    static asyncImport()
     {
         return new Promise((resolve, reject) => {
             const script = document.createElement("script");
