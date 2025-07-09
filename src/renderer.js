@@ -1,6 +1,3 @@
-// import pdf controller
-const { PDFViewerApplication } = await import("../third-parties/pdf.js/v5.3.93/web/viewer.mjs");
-
 
 // Override fetch globally to fix piper-tts-web/pdf.js loading issues in electron
 // or force local loading instead of remote loading
@@ -13,10 +10,10 @@ if (typeof myAPI !== 'undefined')
     if (typeof url === "string")
     {
       let override;
-      if (url.startsWith("/build/") || url.startsWith("/web/"))
+      if (override = PdfView.fetchOverride(url))
       {
-        // pdf.js request
-        overridePath = PDFJS_LOCAL_CODE_PATH;
+        overridePath = override.overridePath;
+        url = override.url;
       }
       else if (override = TextToSpeech.fetchOverride(url))
       {
@@ -66,13 +63,15 @@ ImageProcessing.asyncImport().then(() => {
   enableActions();
 });
 
-// import TTS
+// imports
 import { TextToSpeech } from "./textToSpeech.js";
 const tts = new TextToSpeech();
 
 import { OpticalCharacterRecognition } from "./opticalCharacterRecognition.js";
 
 import { DocumentTools } from "./documentTools.js";
+
+import { PdfView } from "./pdfView.js";
 
 // prepare document elements access
 const preview = document.getElementById("preview");
@@ -387,7 +386,8 @@ async function webcamCaptureToPdf()
 
 
 // process imoage with OCR and display PDF
-async function imageToPdf() {
+async function imageToPdf()
+{
   mayDeskewImageToOutput();
   let processedImg = canvasOutput.toDataURL("image/png");
   const { data: { pdf } } = await OpticalCharacterRecognition.recognize(processedImg, "fra");
@@ -395,7 +395,7 @@ async function imageToPdf() {
   // 5️⃣ Display PDF
   const pdfBlob = new Blob([new Uint8Array(pdf)], { type: "application/pdf" });
   const blobUrl = URL.createObjectURL(pdfBlob);
-  PDFViewerApplication.open({ url: blobUrl });
+  PdfView.openUrl(blobUrl);
 
   switchToPdfMode();
 
