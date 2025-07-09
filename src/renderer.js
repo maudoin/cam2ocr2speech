@@ -1,9 +1,19 @@
 // import ocr engine
 const { createWorker } = Tesseract;
+const TESSERACT_CORE_PATH = "../third-parties/tesseract.js@6.0.1";
+const TESSERACT_WORKER_PATH = "../third-parties/tesseract.js@6.0.1/worker.min.js";
+const TESSERACT_LANG_PATH = "../resources/tesseract_models";
+
 // import pdf controller
 const { PDFViewerApplication } = await import("../third-parties/pdf.js/v5.3.93/web/viewer.mjs");
+
 // import tts engine
 const { PiperWebEngine } = await import("../third-parties/piper-tts-web/piper-tts-web.js");
+const PIPER_HUGGINGFACE_BASE = "https://huggingface.co/rhasspy/piper-voices/resolve/main/";
+const PIPER_LOCAL_CODE_PATH = "./third-parties/piper-tts-web";
+const PDFJS_LOCAL_CODE_PATH = "./third-parties/pdf.js/v5.3.93";
+const PIPER_LOCAL_MODEL_PATH = "./resources/tts_models";
+const PIPER_VOICE = "fr_FR-siwis-medium";
 
 // prepare tts generation
 const piperWebEngine = new PiperWebEngine();
@@ -11,10 +21,11 @@ const piperWebEngine = new PiperWebEngine();
 const audio = new Audio();
 
 // import opencv asynchronously
+const OPENCV_SRC_PATH = "../third-parties/docs.opencv.org/4.x/opencv.js";
 const loadOpenCv = () => {
   return new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = "../third-parties/docs.opencv.org/4.x/opencv.js";
+    script.src = OPENCV_SRC_PATH;
     script.async = true;
     script.onload = () => {
       cv["onRuntimeInitialized"] = () => {
@@ -37,10 +48,6 @@ loadOpenCv().then(() => {
 if (typeof myAPI !== 'undefined')
 {
   const originalFetch = window.fetch;
-  const PIPER_HUGGINGFACE_BASE = "https://huggingface.co/rhasspy/piper-voices/resolve/main/";
-  const PIPER_LOCAL_CODE_PATH = "./third-parties/piper-tts-web";
-  const PDFJS_LOCAL_CODE_PATH = "./third-parties/pdf.js/v5.3.93";
-  const PIPER_LOCAL_MODEL_PATH = "./resources/tts_models";
   window.fetch = async (url) => {
     let overridePath = null;
     if (typeof url === "string")
@@ -602,9 +609,9 @@ async function imageToPdf() {
   mayDeskewImageToOutput();
   let processedImg = canvasOutput.toDataURL("image/png");
   const { data: { text, pdf, hocr } } = await recognize(processedImg, "fra", {
-          workerPath: "../third-parties/tesseract.js@6.0.1/worker.min.js",
-          langPath: "../resources/tesseract_models",
-          corePath: "../third-parties/tesseract.js@6.0.1",
+          workerPath: TESSERACT_WORKER_PATH,
+          langPath: TESSERACT_LANG_PATH,
+          corePath: TESSERACT_CORE_PATH,
           gzip : false,
           logger: m => console.log(m),
           errorHandler: err => console.error(err)
@@ -621,17 +628,15 @@ async function imageToPdf() {
 
 };
 
-
 // TTS speech synthesis
-function speakWithPiper(text)
+function speakWithPiper(text, voice)
 {
-    const voice = "fr_FR-siwis-medium";
-    const speaker = 0;
-    piperWebEngine.generate(text, voice, speaker).then((res) => {
-        audio.src = URL.createObjectURL(res.file);
-        audio.play();
-    });
-    piperWebEngine.terminate();
+  const speaker = 0;
+  piperWebEngine.generate(text, voice, speaker).then((res) => {
+      audio.src = URL.createObjectURL(res.file);
+      audio.play();
+  });
+  piperWebEngine.terminate();
 }
 
 // Add event listener for text selection and trigger speach automatically
@@ -640,8 +645,9 @@ function speakSelectedText()
   if (voiceOption.checked && pageContainer.style.display != "none")
   {
     const selectedText = getSelectedText();
-    if (selectedText && selectedText.length > 1) {
-        speakWithPiper(selectedText);
+    if (selectedText && selectedText.length > 1)
+    {
+      speakWithPiper(selectedText, PIPER_VOICE);
     }
   }
   else
