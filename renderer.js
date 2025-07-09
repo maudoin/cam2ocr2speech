@@ -353,8 +353,8 @@ function addContourOverlay(points)
   // Get canvas position relative to the page
   const rect = canvasInput.getBoundingClientRect();
   const rectMain = canvasInput.parentElement.getBoundingClientRect();
-  const left = rectMain.left + rect.left;
-  const top = rectMain.top + rect.top;
+  const left = rect.left;
+  const top = rect.top;
 
   // Set SVG size to match canvas
   svg.setAttribute('width', canvasInput.width);
@@ -373,6 +373,27 @@ function addContourOverlay(points)
   poly.setAttribute('stroke-width', 2);
   svg.appendChild(poly);
 
+  // Drag logic
+  let draggingIdx = null;
+
+  function onPointerMove(e) {
+    if (draggingIdx !== null) {
+      // Calculate mouse position relative to SVG
+      const svgRect = svg.getBoundingClientRect();
+      const x = e.clientX - svgRect.left;
+      const y = e.clientY - svgRect.top;
+      points[draggingIdx].x = Math.max(0, Math.min(canvasInput.width, x));
+      points[draggingIdx].y = Math.max(0, Math.min(canvasInput.height, y));
+      addContourOverlay(points); // Redraw
+    }
+  }
+
+  function onPointerUp() {
+    draggingIdx = null;
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+  }
+
   // Draw draggable points
   points.forEach((p, idx) => {
     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -385,6 +406,16 @@ function addContourOverlay(points)
     circle.style.cursor = 'pointer';
     circle.setAttribute('data-idx', idx);
     circle.style.pointerEvents = 'auto';
+
+    // Add drag events
+    circle.addEventListener('pointerdown', function(e) {
+      draggingIdx = idx;
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
     svg.appendChild(circle);
   });
   svg.style.pointerEvents = 'auto';
