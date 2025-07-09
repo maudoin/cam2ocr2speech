@@ -31,63 +31,66 @@ loadOpenCv().then(() => {
   enableWebcamScan();
 });
 
-// Override fetch globally to fix piper-tts-web loading issues
+// Override fetch globally to fix piper-tts-web loading issues in electron
 // or force local loading instead of remote loading
 // Save original fetch as fallback for regular requests
-const originalFetch = window.fetch;
-const PIPER_HUGGINGFACE_BASE = "https://huggingface.co/rhasspy/piper-voices/resolve/main/";
-const PIPER_LOCAL_CODE_PATH = "third-parties/piper-tts-web";
-const PIPER_LOCAL_MODEL_PATH = "tts_models";
-window.fetch = async (url) => {
-  let overridePath = null;
-  if (typeof url === "string")
-  {
-    if (url.startsWith("/piper/") || url.startsWith("/onnx/") || url.startsWith("/worker/"))
+if (typeof myAPI !== 'undefined')
+{
+  const originalFetch = window.fetch;
+  const PIPER_HUGGINGFACE_BASE = "https://huggingface.co/rhasspy/piper-voices/resolve/main/";
+  const PIPER_LOCAL_CODE_PATH = "third-parties/piper-tts-web";
+  const PIPER_LOCAL_MODEL_PATH = "tts_models";
+  window.fetch = async (url) => {
+    let overridePath = null;
+    if (typeof url === "string")
     {
-      // piper-tts-web request
-      overridePath = PIPER_LOCAL_CODE_PATH;
-    }
-    else if (url.startsWith(PIPER_HUGGINGFACE_BASE))
+      if (url.startsWith("/piper/") || url.startsWith("/onnx/") || url.startsWith("/worker/"))
+      {
+        // piper-tts-web request
+        overridePath = PIPER_LOCAL_CODE_PATH;
+      }
+      else if (url.startsWith(PIPER_HUGGINGFACE_BASE))
+      {
+        // piper-tts-web voice request
+        overridePath = PIPER_LOCAL_MODEL_PATH;
+        // strip the base URL to get the voice file sub path only
+        url = url.substring(PIPER_HUGGINGFACE_BASE.length);
+      }
+    };
+    if (overridePath !== null)
     {
-      // piper-tts-web voice request
-      overridePath = PIPER_LOCAL_MODEL_PATH;
-      // strip the base URL to get the voice file sub path only
-      url = url.substring(PIPER_HUGGINGFACE_BASE.length);
-    }
-  };
-  if (overridePath !== null)
-  {
-    console.log(`Intercepted fetch request for: ${url}`);
-    const basePath = myAPI.joinPath(myAPI.dirname(), overridePath);
-    const fullPath = myAPI.joinPath(basePath, url);
-    console.log(`Path resolved to: ${fullPath}`);
+      console.log(`Intercepted fetch request for: ${url}`);
+      const basePath = myAPI.joinPath(myAPI.dirname(), overridePath);
+      const fullPath = myAPI.joinPath(basePath, url);
+      console.log(`Path resolved to: ${fullPath}`);
 
-    return new Promise((resolve, reject) => {
-      myAPI.readFile(fullPath, (err, data) => {
-        if (err) {
-          resolve(new Response(null, {
-            status: 404,
-            statusText: "File Not Found"
-          }));
-        }
-        else
-        {
-          // Warning: only js, wasm and binary files support is required for piper-tts-web requests
-          resolve(new Response(data, {
-            status: 200,
-            statusText: "OK",
-            headers: { "Content-Type": url.endsWith(".js")?"application/javascript" :
-                url.endsWith(".wasm")?"application/wasm":
-                "application/octet-stream"
-            }
-          }));
-        }
+      return new Promise((resolve, reject) => {
+        myAPI.readFile(fullPath, (err, data) => {
+          if (err) {
+            resolve(new Response(null, {
+              status: 404,
+              statusText: "File Not Found"
+            }));
+          }
+          else
+          {
+            // Warning: only js, wasm and binary files support is required for piper-tts-web requests
+            resolve(new Response(data, {
+              status: 200,
+              statusText: "OK",
+              headers: { "Content-Type": url.endsWith(".js")?"application/javascript" :
+                  url.endsWith(".wasm")?"application/wasm":
+                  "application/octet-stream"
+              }
+            }));
+          }
+        });
       });
-    });
-  }
+    }
 
-  return originalFetch(url);
-};
+    return originalFetch(url);
+  };
+}
 
 // prepare document elements access
 const preview = document.getElementById("preview");
@@ -463,13 +466,40 @@ function mayDeskewImageToOutput()
     canvasOutput.height = canvasInput.height;
     ctxOutput.drawImage(canvasInput, 0, 0, canvasInput.width, canvasInput.height);
   }
+}
 
+function showOpenDialog(title = "Images", acceptFilters = ["png", "jpg", "jpeg"])
+{
+  if (typeof myAPI !== 'undefined')
+  {
+
+    return myAPI.showOpenDialog(title, acceptFilters);
+  }
+  else
+  {
+    // transform acceptFilters to a string
+    const acceptStr = acceptFilters.map(ext => `.${ext}`).join(",");
+    return new Promise((resolve) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = acceptStr;
+      input.style.display = 'none';
+      document.body.appendChild(input);
+
+      input.addEventListener('change', () => {
+        resolve({filePaths:[URL.createObjectURL(input.files[0])], canceled: false});
+        document.body.removeChild(input); // Cleanup after use
+      });
+
+      input.click();
+    });
+  }
 }
 
 // Select an image file using file open dialog and create a pdf with text layer via ocr
 function selectImage()
 {
-  myAPI.showOpenDialog("Images", ["png", "jpg", "jpeg"]).then(result => {
+  showOpenDialog("Images", ["png", "jpg", "jpeg"]).then(result => {
     if (!result.canceled) {
       const filePath = result.filePaths[0];
       // Create an Image object
