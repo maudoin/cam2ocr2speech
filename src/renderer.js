@@ -20,28 +20,6 @@ const piperWebEngine = new PiperWebEngine();
 // use single audio instance to avoid overlapping sounds
 const audio = new Audio();
 
-// import opencv asynchronously
-const OPENCV_SRC_PATH = "../third-parties/docs.opencv.org/4.x/opencv.js";
-const loadOpenCv = () => {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = OPENCV_SRC_PATH;
-    script.async = true;
-    script.onload = () => {
-      cv["onRuntimeInitialized"] = () => {
-        console.log("OpenCV is initialized inside module");
-        resolve();
-      };
-    };
-    script.onerror = reject;
-    document.body.appendChild(script);
-  });
-};
-// enable scan button when OpenCV is ready
-loadOpenCv().then(() => {
-  enableWebcamScan();
-});
-
 // Override fetch globally to fix piper-tts-web/pdf.js loading issues in electron
 // or force local loading instead of remote loading
 // Save original fetch as fallback for regular requests
@@ -104,6 +82,13 @@ if (typeof myAPI !== 'undefined')
     return originalFetch(url);
   };
 }
+
+// import image processing functions
+import { ImageProcessing } from "./imageProcessing.js";
+// enable scan button when OpenCV is ready
+ImageProcessing.import().then(() => {
+  enableWebcamScan();
+});
 
 // prepare document elements access
 const preview = document.getElementById("preview");
@@ -242,121 +227,6 @@ if (defaultDeviceId) {
 }
 
 
-// Read the image from the canvas and perform skewed sheet detection
-function detectContourPoints(canvas) {
-
-  let src = cv.imread(canvas);
-  let gray = new cv.Mat();
-  let blur = new cv.Mat();
-  let threshold = new cv.Mat();
-
-  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
-  cv.GaussianBlur(gray, blur, new cv.Size(5, 5), 0, 0);
-
-  // --- Gamma correction ---
-  let gamma = 1.5; // You can adjust this value as needed
-  let lookUpTable = new cv.Mat(1, 256, cv.CV_8U);
-  for (let i = 0; i < 256; i++) {
-    lookUpTable.ucharPtr(0, i)[0] = Math.min(255, Math.pow(i / 255.0, 1.0 / gamma) * 255.0);
-  }
-  cv.LUT(blur, lookUpTable, blur);
-  lookUpTable.delete();
-  // --- End gamma correction ---
-
-  cv.threshold(blur, threshold, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
-
-  // Debug Display threshold img : cv.imshow(canvasInput, threshold);
-
-  let contours = new cv.MatVector();
-  let hierarchy = new cv.Mat();
-  cv.findContours(threshold, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
-
-  let maxArea = 0;
-  let documentContour = new cv.Mat();
-
-  for (let i = 0; i < contours.size(); i++)
-  {
-    let cnt = contours.get(i);
-
-    let area = cv.contourArea(cnt, false);
-    // Remove close points from cnt
-    let filteredCnt = new cv.Mat();
-    if (area > 1000 && cnt.rows > 1) {
-        let points = [];
-        let prev = cnt.intPtr(0);
-        points.push([prev[0], prev[1]]);
-        for (let j = 1; j < cnt.rows; j++) {
-            let curr = cnt.intPtr(j);
-            let dx = curr[0] - prev[0];
-            let dy = curr[1] - prev[1];
-            if (Math.sqrt(dx * dx + dy * dy) > 2) { // threshold: 2 pixels
-                // Colinearity check: keep only if not nearly colinear with previous two
-                if (points.length >= 2) {
-                    let [x1, y1] = points[points.length - 2];
-                    let [x2, y2] = points[points.length - 1];
-                    let [x3, y3] = [curr[0], curr[1]];
-                    // Calculate area of triangle (x1,y1)-(x2,y2)-(x3,y3)
-                    let area = Math.abs((x2 - x1)*(y3 - y1) - (y2 - y1)*(x3 - x1));
-                    // If area is small, points are nearly colinear (threshold: 1.5)
-                    if (area > 1.5) {
-                        points.push([curr[0], curr[1]]);
-                        prev = curr;
-                    }
-                } else {
-                    points.push([curr[0], curr[1]]);
-                    prev = curr;
-                }
-            }
-        }
-        // Convert filtered points back to Mat
-        if (points.length > 1) {
-            console.log(cnt.rows + " --filtered-> " + points.length);
-            filteredCnt = cv.matFromArray(points.length, 1, cv.CV_32SC2, points.flat());
-        } else {
-            filteredCnt = cnt.clone();
-        }
-    } else {
-        filteredCnt = cnt.clone();
-    }
-
-    area = cv.contourArea(cnt, false);
-    if (area > 1000) {
-        let peri = cv.arcLength(cnt, true);
-        let approx = new cv.Mat();
-        cv.approxPolyDP(cnt, approx, 0.015 * peri, true);
-        if (area > maxArea && approx.rows === 4) {
-          // may delete previous
-          if (documentContour) documentContour.delete();
-          documentContour = approx;
-          // approx does not need to be deleted, documentContour holds it
-          maxArea = area;
-        }
-        else
-        {
-          // only delete here otherwise it has been assigned to documentContour
-          // and documentContour would be invalid
-          approx.delete();
-        }
-    }
-    cnt.delete();
-    filteredCnt.delete();
-  }
-  let contourPoints = [];
-  if (documentContour) {
-    // Get the points from documentContour
-    for (let i = 0; i < documentContour.rows; i++) {
-        let pt = documentContour.intPtr(i);
-        contourPoints.push({ x: pt[0], y: pt[1] });
-    }
-  }
-  // Cleanup
-  gray.delete(); blur.delete(); threshold.delete();
-  contours.delete(); hierarchy.delete();
-  src.delete(); documentContour.delete();
-
-  return contourPoints;
-}
-
 // Display points in svg overlay
 function addContourOverlay(points)
 {
@@ -441,58 +311,10 @@ function addContourOverlay(points)
   svgOverlay.style.pointerEvents = 'auto';
 }
 
-// apply detected skewed sheet to the original image to get a straightened image
-// canvas: input canvas element with the image to be straightened
-// pts: array of 4 cv.Points in order [top-left, top-right, bottom-right, bottom-left]
-// return opencv image Mat instance of the straightened image
-function fourPointTransform(canvas, pts) {
-
-    // Compute width and height of the new image
-    const widthA = Math.hypot(pts[2].x - pts[3].x, pts[2].y - pts[3].y);
-    const widthB = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
-    const maxWidth = Math.max(widthA, widthB);
-
-    const heightA = Math.hypot(pts[1].x - pts[2].x, pts[1].y - pts[2].y);
-    const heightB = Math.hypot(pts[0].x - pts[3].x, pts[0].y - pts[3].y);
-    const maxHeight = Math.max(heightA, heightB);
-
-    // Destination points for warped image
-    const dstPts = cv.matFromArray(4, 1, cv.CV_32FC2, [
-        0, 0,
-        maxWidth - 1, 0,
-        maxWidth - 1, maxHeight - 1,
-        0, maxHeight - 1
-    ]);
-
-    const srcPts = cv.matFromArray(4, 1, cv.CV_32FC2, [
-        pts[0].x, pts[0].y,
-        pts[1].x, pts[1].y,
-        pts[2].x, pts[2].y,
-        pts[3].x, pts[3].y
-    ]);
-
-    // Get perspective transform matrix
-    const M = cv.getPerspectiveTransform(srcPts, dstPts);
-
-    // Cleanup
-    srcPts.delete(); dstPts.delete();
-
-    // Return the matrix and the computed dimensions
-    let dsize = new cv.Size(Math.round(maxWidth), Math.round(maxHeight));
-    let src = cv.imread(canvas);
-    // Apply warp
-    const dst = new cv.Mat();
-    cv.warpPerspective(src, dst, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
-
-    // Cleanup
-    M.delete();
-    src.delete();
-    return dst;
-}
 
 function findImageContour()
 {
-  currentContourPoints = (deskewImage.checked)?detectContourPoints(canvasInput):[];
+  currentContourPoints = (deskewImage.checked)?ImageProcessing.detectContourPoints(canvasInput):[];
   // add contour after transformation so the strainghtened image does not show the overlay
   addContourOverlay(currentContourPoints);
 
@@ -503,7 +325,7 @@ function mayDeskewImageToOutput()
 {
   if (currentContourPoints.length)
   {
-    const cvImageMat = fourPointTransform(canvasInput, currentContourPoints);
+    const cvImageMat = ImageProcessing.fourPointTransform(canvasInput, currentContourPoints);
 
     // Display the result in the output canvas
     canvasOutput.width = cvImageMat.cols;
