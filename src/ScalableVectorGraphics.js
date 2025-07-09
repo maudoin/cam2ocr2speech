@@ -31,22 +31,33 @@ export class ScalableVectorGraphics
         // Drag logic
         let draggingIdx = null;
 
-        function onPointerMove(e) {
+        function onPointerMove(evt) {
             if (draggingIdx !== null) {
-            // Calculate mouse position relative to SVG
-            const svgRect = svgElement.getBoundingClientRect();
-            const x = e.clientX - svgRect.left;
-            const y = e.clientY - svgRect.top;
-            points[draggingIdx].x = Math.max(0, Math.min(originalWidth, x));
-            points[draggingIdx].y = Math.max(0, Math.min(originalHeight, y));
-            ScalableVectorGraphics.setupEditablePoints(svgOverlay, points); // Redraw
+                // Calculate mouse position relative to SVG
+
+                // 1) Create an SVGPoint in screen pixels.
+                const pt = svgElement.createSVGPoint();
+                pt.x = evt.clientX;
+                pt.y = evt.clientY;
+
+                // 2) Grab the current screen-to-SVG matrix
+                const CTM = svgElement.getScreenCTM();
+
+                // 3) Invert it and transform the point
+                const svgP = pt.matrixTransform(CTM.inverse());
+
+                points[draggingIdx].x = Math.max(0, Math.min(originalWidth, svgP.x));
+                points[draggingIdx].y = Math.max(0, Math.min(originalHeight, svgP.y));
+
+               // 4) Redraw
+                ScalableVectorGraphics.setupEditablePoints(svgOverlay, points);
             }
         }
 
         function onPointerUp() {
             draggingIdx = null;
-            window.removeEventListener("pointermove", onPointerMove);
-            window.removeEventListener("pointerup", onPointerUp);
+            svgElement.removeEventListener("pointermove", onPointerMove);
+            svgElement.removeEventListener("pointerup", onPointerUp);
         }
 
         // Draw draggable points
@@ -64,11 +75,11 @@ export class ScalableVectorGraphics
 
             // Add drag events
             circle.addEventListener("pointerdown", function(e) {
-            draggingIdx = idx;
-            window.addEventListener("pointermove", onPointerMove);
-            window.addEventListener("pointerup", onPointerUp);
-            e.preventDefault();
-            e.stopPropagation();
+                draggingIdx = idx;
+                svgElement.addEventListener("pointermove", onPointerMove);
+                svgElement.addEventListener("pointerup", onPointerUp);
+                e.preventDefault();
+                e.stopPropagation();
             });
 
             svgElement.appendChild(circle);
