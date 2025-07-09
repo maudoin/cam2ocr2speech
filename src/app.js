@@ -1,9 +1,9 @@
-import { Utils } from "./utils.js";
-import { ImageProcessing } from "./imageProcessing.js";
-import { TextToSpeech } from "./textToSpeech.js";
-import { OpticalCharacterRecognition } from "./opticalCharacterRecognition.js";
-import { PdfView } from "./pdfView.js";
-import { Webcam } from "./webcam.js";
+import { Utils } from "./Utils.js";
+import { ImageProcessing } from "./ImageProcessing.js";
+import { TextToSpeech } from "./TextToSpeech.js";
+import { OpticalCharacterRecognition } from "./OpticalCharacterRecognition.js";
+import { PdfView } from "./PdfView.js";
+import { Webcam } from "./Webcam.js";
 import { ScalableVectorGraphics } from "./ScalableVectorGraphics.js";
 
 Utils.fetchUrlOverride((urlStr)=> PdfView.fetchOverride(urlStr) || TextToSpeech.fetchOverride(urlStr));
