@@ -1,9 +1,9 @@
 // import ocr engine
 const { createWorker } = Tesseract;
 // import pdf controller
-const { PDFViewerApplication } = await import("./third-parties/pdf.js/v5.3.93/web/viewer.mjs");
+const { PDFViewerApplication } = await import("../third-parties/pdf.js/v5.3.93/web/viewer.mjs");
 // import tts engine
-const { PiperWebEngine } = await import("./third-parties/piper-tts-web/piper-tts-web.js");
+const { PiperWebEngine } = await import("../third-parties/piper-tts-web/piper-tts-web.js");
 
 // prepare tts generation
 const piperWebEngine = new PiperWebEngine();
@@ -14,7 +14,7 @@ const audio = new Audio();
 const loadOpenCv = () => {
   return new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = "./third-parties/docs.opencv.org/4.x/opencv.js";
+    script.src = "../third-parties/docs.opencv.org/4.x/opencv.js";
     script.async = true;
     script.onload = () => {
       cv["onRuntimeInitialized"] = () => {
@@ -602,9 +602,9 @@ async function imageToPdf() {
   mayDeskewImageToOutput();
   let processedImg = canvasOutput.toDataURL("image/png");
   const { data: { text, pdf, hocr } } = await recognize(processedImg, "fra", {
-          workerPath: "./third-parties/tesseract.js@6.0.1/worker.min.js",
-          langPath: "./resources/tesseract_models",
-          corePath: "./third-parties/tesseract.js@6.0.1",
+          workerPath: "../third-parties/tesseract.js@6.0.1/worker.min.js",
+          langPath: "../resources/tesseract_models",
+          corePath: "../third-parties/tesseract.js@6.0.1",
           gzip : false,
           logger: m => console.log(m),
           errorHandler: err => console.error(err)
