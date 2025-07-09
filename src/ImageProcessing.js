@@ -85,7 +85,7 @@ export class ImageProcessing
                 }
                 // Convert filtered points back to Mat
                 if (points.length > 1) {
-                    console.log(cnt.rows + " --filtered-> " + points.length);
+                    // console.log(cnt.rows + " --filtered-> " + points.length);
                     filteredCnt = cv.matFromArray(points.length, 1, cv.CV_32SC2, points.flat());
                 } else {
                     filteredCnt = cnt.clone();

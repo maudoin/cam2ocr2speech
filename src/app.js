@@ -129,17 +129,7 @@ function switchToPdfMode()
 function findImageContour()
 {
   currentContourPoints = (deskewImage.checked)?ImageProcessing.detectContourPoints(canvasInput):[];
-  if (currentContourPoints.length != 0)
-  {
-    Utils.overlayElementOnAnother(svgOverlay, canvasInput);
-  }
-  else
-  {
-    // hide
-    svgOverlay.style.width = "0px";
-    svgOverlay.style.height = "0px";
-  }
-  ScalableVectorGraphics.setupEditablePoints(svgOverlay, currentContourPoints);
+  ScalableVectorGraphics.setupEditablePoints(svgOverlay, currentContourPoints, canvasInput.width, canvasInput.height);
 }
 
 // use Node.js or Brwoser dialog
