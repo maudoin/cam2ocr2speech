@@ -1,9 +1,3 @@
-// import ocr engine
-const { createWorker } = Tesseract;
-const TESSERACT_CORE_PATH = "../third-parties/tesseract.js@6.0.1";
-const TESSERACT_WORKER_PATH = "../third-parties/tesseract.js@6.0.1/worker.min.js";
-const TESSERACT_LANG_PATH = "../resources/tesseract_models";
-
 // import pdf controller
 const { PDFViewerApplication } = await import("../third-parties/pdf.js/v5.3.93/web/viewer.mjs");
 
@@ -75,6 +69,8 @@ ImageProcessing.asyncImport().then(() => {
 // import TTS
 import { TextToSpeech } from "./textToSpeech.js";
 const tts = new TextToSpeech();
+
+import { OpticalCharacterRecognition } from "./opticalCharacterRecognition.js";
 
 import { DocumentTools } from "./documentTools.js";
 
@@ -390,31 +386,11 @@ async function webcamCaptureToPdf()
 }
 
 
-// OCR recognition
-async function recognize(image, langs, options, output)
-{
-  // OCR with Tesseract.js
-  const worker = await createWorker(langs, 1, options);
-  return worker.recognize(image, {}, output)
-    .finally(async () => {
-    await worker.terminate();
-    });
-};
-
 // process imoage with OCR and display PDF
 async function imageToPdf() {
   mayDeskewImageToOutput();
   let processedImg = canvasOutput.toDataURL("image/png");
-  const { data: { text, pdf, hocr } } = await recognize(processedImg, "fra", {
-          workerPath: TESSERACT_WORKER_PATH,
-          langPath: TESSERACT_LANG_PATH,
-          corePath: TESSERACT_CORE_PATH,
-          gzip : false,
-          logger: m => console.log(m),
-          errorHandler: err => console.error(err)
-      },
-      { text: true, pdf: true , hocr: true}
-  );
+  const { data: { pdf } } = await OpticalCharacterRecognition.recognize(processedImg, "fra");
 
   // 5️⃣ Display PDF
   const pdfBlob = new Blob([new Uint8Array(pdf)], { type: "application/pdf" });
