@@ -4,6 +4,7 @@ import { TextToSpeech } from "./textToSpeech.js";
 import { OpticalCharacterRecognition } from "./opticalCharacterRecognition.js";
 import { PdfView } from "./pdfView.js";
 import { Webcam } from "./webcam.js";
+import { ScalableVectorGraphics } from "./ScalableVectorGraphics.js";
 
 Utils.fetchUrlOverride((urlStr)=> PdfView.fetchOverride(urlStr) || TextToSpeech.fetchOverride(urlStr));
 
@@ -116,7 +117,6 @@ function switchToPdfMode()
 // Display points in svg overlay
 function addContourOverlay(points)
 {
-  svgOverlay.innerHTML = ""; // Clear previous
 
   // Get canvas position relative to the page
   const rect = canvasInput.getBoundingClientRect();
@@ -141,60 +141,7 @@ function addContourOverlay(points)
     svgOverlay.style.height = "0px";
   }
 
-  // Draw polygon
-  const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-  poly.setAttribute("points", points.map(p => `${p.x},${p.y}`).join(" "));
-  poly.setAttribute("fill", "rgba(0,255,0,0.2)");
-  poly.setAttribute("stroke", "lime");
-  poly.setAttribute("stroke-width", 2);
-  svgOverlay.appendChild(poly);
-
-  // Drag logic
-  let draggingIdx = null;
-
-  function onPointerMove(e) {
-    if (draggingIdx !== null) {
-      // Calculate mouse position relative to SVG
-      const svgRect = svgOverlay.getBoundingClientRect();
-      const x = e.clientX - svgRect.left;
-      const y = e.clientY - svgRect.top;
-      points[draggingIdx].x = Math.max(0, Math.min(canvasInput.width, x));
-      points[draggingIdx].y = Math.max(0, Math.min(canvasInput.height, y));
-      addContourOverlay(points); // Redraw
-    }
-  }
-
-  function onPointerUp() {
-    draggingIdx = null;
-    window.removeEventListener("pointermove", onPointerMove);
-    window.removeEventListener("pointerup", onPointerUp);
-  }
-
-  // Draw draggable points
-  points.forEach((p, idx) => {
-    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    circle.setAttribute("cx", p.x);
-    circle.setAttribute("cy", p.y);
-    circle.setAttribute("r", 8);
-    circle.setAttribute("fill", "yellow");
-    circle.setAttribute("stroke", "orange");
-    circle.setAttribute("stroke-width", 2);
-    circle.style.cursor = "pointer";
-    circle.setAttribute("data-idx", idx);
-    circle.style.pointerEvents = "auto";
-
-    // Add drag events
-    circle.addEventListener("pointerdown", function(e) {
-      draggingIdx = idx;
-      window.addEventListener("pointermove", onPointerMove);
-      window.addEventListener("pointerup", onPointerUp);
-      e.preventDefault();
-      e.stopPropagation();
-    });
-
-    svgOverlay.appendChild(circle);
-  });
-  svgOverlay.style.pointerEvents = "auto";
+  ScalableVectorGraphics.setupEditablePoints(svgOverlay, points);
 }
 
 
