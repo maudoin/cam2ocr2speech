@@ -110,6 +110,7 @@ const canvasInput = document.getElementById("canvasInput");
 const ctxInput = canvasInput.getContext("2d");
 const canvasOutput = document.getElementById("canvasOutput");
 const ctxOutput = canvasOutput.getContext("2d");
+  const svgOverlay = document.getElementById('svgOverlay');
 
 const voiceOption = document.getElementById("voiceOption");
 const deskewImage = document.getElementById("deskewImage");
@@ -346,24 +347,30 @@ function detectContourPoints(canvas) {
 // Display points in svg overlay
 function addContourOverlay(points)
 {
-  const svg = document.getElementById('svgOverlay');
-  const mainContent = document.getElementById('mainContent');
-  svg.innerHTML = ''; // Clear previous
+  svgOverlay.innerHTML = ''; // Clear previous
 
   // Get canvas position relative to the page
   const rect = canvasInput.getBoundingClientRect();
-  const rectMain = canvasInput.parentElement.getBoundingClientRect();
+  // const rectMain = canvasInput.parentElement.getBoundingClientRect();
   const left = rect.left;
   const top = rect.top;
 
   // Set SVG size to match canvas
-  svg.setAttribute('width', canvasInput.width);
-  svg.setAttribute('height', canvasInput.height);
-  svg.style.width = canvasInput.width + 'px';
-  svg.style.height = canvasInput.height + 'px';
-  svg.style.position = 'absolute';
-  svg.style.left = left + 'px';
-  svg.style.top = top + 'px';
+  svgOverlay.setAttribute('width', canvasInput.width);
+  svgOverlay.setAttribute('height', canvasInput.height);
+  svgOverlay.style.position = 'absolute';
+  svgOverlay.style.left = left + 'px';
+  svgOverlay.style.top = top + 'px';
+  if (points.length != 0)
+  {
+    svgOverlay.style.width = canvasInput.width + 'px';
+    svgOverlay.style.height = canvasInput.height + 'px';
+  }
+  else
+  {
+    svgOverlay.style.width = '0px';
+    svgOverlay.style.height = '0px';
+  }
 
   // Draw polygon
   const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
@@ -371,7 +378,7 @@ function addContourOverlay(points)
   poly.setAttribute('fill', 'rgba(0,255,0,0.2)');
   poly.setAttribute('stroke', 'lime');
   poly.setAttribute('stroke-width', 2);
-  svg.appendChild(poly);
+  svgOverlay.appendChild(poly);
 
   // Drag logic
   let draggingIdx = null;
@@ -379,7 +386,7 @@ function addContourOverlay(points)
   function onPointerMove(e) {
     if (draggingIdx !== null) {
       // Calculate mouse position relative to SVG
-      const svgRect = svg.getBoundingClientRect();
+      const svgRect = svgOverlay.getBoundingClientRect();
       const x = e.clientX - svgRect.left;
       const y = e.clientY - svgRect.top;
       points[draggingIdx].x = Math.max(0, Math.min(canvasInput.width, x));
@@ -416,9 +423,9 @@ function addContourOverlay(points)
       e.stopPropagation();
     });
 
-    svg.appendChild(circle);
+    svgOverlay.appendChild(circle);
   });
-  svg.style.pointerEvents = 'auto';
+  svgOverlay.style.pointerEvents = 'auto';
 }
 
 // apply detected skewed sheet to the original image to get a straightened image
