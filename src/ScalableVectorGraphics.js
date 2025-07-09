@@ -2,35 +2,26 @@ export class ScalableVectorGraphics
 {
 
     // Display points in svg overlay
-    static setupEditablePoints(svgElement, points)
+    static setupEditablePoints(svgElement, points, originalWidth, originalHeight)
     {
         svgElement.innerHTML = ""; // Clear previous
 
-        // Get canvas position relative to the page
-        const rect = canvasInput.getBoundingClientRect();
-        // const rectMain = canvasInput.parentElement.getBoundingClientRect();
-        const left = rect.left;
-        const top = rect.top;
+        svgElement.setAttribute('viewBox', `0 0 ${originalWidth} ${originalHeight}`);
+        svgElement.setAttribute('preserveAspectRatio', 'xMinYMin meet');
 
-        // Set SVG size to match canvas
-        svgElement.setAttribute("width", canvasInput.width);
-        svgElement.setAttribute("height", canvasInput.height);
-        svgElement.style.position = "absolute";
-        svgElement.style.left = left + "px";
-        svgElement.style.top = top + "px";
-        if (points.length != 0)
-        {
-            svgElement.style.width = canvasInput.width + "px";
-            svgElement.style.height = canvasInput.height + "px";
-        }
-        else
-        {
-            svgElement.style.width = "0px";
-            svgElement.style.height = "0px";
-        }
+        const rect   = document.createElementNS(ScalableVectorGraphics.NS, 'rect');
+        rect.setAttribute('x',              0);
+        rect.setAttribute('y',              0);
+        rect.setAttribute('width',          originalWidth);
+        rect.setAttribute('height',         originalHeight);
+        rect.setAttribute('fill',           'rgba(255,0,0,0.2)');      // 20% red fill
+        rect.setAttribute('stroke',         'rgba(255,0,0,0.8)');      // 80% red border
+        rect.setAttribute('stroke-width',   20);
+        rect.setAttribute('vector-effect',  'non-scaling-stroke');
+        svgElement.appendChild(rect);
 
         // Draw polygon
-        const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        const poly = document.createElementNS(ScalableVectorGraphics.NS, "polygon");
         poly.setAttribute("points", points.map(p => `${p.x},${p.y}`).join(" "));
         poly.setAttribute("fill", "rgba(0,255,0,0.2)");
         poly.setAttribute("stroke", "lime");
@@ -46,8 +37,8 @@ export class ScalableVectorGraphics
             const svgRect = svgElement.getBoundingClientRect();
             const x = e.clientX - svgRect.left;
             const y = e.clientY - svgRect.top;
-            points[draggingIdx].x = Math.max(0, Math.min(canvasInput.width, x));
-            points[draggingIdx].y = Math.max(0, Math.min(canvasInput.height, y));
+            points[draggingIdx].x = Math.max(0, Math.min(originalWidth, x));
+            points[draggingIdx].y = Math.max(0, Math.min(originalHeight, y));
             ScalableVectorGraphics.setupEditablePoints(svgOverlay, points); // Redraw
             }
         }
@@ -60,7 +51,7 @@ export class ScalableVectorGraphics
 
         // Draw draggable points
         points.forEach((p, idx) => {
-            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            const circle = document.createElementNS(ScalableVectorGraphics.NS, "circle");
             circle.setAttribute("cx", p.x);
             circle.setAttribute("cy", p.y);
             circle.setAttribute("r", 8);
@@ -85,3 +76,5 @@ export class ScalableVectorGraphics
         svgElement.style.pointerEvents = "auto";
     }
 }
+
+ScalableVectorGraphics.NS = 'http://www.w3.org/2000/svg';

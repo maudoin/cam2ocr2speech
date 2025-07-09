@@ -61,15 +61,39 @@ html, body {
   position: relative;
   flex-grow: 1;
   background-color: lightgray;
+  display: grid;
 }
 
-#video, #canvasInput, #canvasOutput {
+#mainContent > * {
+  grid-column: 1;
+  grid-row: 1;
   object-fit: contain;
   max-width: 100vw;
   max-height: 100vh;
   margin: auto;
   width: 100%;
   height: 100%;
+}
+
+#video
+{
+  z-index: 1;
+}
+
+#canvasInput
+{
+  z-index: 2;
+}
+
+#svgOverlay
+{
+  z-index: 3;
+  pointer-events: none;   /* allow clicks through to the canvas if needed */
+}
+
+#canvasOutput
+{
+  z-index: 4;
 }
 
 button, select, label {
