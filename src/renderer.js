@@ -76,6 +76,8 @@ ImageProcessing.asyncImport().then(() => {
 import { TextToSpeech } from "./textToSpeech.js";
 const tts = new TextToSpeech();
 
+import { DocumentTools } from "./documentTools.js";
+
 // prepare document elements access
 const preview = document.getElementById("preview");
 const pageContainer = document.getElementById("pageContainer");
@@ -338,22 +340,7 @@ function showOpenDialog(title = "Images", acceptFilters = ["png", "jpg", "jpeg"]
   }
   else
   {
-    // transform acceptFilters to a string
-    const acceptStr = acceptFilters.map(ext => `.${ext}`).join(",");
-    return new Promise((resolve) => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = acceptStr;
-      input.style.display = 'none';
-      document.body.appendChild(input);
-
-      input.addEventListener('change', () => {
-        resolve({filePaths:[URL.createObjectURL(input.files[0])], canceled: false});
-        document.body.removeChild(input); // Cleanup after use
-      });
-
-      input.click();
-    });
+    DocumentTools.showOpenDialog(title, acceptFilters);
   }
 }
 
@@ -444,7 +431,7 @@ function speakSelectedText()
 {
   if (voiceOption.checked && pageContainer.style.display != "none")
   {
-    const selectedText = getSelectedText();
+    const selectedText = DocumentTools.getSelectedText();
     if (selectedText && selectedText.length > 1)
     {
       tts.speak(selectedText);
@@ -454,16 +441,4 @@ function speakSelectedText()
   {
     tts.interrupt();
   }
-}
-
-// Retrieve selected text from the document
-function getSelectedText()
-{
-    if (window.getSelection) {
-    return window.getSelection().toString();
-    }
-    else if (document.selection) {
-        return document.selection.createRange().text;
-    }
-    return "";
 }
