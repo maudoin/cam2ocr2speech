@@ -112,13 +112,16 @@ const voiceOption = document.getElementById("voiceOption");
 const deskewImage = document.getElementById("deskewImage");
 const deskewImageLabel = document.getElementById("deskewImageLabel");
 
+
+let currentContourPoints = [];
+
 // plug document elements to action callbacks
 webcamPreview.onclick = switchToWebcamMode;
 reScanBtn.onclick = switchToWebcamMode;
 showPdfBtn.onclick = switchToPdfMode;
 img2PdfBtn.onclick = imageToPdf;
 openImage.onclick = selectImage;
-deskewImage.addEventListener("click", processImage);
+deskewImage.addEventListener("click", findImageContour);
 voiceOption.addEventListener("click", speakSelectedText);
 document.addEventListener("mouseup", speakSelectedText);
 
@@ -321,12 +324,12 @@ function detectContourPoints(canvas) {
     cnt.delete();
     filteredCnt.delete();
   }
-  let points = [];
+  let contourPoints = [];
   if (documentContour) {
     // Get the points from documentContour
     for (let i = 0; i < documentContour.rows; i++) {
         let pt = documentContour.intPtr(i);
-        points.push({ x: pt[0], y: pt[1] });
+        contourPoints.push({ x: pt[0], y: pt[1] });
     }
   }
   // Cleanup
@@ -334,25 +337,54 @@ function detectContourPoints(canvas) {
   contours.delete(); hierarchy.delete();
   src.delete(); documentContour.delete();
 
-  return points;
+  return contourPoints;
 }
 
-
-// Display points directly in cavas context
-function addCoutourOverlay(canvasContext, points)
+// Display points in svg overlay
+function addContourOverlay(points)
 {
-  canvasContext.save();
-  canvasContext.globalAlpha = 0.3; // Set transparency
-  canvasContext.beginPath();
-  canvasContext.moveTo(points[0].x, points[0].y);
-  for (let i = 1; i < points.length; i++) {
-      canvasContext.lineTo(points[i].x, points[i].y);
-  }
-  canvasContext.closePath();
-  canvasContext.fillStyle = "lime"; // or "rgba(0,255,0,0.3)"
-  canvasContext.fill();
-  canvasContext.restore();
+  const svg = document.getElementById('svgOverlay');
+  const mainContent = document.getElementById('mainContent');
+  svg.innerHTML = ''; // Clear previous
 
+  // Get canvas position relative to the page
+  const rect = canvasInput.getBoundingClientRect();
+  const rectMain = canvasInput.parentElement.getBoundingClientRect();
+  const left = rectMain.left + rect.left;
+  const top = rectMain.top + rect.top;
+
+  // Set SVG size to match canvas
+  svg.setAttribute('width', canvasInput.width);
+  svg.setAttribute('height', canvasInput.height);
+  svg.style.width = canvasInput.width + 'px';
+  svg.style.height = canvasInput.height + 'px';
+  svg.style.position = 'absolute';
+  svg.style.left = left + 'px';
+  svg.style.top = top + 'px';
+
+  // Draw polygon
+  const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+  poly.setAttribute('points', points.map(p => `${p.x},${p.y}`).join(' '));
+  poly.setAttribute('fill', 'rgba(0,255,0,0.2)');
+  poly.setAttribute('stroke', 'lime');
+  poly.setAttribute('stroke-width', 2);
+  svg.appendChild(poly);
+
+  // Draw draggable points
+  points.forEach((p, idx) => {
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', p.x);
+    circle.setAttribute('cy', p.y);
+    circle.setAttribute('r', 8);
+    circle.setAttribute('fill', 'yellow');
+    circle.setAttribute('stroke', 'orange');
+    circle.setAttribute('stroke-width', 2);
+    circle.style.cursor = 'pointer';
+    circle.setAttribute('data-idx', idx);
+    circle.style.pointerEvents = 'auto';
+    svg.appendChild(circle);
+  });
+  svg.style.pointerEvents = 'auto';
 }
 
 // apply detected skewed sheet to the original image to get a straightened image
@@ -389,7 +421,7 @@ function fourPointTransform(canvas, pts) {
     const M = cv.getPerspectiveTransform(srcPts, dstPts);
 
     // Cleanup
-    srcPts.delete(); dstPts.delete(); 
+    srcPts.delete(); dstPts.delete();
 
     // Return the matrix and the computed dimensions
     let dsize = new cv.Size(Math.round(maxWidth), Math.round(maxHeight));
@@ -404,31 +436,27 @@ function fourPointTransform(canvas, pts) {
     return dst;
 }
 
-// Process the image from the input canvas
-function processImage()
+function findImageContour()
 {
+  currentContourPoints = (deskewImage.checked)?detectContourPoints(canvasInput):[];
+  // add contour after transformation so the strainghtened image does not show the overlay
+  addContourOverlay(currentContourPoints);
 
-  let copyOriginalImage = true;
-  if (deskewImage.checked)
+}
+
+// prepare output canvas by using contour points to deskey image
+function mayDeskewImageToOutput()
+{
+  if (currentContourPoints.length)
   {
-    const pts = detectContourPoints(canvasInput);
-    if (pts.length === 4)
-    {
-      const cvImageMat = fourPointTransform(canvasInput, pts);
-      // add contour after transformation so the strainghtened image does not show the overlay
-      addCoutourOverlay(ctxInput, pts);
+    const cvImageMat = fourPointTransform(canvasInput, currentContourPoints);
 
-      // Display the result in the output canvas
-      canvasOutput.width = cvImageMat.cols;
-      canvasOutput.height = cvImageMat.rows;
-      cv.imshow(canvasOutput, cvImageMat);
-
-      copyOriginalImage = false;
-
-    }
+    // Display the result in the output canvas
+    canvasOutput.width = cvImageMat.cols;
+    canvasOutput.height = cvImageMat.rows;
+    cv.imshow(canvasOutput, cvImageMat);
   }
-
-  if (copyOriginalImage)
+  else
   {
     // copy input canvas to output canvas
     canvasOutput.width = canvasInput.width;
@@ -452,7 +480,7 @@ function selectImage()
         // Draw the image to fill the entire canvas
         ctxInput.drawImage(img, 0, 0, canvasInput.width, canvasInput.height);
 
-        processImage();
+        findImageContour();
         switchToImagePreviewMode();
       };
       // Set the image source (can be a URL, data URL, or blob URL)
@@ -469,7 +497,7 @@ async function webcamCaptureToImage()
   canvasInput.height = video.videoHeight;
   ctxInput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
 
-  processImage();
+  findImageContour();
   switchToImagePreviewMode();
 }
 
@@ -479,7 +507,7 @@ async function webcamCaptureToPdf()
   canvasInput.height = video.videoHeight;
   ctxInput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
 
-  processImage();
+  findImageContour();
   imageToPdf();
 }
 
@@ -497,6 +525,7 @@ async function recognize(image, langs, options, output)
 
 // process imoage with OCR and display PDF
 async function imageToPdf() {
+  mayDeskewImageToOutput();
   let processedImg = canvasOutput.toDataURL("image/png");
   const { data: { text, pdf, hocr } } = await recognize(processedImg, "fra", {
           workerPath: "./third-parties/tesseract.js@6.0.1/worker.min.js",
@@ -534,7 +563,7 @@ function speakWithPiper(text)
 // Add event listener for text selection and trigger speach automatically
 function speakSelectedText()
 {
-  if (voiceOption.checked)
+  if (voiceOption.checked && pageContainer.style.display != "none")
   {
     const selectedText = getSelectedText();
     if (selectedText && selectedText.length > 1) {
