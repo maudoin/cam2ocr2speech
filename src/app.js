@@ -1,10 +1,10 @@
-import { DocumentTools } from "./documentTools.js";
+import { Utils } from "./utils.js";
 import { ImageProcessing } from "./imageProcessing.js";
 import { TextToSpeech } from "./textToSpeech.js";
 import { OpticalCharacterRecognition } from "./opticalCharacterRecognition.js";
 import { PdfView } from "./pdfView.js";
 
-DocumentTools.fetchUrlOverride((urlStr)=> PdfView.fetchOverride(urlStr) || TextToSpeech.fetchOverride(urlStr));
+Utils.fetchUrlOverride((urlStr)=> PdfView.fetchOverride(urlStr) || TextToSpeech.fetchOverride(urlStr));
 
 // import image processing functions & enable actions ony when ready
 ImageProcessing.asyncImport().then(() => enableActions());
@@ -30,7 +30,7 @@ const canvasInput = document.getElementById("canvasInput");
 const ctxInput = canvasInput.getContext("2d");
 const canvasOutput = document.getElementById("canvasOutput");
 const ctxOutput = canvasOutput.getContext("2d");
-  const svgOverlay = document.getElementById("svgOverlay");
+const svgOverlay = document.getElementById("svgOverlay");
 
 const voiceOption = document.getElementById("voiceOption");
 const deskewImage = document.getElementById("deskewImage");
@@ -278,7 +278,7 @@ function showOpenDialog(title = "Images", acceptFilters = ["png", "jpg", "jpeg"]
   }
   else
   {
-    return DocumentTools.showOpenDialog(title, acceptFilters);
+    return Utils.showOpenDialog(title, acceptFilters);
   }
 }
 
@@ -348,7 +348,7 @@ function speakSelectedText()
 {
   if (voiceOption.checked && pageContainer.style.display != "none")
   {
-    const selectedText = DocumentTools.getSelectedText();
+    const selectedText = Utils.getSelectedText();
     if (selectedText && selectedText.length > 1)
     {
       tts.speak(selectedText);

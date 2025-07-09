@@ -1,4 +1,4 @@
-export class DocumentTools
+export class Utils
 {
     // Retrieve selected text from the window/document
     static getSelectedText()
