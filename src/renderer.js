@@ -1,60 +1,6 @@
+import { DocumentTools } from "./documentTools.js";
 
-// Override fetch globally to fix piper-tts-web/pdf.js loading issues in electron
-// or force local loading instead of remote loading
-// Save original fetch as fallback for regular requests
-if (typeof myAPI !== 'undefined')
-{
-  const originalFetch = window.fetch;
-  window.fetch = async (url) => {
-    let overridePath = null;
-    if (typeof url === "string")
-    {
-      let override;
-      if (override = PdfView.fetchOverride(url))
-      {
-        overridePath = override.overridePath;
-        url = override.url;
-      }
-      else if (override = TextToSpeech.fetchOverride(url))
-      {
-        overridePath = override.overridePath;
-        url = override.url;
-      }
-    };
-    if (overridePath !== null)
-    {
-      console.log(`Intercepted fetch request for: ${url}`);
-      const basePath = myAPI.joinPath(myAPI.dirname(), overridePath);
-      const fullPath = myAPI.joinPath(basePath, url);
-      console.log(`Path resolved to: ${fullPath}`);
-
-      return new Promise((resolve, reject) => {
-        myAPI.readFile(fullPath, (err, data) => {
-          if (err) {
-            resolve(new Response(null, {
-              status: 404,
-              statusText: "File Not Found"
-            }));
-          }
-          else
-          {
-            // Warning: only js, wasm and binary files support is required for piper-tts-web requests
-            resolve(new Response(data, {
-              status: 200,
-              statusText: "OK",
-              headers: { "Content-Type": url.endsWith(".js")?"application/javascript" :
-                  url.endsWith(".wasm")?"application/wasm":
-                  "application/octet-stream"
-              }
-            }));
-          }
-        });
-      });
-    }
-
-    return originalFetch(url);
-  };
-}
+DocumentTools.fetchUrlOverride((urlStr)=> PdfView.fetchOverride(urlStr) || TextToSpeech.fetchOverride(urlStr));
 
 // import image processing functions
 import { ImageProcessing } from "./imageProcessing.js";
@@ -68,8 +14,6 @@ import { TextToSpeech } from "./textToSpeech.js";
 const tts = new TextToSpeech();
 
 import { OpticalCharacterRecognition } from "./opticalCharacterRecognition.js";
-
-import { DocumentTools } from "./documentTools.js";
 
 import { PdfView } from "./pdfView.js";
 
