@@ -1,7 +1,7 @@
 const { app, BrowserWindow, dialog, ipcMain, Menu } = require('electron');
 const path = require('path');
 
-Menu.setApplicationMenu(null);
+// Menu.setApplicationMenu(null);
 
 ipcMain.handle('show-open-dialog', async (event, { title, exts }) => {
   const result = await dialog.showOpenDialog({

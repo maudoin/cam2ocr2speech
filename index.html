@@ -4,13 +4,8 @@
   <title>Document Scanner</title>
   <style src="index.css"></style>
   <base href=".">
-
-  <link rel="resource" type="application/l10n" href="web/locale/locale.json">
-  <script src="build/pdf.mjs" type="module"></script>
-
-  <link rel="stylesheet" href="web/viewer.css">
-
-  <script src="web/viewer.mjs" type="module"></script>
+  <link rel="resource" type="application/l10n" href="./third-parties/pdf.js/v5.3.93/web/locale/locale.json">
+  <link rel="stylesheet" href="./third-parties/pdf.js/v5.3.93/web/viewer.css">
 </head>
 <body tabindex="1">
 
@@ -741,9 +736,9 @@
 
   <!-- Libraries -->
   <script src="./third-parties/tesseract.js@6.0.1/tesseract.min.js" type="application/javascript"></script>
-  <script type="module" src="./third-parties/piper-tts-web/piper-tts-web.js"></script>
-
-  <script src="./build/pdf.mjs" type="module"></script>
+  <script src="./third-parties/piper-tts-web/piper-tts-web.js" type="module"></script>
+  <script src="./third-parties/pdf.js/v5.3.93/build/pdf.mjs" type="module"></script>
+  <script src="./third-parties/pdf.js/v5.3.93/web/viewer.mjs" type="module"></script>
 
   <script type="module" src="./renderer.js"></script>
 </body>
