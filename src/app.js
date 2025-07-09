@@ -114,63 +114,21 @@ function switchToPdfMode()
   pageContainer.style.display = "block";
 }
 
-// Display points in svg overlay
-function addContourOverlay(points)
-{
-
-  // Get canvas position relative to the page
-  const rect = canvasInput.getBoundingClientRect();
-  // const rectMain = canvasInput.parentElement.getBoundingClientRect();
-  const left = rect.left;
-  const top = rect.top;
-
-  // Set SVG size to match canvas
-  svgOverlay.setAttribute("width", canvasInput.width);
-  svgOverlay.setAttribute("height", canvasInput.height);
-  svgOverlay.style.position = "absolute";
-  svgOverlay.style.left = left + "px";
-  svgOverlay.style.top = top + "px";
-  if (points.length != 0)
-  {
-    svgOverlay.style.width = canvasInput.width + "px";
-    svgOverlay.style.height = canvasInput.height + "px";
-  }
-  else
-  {
-    svgOverlay.style.width = "0px";
-    svgOverlay.style.height = "0px";
-  }
-
-  ScalableVectorGraphics.setupEditablePoints(svgOverlay, points);
-}
-
-
+// read canvas input and update contour points
 function findImageContour()
 {
   currentContourPoints = (deskewImage.checked)?ImageProcessing.detectContourPoints(canvasInput):[];
-  // add contour after transformation so the strainghtened image does not show the overlay
-  addContourOverlay(currentContourPoints);
-}
-
-// prepare output canvas by using contour points to deskey image
-function mayDeskewImageToOutput()
-{
-  if (currentContourPoints.length)
+  if (currentContourPoints.length != 0)
   {
-    const cvImageMat = ImageProcessing.fourPointTransform(canvasInput, currentContourPoints);
-
-    // Display the result in the output canvas
-    canvasOutput.width = cvImageMat.cols;
-    canvasOutput.height = cvImageMat.rows;
-    cv.imshow(canvasOutput, cvImageMat);
+    Utils.overlayElementOnAnother(svgOverlay, canvasInput);
   }
   else
   {
-    // copy input canvas to output canvas
-    canvasOutput.width = canvasInput.width;
-    canvasOutput.height = canvasInput.height;
-    ctxOutput.drawImage(canvasInput, 0, 0, canvasInput.width, canvasInput.height);
+    // hide
+    svgOverlay.style.width = "0px";
+    svgOverlay.style.height = "0px";
   }
+  ScalableVectorGraphics.setupEditablePoints(svgOverlay, currentContourPoints);
 }
 
 // use Node.js or Brwoser dialog
@@ -236,11 +194,25 @@ async function webcamCaptureToPdf()
 // process image with OCR and display PDF
 async function imageToPdf()
 {
-  mayDeskewImageToOutput();
-  let processedImg = canvasOutput.toDataURL("image/png");
+  // prepare image by using contour points to deskey image
+  let processedImg;
+  if (currentContourPoints.length)
+  {
+    const cvImageMat = ImageProcessing.fourPointTransform(canvasInput, currentContourPoints);
+
+    // Display the result in the output canvas
+    canvasOutput.width = cvImageMat.cols;
+    canvasOutput.height = cvImageMat.rows;
+    cv.imshow(canvasOutput, cvImageMat);
+    processedImg = canvasOutput.toDataURL("image/png");
+  }
+  else
+  {
+    processedImg = canvasInput.toDataURL("image/png");
+  }
   const { data: { pdf } } = await OpticalCharacterRecognition.recognize(processedImg, "fra");
 
-  // 5️⃣ Display PDF
+  // Display PDF
   const pdfBlob = new Blob([new Uint8Array(pdf)], { type: "application/pdf" });
   const blobUrl = URL.createObjectURL(pdfBlob);
   PdfView.openUrl(blobUrl);
