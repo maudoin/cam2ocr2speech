@@ -185,29 +185,26 @@ export class ImageProcessing
 
     static rotate(canvas, clockwise)
     {
-        const ctx = canvas.getContext("2d");
-
-        // Get current canvas content
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-        // Put image data on temp canvas
+        // Temp canvas with swapped dimensions
         const tempCanvas = document.createElement("canvas");
-        tempCanvas.width = canvas.width;
-        tempCanvas.height = canvas.height;
+        tempCanvas.width = canvas.height;
+        tempCanvas.height = canvas.width;
 
-        // Put image data on temp canvas
+        // Apply rotation inside temp canvas
         const tempCtx = tempCanvas.getContext("2d");
-        tempCtx.putImageData(imageData, 0, 0);
+        tempCtx.save();
+        tempCtx.translate(tempCanvas.width / 2, tempCanvas.height / 2);
+        tempCtx.rotate((clockwise ? 1 : -1) * Math.PI / 2);
+        tempCtx.translate(-tempCanvas.height / 2, -tempCanvas.width / 2);
+        tempCtx.drawImage(canvas, 0, 0);
+        tempCtx.restore();
 
         // Resize original canvas and copy back
-        canvas.width = tempCanvas.height;
-        canvas.height = tempCanvas.width;
-        ctx.save();
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate((clockwise ? 1 : -1) * Math.PI / 2); // 90°
-        ctx.translate(-canvas.height / 2, -canvas.width / 2);
+        canvas.width = tempCanvas.width;
+        canvas.height = tempCanvas.height;
+        const ctx = canvas.getContext("2d");
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
         ctx.drawImage(tempCanvas, 0, 0);
-        ctx.restore();
     }
 }
 // Assign static property and static method at the end
