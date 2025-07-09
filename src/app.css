@@ -1,38 +1,52 @@
 html, body {
-    margin: 0;
-    height: 100%;
-    display: flex;
-    background: #3b3b3b;
-    flex-direction: column;
+  margin: 0;
+  height: 100vh; /* Full viewport height */
 }
 
 #preview {
-    overflow: hidden;
-    position: relative;
-    max-width: 100vw;
-    max-height: 100vh;
-    background-color: #3b3b3b;
+  height: 100vh; /* Full viewport height */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  max-width: 100vw;
+  max-height: 100vh;
 }
 
-#toolbar {
+.previewToolbar {
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
-  background-color: #3b3b3b;
   padding: 8px 16px;
   gap: 16px;
+  border-bottom: 1px solid gray; 
+  background-color: azure;
 }
 
-.toolbarSection {
-  background-color: #3b3b3b;
+.previewToolbarSection {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  align-items: center;
   gap: 10px;
+  border: none;
+  box-shadow: none;
+  border-right: 1px solid gray; 
+}
+
+.previewToolbarSection button,
+.previewToolbarSection input {
+  background-color: azure;
+  border: none;
 }
 
 #mainContent {
-  background-color: #3b3b3b;
   overflow: auto;
   position: relative;
+  flex-grow: 1;
+  background-color: lightgray;
 }
 
 #video, #canvasInput, #canvasOutput {
