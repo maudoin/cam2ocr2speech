@@ -2,24 +2,24 @@
 <html>
 <head>
   <title>VolcalImage</title>
-  <style src="app.css"></style>
+  <link rel="stylesheet" href="app.css">
   <base href=".">
   <link rel="resource" type="application/l10n" href="../third-parties/pdf.js/v5.3.93/web/locale/locale.json">
 </head>
 <body tabindex="1">
 
   <div id="preview">
-    <div class="topBar">
-      <div class="topBar">
+    <div class="toolbar">
+      <div id="loadToolbar" class="toolbarSection">
         <button id="showPdfBtn">📂📑 PDF...</button>
         <button id="openImage">📂🖼️ Image...</button>
       </div>
-      <div id="webcamToolbar" class="topBar">
+      <div id="webcamToolbar" class="toolbarSection">
         <select id="webcamSelect"></select>
         <button id="webcam2Img">📷 Webcam -> 🖼️ Image</button>
         <button id="webcam2Pdf">📷 Webcam -> 📑 PDF</button>
       </div>
-      <div id="imgToolbar" class="topBar">
+      <div id="imgToolbar" class="toolbarSection">
         <button id="webcamPreview">📷 Webcam</button>
         <label style="margin-left:10px;" id="deskewImageLabel"><input type="checkbox" id="deskewImage" checked>Page detection</label>
         <button id="img2PdfBtn">🖼️ Image -> 📑 PDF</button>
