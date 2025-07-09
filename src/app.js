@@ -3,20 +3,17 @@ import { ImageProcessing } from "./imageProcessing.js";
 import { TextToSpeech } from "./textToSpeech.js";
 import { OpticalCharacterRecognition } from "./opticalCharacterRecognition.js";
 import { PdfView } from "./pdfView.js";
+import { Webcam } from "./webcam.js";
 
 Utils.fetchUrlOverride((urlStr)=> PdfView.fetchOverride(urlStr) || TextToSpeech.fetchOverride(urlStr));
 
 // import image processing functions & enable actions ony when ready
 ImageProcessing.asyncImport().then(() => enableActions());
 
-const tts = new TextToSpeech();
-
 
 // prepare document elements access
 const preview = document.getElementById("preview");
 const pageContainer = document.getElementById("pageContainer");
-pageContainer.style.display = "none";
-
 const webcamSelect = document.getElementById("webcamSelect");
 const webcamPreview = document.getElementById("webcamPreview");
 const video = document.getElementById("video");
@@ -37,7 +34,10 @@ const deskewImage = document.getElementById("deskewImage");
 const deskewImageLabel = document.getElementById("deskewImageLabel");
 
 
+Webcam.install(webcamSelect, video);
 let currentContourPoints = [];
+const tts = new TextToSpeech();
+
 
 // plug document elements to action callbacks
 webcamPreview.onclick = switchToWebcamMode;
@@ -111,48 +111,6 @@ function switchToPdfMode()
   // layout update
   preview.style.display = "none";
   pageContainer.style.display = "block";
-}
-
-// retrieve webcam devices and populate the select element
-async function listWebcams()
-{
-  const devices = await navigator.mediaDevices.enumerateDevices();
-  const videoSelect = document.getElementById("webcamSelect");
-
-  // Clear existing options
-  videoSelect.innerHTML = "";
-
-  devices
-    .filter(device => device.kind === "videoinput")
-    .forEach((device, index) => {
-      const option = document.createElement("option");
-      option.value = device.deviceId;
-      option.text = device.label || `Camera ${index + 1}`;
-      videoSelect.appendChild(option);
-    });
-}
-
-// handle webcam device selection change
-webcamSelect.addEventListener("change", (event) => {
-  startStream(event.target.value);
-});
-
-// start webcam stream with selected device
-async function startStream(deviceId)
-{
-  const constraints = {
-    video: { deviceId: { exact: deviceId } }
-  };
-
-  const stream = await navigator.mediaDevices.getUserMedia(constraints);
-  video.srcObject = stream;
-}
-
-// setup webcam stream on page load
-await listWebcams();
-const defaultDeviceId = webcamSelect.value;
-if (defaultDeviceId) {
-  startStream(defaultDeviceId);
 }
 
 // Display points in svg overlay
