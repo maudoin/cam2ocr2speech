@@ -16,18 +16,21 @@ ImageProcessing.asyncImport().then(() => enableActions());
 const preview = document.getElementById("preview");
 const pageContainer = document.getElementById("pageContainer");
 const webcamSelect = document.getElementById("webcamSelect");
+const imagePreview = document.getElementById("imagePreview");
 const webcamPreview = document.getElementById("webcamPreview");
 const video = document.getElementById("video");
 const webcam2Img = document.getElementById("webcam2Img");
 const webcam2Pdf = document.getElementById("webcam2Pdf");
 const img2PdfBtn = document.getElementById("img2PdfBtn");
-const reScanBtn = document.getElementById("reScanBtn");
+const pdfToWebcamPreview = document.getElementById("pdfToWebcamPreview");
+const pdfToImagePreview = document.getElementById("pdfToImagePreview");
+const openPdfBtn = document.getElementById("openPdfBtn");
+const pdfOpenButton = document.getElementById("pdfOpenButton");
 const openImage = document.getElementById("openImage");
 const showPdfBtn = document.getElementById("showPdfBtn");
 const canvasInput = document.getElementById("canvasInput");
 const ctxInput = canvasInput.getContext("2d");
 const canvasOutput = document.getElementById("canvasOutput");
-const ctxOutput = canvasOutput.getContext("2d");
 const svgOverlay = document.getElementById("svgOverlay");
 
 const voiceOption = document.getElementById("voiceOption");
@@ -42,8 +45,12 @@ const tts = new TextToSpeech();
 
 // plug document elements to action callbacks
 webcamPreview.onclick = switchToWebcamMode;
-reScanBtn.onclick = switchToWebcamMode;
+imagePreview.onclick = switchToImagePreviewMode;
+pdfToWebcamPreview.onclick = switchToWebcamMode;
+pdfToImagePreview.onclick = switchToImagePreviewMode;
 showPdfBtn.onclick = switchToPdfMode;
+openPdfBtn.onclick = selectPdf;
+pdfOpenButton.onclick = selectPdf;
 document.addEventListener("mouseup", speakSelectedText);
 
 // diable buttons until OpenCV is ready
@@ -72,12 +79,14 @@ function enableActions()
 function switchToWebcamMode()
 {
   // toolbar update
-  webcamPreview.style.display = "none";
+  imagePreview.classList.remove('activeMode');
+  webcamPreview.classList.add('activeMode');
   webcamSelect.style.display = "block";
   webcam2Img.style.display = "block";
   webcam2Pdf.style.display = "block";
   img2PdfBtn.style.display = "none";
   deskewImageLabel.style.display = "none";
+  svgOverlay.style.display = "none";
   // display update
   video.style.display = "block";
   canvasInput.style.display = "none";
@@ -91,12 +100,14 @@ function switchToWebcamMode()
 function switchToImagePreviewMode()
 {
   // toolbar update
-  webcamPreview.style.display = "block";
+  imagePreview.classList.add('activeMode');
+  webcamPreview.classList.remove('activeMode');
   webcamSelect.style.display = "none";
   webcam2Img.style.display = "none";
   webcam2Pdf.style.display = "none";
   img2PdfBtn.style.display = "block";
   deskewImageLabel.style.display = "block";
+  svgOverlay.style.display = "block";
   // display update
   video.style.display = "none";
   canvasInput.style.display = "block";
@@ -168,6 +179,18 @@ function selectImage()
   });
 }
 
+
+// Select an image file using file open dialog and create a pdf with text layer via ocr
+function selectPdf()
+{
+  showOpenDialog("PDF", ["pdf"]).then(result => {
+    if (!result.canceled) {
+      const filePath = result.filePaths[0];
+      PdfView.openUrl(filePath);
+      switchToPdfMode();
+    }
+  });
+}
 
 // webcam to canevas capture
 async function webcamCaptureToImage()

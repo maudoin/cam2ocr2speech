@@ -10,19 +10,21 @@
 
   <div id="preview">
     <div class="previewToolbar">
-      <div id="loadToolbar" class="previewToolbarSection">
-        <button id="showPdfBtn">📂📑 PDF...</button>
-        <button id="openImage">📂🖼️ Image...</button>
-      </div>
       <div id="webcamToolbar" class="previewToolbarSection">
+        <button id="webcamPreview">📷 Webcam</button>
         <select id="webcamSelect"></select>
-        <button id="webcam2Img">📷 Webcam -> 🖼️ Image</button>
-        <button id="webcam2Pdf">📷 Webcam -> 📑 PDF</button>
+        <button id="webcam2Img">➦🖼️Image</button>
+        <button id="webcam2Pdf">➦📑PDF</button>
       </div>
       <div id="imgToolbar" class="previewToolbarSection">
-        <button id="webcamPreview">📷 Webcam</button>
+        <button id="imagePreview">🖼️ Image</button>
+        <button id="openImage">📂...</button>
         <label style="margin-left:10px;" id="deskewImageLabel"><input type="checkbox" id="deskewImage" checked>Page detection</label>
-        <button id="img2PdfBtn">🖼️ Image -> 📑 PDF</button>
+        <button id="img2PdfBtn">➦📑PDF</button>
+      </div>
+      <div id="pdfToolbar" class="previewToolbarSection">
+        <button id="showPdfBtn">📑PDF</button>
+        <button id="openPdfBtn">📂...</button>
       </div>
     </div>
     <div id="mainContent">
@@ -83,11 +85,20 @@
           <div id="toolbarContainer">
             <div id="toolbarViewer" class="toolbarHorizontalGroup">
               <div id="toolbarViewerLeft" class="toolbarHorizontalGroup">
-                <button id="sidebarToggleButton" class="toolbarButton" type="button" tabindex="0" data-l10n-id="pdfjs-toggle-sidebar-button" aria-expanded="false" aria-haspopup="true" aria-controls="sidebarContainer">
+                <button id="sidebarToggleButton" class="toolbarButton" type="button" tabindex="0" data-l10n-id="pdfjs-toggle-sidebar-button" aria-expanded="false" aria-haspopup="true" aria-controls="sidebarContainer" display="none;">
                   <span data-l10n-id="pdfjs-toggle-sidebar-button-label"></span>
                 </button>
-                <button id="reScanBtn" class="toolbarButton" type="button" tabindex="0">🧾 Scan</button>
-                <label style="margin-left:10px;"><input type="checkbox" id="voiceOption" checked>💬 Voix</label>
+                <div id="webcamToolbar" class="previewToolbarSection">
+                  <button id="pdfToWebcamPreview">📷 Webcam</button>
+                </div>
+                <div id="imgToolbar" class="previewToolbarSection">
+                  <button id="pdfToImagePreview">🖼️ Image</button>
+                </div>
+                <div id="pdfToolbar" class="previewToolbarSection">
+                  <button class="activeMode">📑PDF</button>
+                  <button id="pdfOpenButton">📂...</button>
+                  <label style="margin-left:10px;"><input type="checkbox" id="voiceOption" checked>💬 Voix</label>
+                </div>
                 <div class="toolbarButtonSpacer"></div>
                 <div class="toolbarButtonWithContainer">
                   <button id="viewFindButton" class="toolbarButton" type="button" tabindex="0" data-l10n-id="pdfjs-findbar-button" aria-expanded="false" aria-controls="findbar">
