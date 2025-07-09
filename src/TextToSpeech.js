@@ -46,7 +46,7 @@ export class TextToSpeech
       const speaker = 0;
       this.piperWebEngine.generate(text, TextToSpeech.PIPER_VOICE, speaker).then((res) => {
           this.audio.src = URL.createObjectURL(res.file);
-          this.audio.play();
+          this.audio.play().catch(error => {});
       });
       this.piperWebEngine.terminate();
     }
