@@ -1,6 +1,22 @@
 export class ScalableVectorGraphics
 {
+    static updatePolygonAndCircle(svgElement, points, idx)
+    {
+        // Update polygon
+        const poly = svgElement.querySelector("polygon");
+        if (poly) {
+            const newPointsStr = points.map(p => `${p.x},${p.y}`).join(" ");
+            poly.setAttribute("points", newPointsStr);
+        }
 
+        // Update the specific circle
+        const circle = svgElement.querySelector(`circle[data-idx="${idx}"]`);
+        if (circle) {
+            const point = points[idx];
+            circle.setAttribute("cx", point.x);
+            circle.setAttribute("cy", point.y);
+        }
+    }
     // Display points in svg overlay
     static setupEditablePoints(svgElement, points, originalWidth, originalHeight)
     {
@@ -49,8 +65,8 @@ export class ScalableVectorGraphics
                 points[draggingIdx].x = Math.max(0, Math.min(originalWidth, svgP.x));
                 points[draggingIdx].y = Math.max(0, Math.min(originalHeight, svgP.y));
 
-               // 4) Redraw
-                ScalableVectorGraphics.setupEditablePoints(svgOverlay, points);
+                // 4) apply coordinates
+                ScalableVectorGraphics.updatePolygonAndCircle(svgOverlay, points, draggingIdx);
             }
         }
 
@@ -65,7 +81,7 @@ export class ScalableVectorGraphics
             const circle = document.createElementNS(ScalableVectorGraphics.NS, "circle");
             circle.setAttribute("cx", p.x);
             circle.setAttribute("cy", p.y);
-            circle.setAttribute("r", 8);
+            circle.setAttribute("r", 4);
             circle.setAttribute("fill", "yellow");
             circle.setAttribute("stroke", "orange");
             circle.setAttribute("stroke-width", 2);
