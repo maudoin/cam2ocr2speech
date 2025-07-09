@@ -17,13 +17,13 @@ export class DocumentTools
         // transform acceptFilters to a string
         const acceptStr = acceptFilters.map(ext => `.${ext}`).join(",");
         return new Promise((resolve) => {
-        const input = document.createElement('input');
-        input.type = 'file';
+        const input = document.createElement("input");
+        input.type = "file";
         input.accept = acceptStr;
-        input.style.display = 'none';
+        input.style.display = "none";
         document.body.appendChild(input);
 
-        input.addEventListener('change', () => {
+        input.addEventListener("change", () => {
             resolve({filePaths:[URL.createObjectURL(input.files[0])], canceled: false});
             document.body.removeChild(input); // Cleanup after use
         });
@@ -36,7 +36,7 @@ export class DocumentTools
     // or force local loading instead of remote loading
     static fetchUrlOverride(handler)
     {
-      if (typeof myAPI !== 'undefined')
+      if (typeof myAPI !== "undefined")
       {
         const originalFetch = window.fetch;
         window.fetch = async (url) => {

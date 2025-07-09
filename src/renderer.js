@@ -1,21 +1,16 @@
 import { DocumentTools } from "./documentTools.js";
+import { ImageProcessing } from "./imageProcessing.js";
+import { TextToSpeech } from "./textToSpeech.js";
+import { OpticalCharacterRecognition } from "./opticalCharacterRecognition.js";
+import { PdfView } from "./pdfView.js";
 
 DocumentTools.fetchUrlOverride((urlStr)=> PdfView.fetchOverride(urlStr) || TextToSpeech.fetchOverride(urlStr));
 
-// import image processing functions
-import { ImageProcessing } from "./imageProcessing.js";
-// enable scan button when image processing is ready
-ImageProcessing.asyncImport().then(() => {
-  enableActions();
-});
+// import image processing functions & enable actions ony when ready
+ImageProcessing.asyncImport().then(() => enableActions());
 
-// imports
-import { TextToSpeech } from "./textToSpeech.js";
 const tts = new TextToSpeech();
 
-import { OpticalCharacterRecognition } from "./opticalCharacterRecognition.js";
-
-import { PdfView } from "./pdfView.js";
 
 // prepare document elements access
 const preview = document.getElementById("preview");
@@ -35,7 +30,7 @@ const canvasInput = document.getElementById("canvasInput");
 const ctxInput = canvasInput.getContext("2d");
 const canvasOutput = document.getElementById("canvasOutput");
 const ctxOutput = canvasOutput.getContext("2d");
-  const svgOverlay = document.getElementById('svgOverlay');
+  const svgOverlay = document.getElementById("svgOverlay");
 
 const voiceOption = document.getElementById("voiceOption");
 const deskewImage = document.getElementById("deskewImage");
@@ -56,7 +51,10 @@ img2PdfBtn.disabled = false;
 openImage.disabled = false;
 
 switchToWebcamMode();
-function enableActions() {
+
+// see ImageProcessing.asyncImport
+function enableActions()
+{
   webcam2Img.onclick = webcamCaptureToImage;
   webcam2Img.disabled = false;
   webcam2Pdf.onclick = webcamCaptureToPdf;
@@ -68,6 +66,7 @@ function enableActions() {
   voiceOption.addEventListener("click", speakSelectedText);
 
 }
+
 // switch to scan from video preview mode
 function switchToWebcamMode()
 {
@@ -115,7 +114,8 @@ function switchToPdfMode()
 }
 
 // retrieve webcam devices and populate the select element
-async function listWebcams() {
+async function listWebcams()
+{
   const devices = await navigator.mediaDevices.enumerateDevices();
   const videoSelect = document.getElementById("webcamSelect");
 
@@ -138,7 +138,8 @@ webcamSelect.addEventListener("change", (event) => {
 });
 
 // start webcam stream with selected device
-async function startStream(deviceId) {
+async function startStream(deviceId)
+{
   const constraints = {
     video: { deviceId: { exact: deviceId } }
   };
@@ -147,7 +148,6 @@ async function startStream(deviceId) {
   video.srcObject = stream;
 }
 
-
 // setup webcam stream on page load
 await listWebcams();
 const defaultDeviceId = webcamSelect.value;
@@ -155,11 +155,10 @@ if (defaultDeviceId) {
   startStream(defaultDeviceId);
 }
 
-
 // Display points in svg overlay
 function addContourOverlay(points)
 {
-  svgOverlay.innerHTML = ''; // Clear previous
+  svgOverlay.innerHTML = ""; // Clear previous
 
   // Get canvas position relative to the page
   const rect = canvasInput.getBoundingClientRect();
@@ -168,28 +167,28 @@ function addContourOverlay(points)
   const top = rect.top;
 
   // Set SVG size to match canvas
-  svgOverlay.setAttribute('width', canvasInput.width);
-  svgOverlay.setAttribute('height', canvasInput.height);
-  svgOverlay.style.position = 'absolute';
-  svgOverlay.style.left = left + 'px';
-  svgOverlay.style.top = top + 'px';
+  svgOverlay.setAttribute("width", canvasInput.width);
+  svgOverlay.setAttribute("height", canvasInput.height);
+  svgOverlay.style.position = "absolute";
+  svgOverlay.style.left = left + "px";
+  svgOverlay.style.top = top + "px";
   if (points.length != 0)
   {
-    svgOverlay.style.width = canvasInput.width + 'px';
-    svgOverlay.style.height = canvasInput.height + 'px';
+    svgOverlay.style.width = canvasInput.width + "px";
+    svgOverlay.style.height = canvasInput.height + "px";
   }
   else
   {
-    svgOverlay.style.width = '0px';
-    svgOverlay.style.height = '0px';
+    svgOverlay.style.width = "0px";
+    svgOverlay.style.height = "0px";
   }
 
   // Draw polygon
-  const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-  poly.setAttribute('points', points.map(p => `${p.x},${p.y}`).join(' '));
-  poly.setAttribute('fill', 'rgba(0,255,0,0.2)');
-  poly.setAttribute('stroke', 'lime');
-  poly.setAttribute('stroke-width', 2);
+  const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+  poly.setAttribute("points", points.map(p => `${p.x},${p.y}`).join(" "));
+  poly.setAttribute("fill", "rgba(0,255,0,0.2)");
+  poly.setAttribute("stroke", "lime");
+  poly.setAttribute("stroke-width", 2);
   svgOverlay.appendChild(poly);
 
   // Drag logic
@@ -209,35 +208,35 @@ function addContourOverlay(points)
 
   function onPointerUp() {
     draggingIdx = null;
-    window.removeEventListener('pointermove', onPointerMove);
-    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener("pointermove", onPointerMove);
+    window.removeEventListener("pointerup", onPointerUp);
   }
 
   // Draw draggable points
   points.forEach((p, idx) => {
-    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    circle.setAttribute('cx', p.x);
-    circle.setAttribute('cy', p.y);
-    circle.setAttribute('r', 8);
-    circle.setAttribute('fill', 'yellow');
-    circle.setAttribute('stroke', 'orange');
-    circle.setAttribute('stroke-width', 2);
-    circle.style.cursor = 'pointer';
-    circle.setAttribute('data-idx', idx);
-    circle.style.pointerEvents = 'auto';
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("cx", p.x);
+    circle.setAttribute("cy", p.y);
+    circle.setAttribute("r", 8);
+    circle.setAttribute("fill", "yellow");
+    circle.setAttribute("stroke", "orange");
+    circle.setAttribute("stroke-width", 2);
+    circle.style.cursor = "pointer";
+    circle.setAttribute("data-idx", idx);
+    circle.style.pointerEvents = "auto";
 
     // Add drag events
-    circle.addEventListener('pointerdown', function(e) {
+    circle.addEventListener("pointerdown", function(e) {
       draggingIdx = idx;
-      window.addEventListener('pointermove', onPointerMove);
-      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerUp);
       e.preventDefault();
       e.stopPropagation();
     });
 
     svgOverlay.appendChild(circle);
   });
-  svgOverlay.style.pointerEvents = 'auto';
+  svgOverlay.style.pointerEvents = "auto";
 }
 
 
@@ -246,7 +245,6 @@ function findImageContour()
   currentContourPoints = (deskewImage.checked)?ImageProcessing.detectContourPoints(canvasInput):[];
   // add contour after transformation so the strainghtened image does not show the overlay
   addContourOverlay(currentContourPoints);
-
 }
 
 // prepare output canvas by using contour points to deskey image
@@ -270,16 +268,17 @@ function mayDeskewImageToOutput()
   }
 }
 
+// use Node.js or Brwoser dialog
 function showOpenDialog(title = "Images", acceptFilters = ["png", "jpg", "jpeg"])
 {
-  if (typeof myAPI !== 'undefined')
+  if (typeof myAPI !== "undefined")
   {
 
     return myAPI.showOpenDialog(title, acceptFilters);
   }
   else
   {
-    DocumentTools.showOpenDialog(title, acceptFilters);
+    return DocumentTools.showOpenDialog(title, acceptFilters);
   }
 }
 
@@ -318,6 +317,7 @@ async function webcamCaptureToImage()
   switchToImagePreviewMode();
 }
 
+// webcam to canevas capture
 async function webcamCaptureToPdf()
 {
   canvasInput.width = video.videoWidth;
@@ -328,8 +328,7 @@ async function webcamCaptureToPdf()
   imageToPdf();
 }
 
-
-// process imoage with OCR and display PDF
+// process image with OCR and display PDF
 async function imageToPdf()
 {
   mayDeskewImageToOutput();
@@ -342,9 +341,7 @@ async function imageToPdf()
   PdfView.openUrl(blobUrl);
 
   switchToPdfMode();
-
-};
-
+}
 
 // Add event listener for text selection and trigger speach automatically
 function speakSelectedText()
