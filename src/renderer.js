@@ -67,9 +67,9 @@ if (typeof myAPI !== 'undefined')
 
 // import image processing functions
 import { ImageProcessing } from "./imageProcessing.js";
-// enable scan button when OpenCV is ready
-ImageProcessing.import().then(() => {
-  enableWebcamScan();
+// enable scan button when image processing is ready
+ImageProcessing.asyncImport().then(() => {
+  enableActions();
 });
 
 // import TTS
@@ -107,10 +107,6 @@ let currentContourPoints = [];
 webcamPreview.onclick = switchToWebcamMode;
 reScanBtn.onclick = switchToWebcamMode;
 showPdfBtn.onclick = switchToPdfMode;
-img2PdfBtn.onclick = imageToPdf;
-openImage.onclick = selectImage;
-deskewImage.addEventListener("click", findImageContour);
-voiceOption.addEventListener("click", speakSelectedText);
 document.addEventListener("mouseup", speakSelectedText);
 
 // diable buttons until OpenCV is ready
@@ -118,12 +114,18 @@ showPdfBtn.disabled = false;
 img2PdfBtn.disabled = false;
 openImage.disabled = false;
 
-function enableWebcamScan() {
+switchToWebcamMode();
+function enableActions() {
   webcam2Img.onclick = webcamCaptureToImage;
   webcam2Img.disabled = false;
   webcam2Pdf.onclick = webcamCaptureToPdf;
   webcam2Pdf.disabled = false;
-  switchToWebcamMode();
+
+  img2PdfBtn.onclick = imageToPdf;
+  openImage.onclick = selectImage;
+  deskewImage.addEventListener("click", findImageContour);
+  voiceOption.addEventListener("click", speakSelectedText);
+
 }
 // switch to scan from video preview mode
 function switchToWebcamMode()
