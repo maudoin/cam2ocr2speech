@@ -1,7 +1,7 @@
 // import ocr engine
 const { createWorker } = Tesseract;
 // import pdf controller
-const { PDFViewerApplication } = await import("./web/viewer.mjs");
+const { PDFViewerApplication } = await import("./third-parties/pdf.js/v5.3.93/web/viewer.mjs");
 // import tts engine
 const { PiperWebEngine } = await import("./third-parties/piper-tts-web/piper-tts-web.js");
 
@@ -31,20 +31,26 @@ loadOpenCv().then(() => {
   enableWebcamScan();
 });
 
-// Override fetch globally to fix piper-tts-web loading issues in electron
+// Override fetch globally to fix piper-tts-web/pdf.js loading issues in electron
 // or force local loading instead of remote loading
 // Save original fetch as fallback for regular requests
 if (typeof myAPI !== 'undefined')
 {
   const originalFetch = window.fetch;
   const PIPER_HUGGINGFACE_BASE = "https://huggingface.co/rhasspy/piper-voices/resolve/main/";
-  const PIPER_LOCAL_CODE_PATH = "third-parties/piper-tts-web";
-  const PIPER_LOCAL_MODEL_PATH = "tts_models";
+  const PIPER_LOCAL_CODE_PATH = "./third-parties/piper-tts-web";
+  const PDFJS_LOCAL_CODE_PATH = "./third-parties/pdf.js/v5.3.93";
+  const PIPER_LOCAL_MODEL_PATH = "./resources/tts_models";
   window.fetch = async (url) => {
     let overridePath = null;
     if (typeof url === "string")
     {
-      if (url.startsWith("/piper/") || url.startsWith("/onnx/") || url.startsWith("/worker/"))
+      if (url.startsWith("/build/") || url.startsWith("/web/"))
+      {
+        // pdf.js request
+        overridePath = PDFJS_LOCAL_CODE_PATH;
+      }
+      else if (url.startsWith("/piper/") || url.startsWith("/onnx/") || url.startsWith("/worker/"))
       {
         // piper-tts-web request
         overridePath = PIPER_LOCAL_CODE_PATH;
@@ -597,7 +603,7 @@ async function imageToPdf() {
   let processedImg = canvasOutput.toDataURL("image/png");
   const { data: { text, pdf, hocr } } = await recognize(processedImg, "fra", {
           workerPath: "./third-parties/tesseract.js@6.0.1/worker.min.js",
-          langPath: "./tessdata",
+          langPath: "./resources/tesseract_models",
           corePath: "./third-parties/tesseract.js@6.0.1",
           gzip : false,
           logger: m => console.log(m),
