@@ -1,5 +1,3 @@
-// imageProcessing.js
-
 export class ImageProcessing
 {
     // import opencv asynchronously
