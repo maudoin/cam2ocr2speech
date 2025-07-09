@@ -32,6 +32,24 @@ export class Utils
         });
     }
 
+    static overlayElementOnAnother(target, source)
+    {
+      // Get source position relative to the page
+      const rect = source.getBoundingClientRect();
+      // const rectMain = source.parentElement.getBoundingClientRect();
+      const left = rect.left;
+      const top = rect.top;
+
+      // Set SVG size to match canvas
+      target.setAttribute("width", source.width);
+      target.setAttribute("height", source.height);
+      target.style.position = "absolute";
+      target.style.left = left + "px";
+      target.style.top = top + "px";
+      target.style.width = source.width + "px";
+      target.style.height = source.height + "px";
+    }
+
     // Override fetch globally to workaround root file loading issues in electron
     // or force local loading instead of remote loading
     static fetchUrlOverride(handler)
