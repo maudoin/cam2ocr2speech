@@ -7,18 +7,6 @@ const TESSERACT_LANG_PATH = "../resources/tesseract_models";
 // import pdf controller
 const { PDFViewerApplication } = await import("../third-parties/pdf.js/v5.3.93/web/viewer.mjs");
 
-// import tts engine
-const { PiperWebEngine } = await import("../third-parties/piper-tts-web/piper-tts-web.js");
-const PIPER_HUGGINGFACE_BASE = "https://huggingface.co/rhasspy/piper-voices/resolve/main/";
-const PIPER_LOCAL_CODE_PATH = "./third-parties/piper-tts-web";
-const PDFJS_LOCAL_CODE_PATH = "./third-parties/pdf.js/v5.3.93";
-const PIPER_LOCAL_MODEL_PATH = "./resources/tts_models";
-const PIPER_VOICE = "fr_FR-siwis-medium";
-
-// prepare tts generation
-const piperWebEngine = new PiperWebEngine();
-// use single audio instance to avoid overlapping sounds
-const audio = new Audio();
 
 // Override fetch globally to fix piper-tts-web/pdf.js loading issues in electron
 // or force local loading instead of remote loading
@@ -30,22 +18,16 @@ if (typeof myAPI !== 'undefined')
     let overridePath = null;
     if (typeof url === "string")
     {
+      let override;
       if (url.startsWith("/build/") || url.startsWith("/web/"))
       {
         // pdf.js request
         overridePath = PDFJS_LOCAL_CODE_PATH;
       }
-      else if (url.startsWith("/piper/") || url.startsWith("/onnx/") || url.startsWith("/worker/"))
+      else if (override = TextToSpeech.fetchOverride(url))
       {
-        // piper-tts-web request
-        overridePath = PIPER_LOCAL_CODE_PATH;
-      }
-      else if (url.startsWith(PIPER_HUGGINGFACE_BASE))
-      {
-        // piper-tts-web voice request
-        overridePath = PIPER_LOCAL_MODEL_PATH;
-        // strip the base URL to get the voice file sub path only
-        url = url.substring(PIPER_HUGGINGFACE_BASE.length);
+        overridePath = override.overridePath;
+        url = override.url;
       }
     };
     if (overridePath !== null)
@@ -89,6 +71,10 @@ import { ImageProcessing } from "./imageProcessing.js";
 ImageProcessing.import().then(() => {
   enableWebcamScan();
 });
+
+// import TTS
+import { TextToSpeech } from "./textToSpeech.js";
+const tts = new TextToSpeech();
 
 // prepare document elements access
 const preview = document.getElementById("preview");
@@ -450,16 +436,6 @@ async function imageToPdf() {
 
 };
 
-// TTS speech synthesis
-function speakWithPiper(text, voice)
-{
-  const speaker = 0;
-  piperWebEngine.generate(text, voice, speaker).then((res) => {
-      audio.src = URL.createObjectURL(res.file);
-      audio.play();
-  });
-  piperWebEngine.terminate();
-}
 
 // Add event listener for text selection and trigger speach automatically
 function speakSelectedText()
@@ -469,12 +445,12 @@ function speakSelectedText()
     const selectedText = getSelectedText();
     if (selectedText && selectedText.length > 1)
     {
-      speakWithPiper(selectedText, PIPER_VOICE);
+      tts.speak(selectedText);
     }
   }
   else
   {
-    audio.pause();
+    tts.interrupt();
   }
 }
 
