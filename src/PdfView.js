@@ -31,7 +31,7 @@ export class PdfView
     static async openUrl(url)
     {
       PDFViewerApplication.open({ url: url });
-    };
+    }
 }
 
 // Assign static property and static method at the end

@@ -48,7 +48,6 @@ export class TextToSpeech
           this.audio.src = URL.createObjectURL(res.file);
           this.audio.play().catch(error => {});
       });
-      this.piperWebEngine.terminate();
     }
 
     interrupt()
