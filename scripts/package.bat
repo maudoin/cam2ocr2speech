@@ -1,6 +1,7 @@
 electron-packager .. cam2ocr2speech --platform=win32 --arch=x64 --out=../dist --overwrite \
  --icon=../resources/icon256px.ico \
   --ignore="^/scripts" \
+  --ignore="^/doc" \
   --ignore="^.gitignore" \
   --ignore="^package-lock.json" \
   --ignore="^/third-parties/pdf.js/v5.3.93/web/compressed.tracemonkey-pldi-09.pdf"

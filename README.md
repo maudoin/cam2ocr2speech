@@ -1,15 +1,25 @@
-# 📘 Application pour la lecture vocale de document PDF et creation de PDF textuel à partir d'imae
+# 📘 Application pour la lecture vocale de document PDF et creation de PDF textuel à partir d'image
 
 ## 📄 Présentation
 
 Cette application est conçue pour aider les personnes atteintes de troubles "dys" (dyslexie, dyspraxie, etc.) à travailler sur des documents papier à l'aide d'un ordinateur. Elle permet :
 
 - 🔊 De lire à voix haute le texte sélectionné dans un PDF.
-- 📝 D'ajouter du texte et d'imprimmer sur un PDF.
-- 🖼️ De générer un PDF à partir d'une image, avec une couche de texte sélectionnable (reconaissance de charactères).
-- ✂️ De détecter automatiquement le contour d'une feuille sur une image pour redresser le texte.
-- ✏️ De modifier manuellement le contour détecté pour améliorer la précision.
+- 📝 D'ajouter du texte sur un PDF et de l'imprimer.
+- 🖼️ De transformer une image en PDF avec une couche de texte sélectionnable par reconaissance de charactères.
+- ✂️ De détecter automatiquement le contour d'une feuille sur une image pour redresser le texte ou de redresser manuellement.
 - 📷 De capturer une image depuis une webcam ou d'importer une image depuis un fichier.
+
+---
+
+## Mode webcam:
+![image](doc/webcamMode.jpg)
+
+## Mode image / redressement:
+![image](doc/imageMode.jpg)
+
+## Mode PDF / Lecture vocale:
+![image](doc/pdfMode.jpg)
 
 ---
 
@@ -22,8 +32,7 @@ This application supports individuals with "dys" disorders (e.g., dyslexia, dysp
 - 🔊 Reads aloud selected text from PDFs using Text-to-Speech (TTS).
 - 📝 Adding Text and Printing PDF
 - 🖼️ Generates a PDF from an image with selectable text layer via character recognition (OCR).
-- ✂️ Automatically detects document boundaries in images for perspective correction.
-- ✏️ Allows manual editing of detected contours.
+- ✂️ Automatically detects document boundaries in images for perspective correction and edit contours manually.
 - 📷 Captures images using a webcam or loads images from files.
 
 ---

@@ -24,6 +24,7 @@
     "files": [
       "**/*",
       "!dist/**",
+      "!doc/**",
       "!scripts/**",
       "!third-parties/pdf.js/v5.3.93/web/compressed.tracemonkey-pldi-09.pdf",
       "!.gitignore",
