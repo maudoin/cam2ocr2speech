@@ -42,6 +42,20 @@ html, body {
   border: none;
 }
 
+.previewToolbarSection button.activeMode
+{
+  pointer-events: none; /* disables mouse interaction */
+  opacity: 1;           /* keep normal visual appearance */
+  cursor: default;      /* avoid “clickable” pointer */
+  background-color: lightgray;
+  font-weight: bold;
+}
+
+.previewToolbarSection button:hover
+{
+  background-color: gainsboro;
+}
+
 #mainContent {
   overflow: auto;
   position: relative;
