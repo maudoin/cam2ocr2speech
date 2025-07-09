@@ -9,27 +9,27 @@
 <body tabindex="1">
 
   <div id="preview">
-    <div class="toolbar">
-      <div id="loadToolbar" class="toolbarSection">
+    <div class="previewToolbar">
+      <div id="loadToolbar" class="previewToolbarSection">
         <button id="showPdfBtn">📂📑 PDF...</button>
         <button id="openImage">📂🖼️ Image...</button>
       </div>
-      <div id="webcamToolbar" class="toolbarSection">
+      <div id="webcamToolbar" class="previewToolbarSection">
         <select id="webcamSelect"></select>
         <button id="webcam2Img">📷 Webcam -> 🖼️ Image</button>
         <button id="webcam2Pdf">📷 Webcam -> 📑 PDF</button>
       </div>
-      <div id="imgToolbar" class="toolbarSection">
+      <div id="imgToolbar" class="previewToolbarSection">
         <button id="webcamPreview">📷 Webcam</button>
         <label style="margin-left:10px;" id="deskewImageLabel"><input type="checkbox" id="deskewImage" checked>Page detection</label>
         <button id="img2PdfBtn">🖼️ Image -> 📑 PDF</button>
       </div>
-      <div id="mainContent">
-        <video id="video" autoplay muted playsinline></video>
-        <canvas id="canvasInput"></canvas>
-        <svg id="svgOverlay" style="position:absolute; left:0; top:100; pointer-events:none;"></svg>
-        <canvas id="canvasOutput" display="none;"></canvas>
-      </div>
+    </div>
+    <div id="mainContent">
+      <video id="video" autoplay muted playsinline></video>
+      <canvas id="canvasInput"></canvas>
+      <svg id="svgOverlay" style="position:absolute; left:0; top:100; pointer-events:none;"></svg>
+      <canvas id="canvasOutput" display="none;"></canvas>
     </div>
   </div>
 

@@ -72,12 +72,12 @@ function enableActions()
 function switchToWebcamMode()
 {
   // toolbar update
-  webcamPreview.style.visibility = "hidden";
-  webcamSelect.style.visibility = "visible";
-  webcam2Img.style.visibility = "visible";
-  webcam2Pdf.style.visibility = "visible";
-  img2PdfBtn.style.visibility = "hidden";
-  deskewImageLabel.style.visibility = "hidden";
+  webcamPreview.style.display = "none";
+  webcamSelect.style.display = "block";
+  webcam2Img.style.display = "block";
+  webcam2Pdf.style.display = "block";
+  img2PdfBtn.style.display = "none";
+  deskewImageLabel.style.display = "none";
   // display update
   video.style.display = "block";
   canvasInput.style.display = "none";
@@ -91,12 +91,12 @@ function switchToWebcamMode()
 function switchToImagePreviewMode()
 {
   // toolbar update
-  webcamPreview.style.visibility = "visible";
-  webcamSelect.style.visibility = "hidden";
-  webcam2Img.style.visibility = "hidden";
-  webcam2Pdf.style.visibility = "hidden";
-  img2PdfBtn.style.visibility = "visible";
-  deskewImageLabel.style.visibility = "visible";
+  webcamPreview.style.display = "block";
+  webcamSelect.style.display = "none";
+  webcam2Img.style.display = "none";
+  webcam2Pdf.style.display = "none";
+  img2PdfBtn.style.display = "block";
+  deskewImageLabel.style.display = "block";
   // display update
   video.style.display = "none";
   canvasInput.style.display = "block";
