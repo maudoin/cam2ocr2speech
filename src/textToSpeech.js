@@ -5,7 +5,7 @@ const { PiperWebEngine } = await import("../third-parties/piper-tts-web/piper-tt
 export class TextToSpeech
 {
     /// Checks if the URL matches a piper-tts-web resource and sets overridePath accordingly.
-    /// Fixes piper-tts-web loading issues in electron
+    /// Fixes piper-tts-web loading issues in electron (avoid copying folders to root)
     /// and force local loading of model instead of remote loading
     /// Returns null or  { overridePath: string|null, url: string }
     static fetchOverride(urlStr)
@@ -60,7 +60,6 @@ export class TextToSpeech
 // Assign static property and static method at the end
 TextToSpeech.PIPER_HUGGINGFACE_BASE = "https://huggingface.co/rhasspy/piper-voices/resolve/main/";
 TextToSpeech.PIPER_LOCAL_CODE_PATH = "./third-parties/piper-tts-web";
-TextToSpeech.PDFJS_LOCAL_CODE_PATH = "./third-parties/pdf.js/v5.3.93";
 TextToSpeech.PIPER_LOCAL_MODEL_PATH = "./resources/tts_models";
 TextToSpeech.PIPER_VOICE = "fr_FR-siwis-medium";
 
