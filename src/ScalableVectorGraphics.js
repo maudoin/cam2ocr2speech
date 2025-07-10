@@ -25,17 +25,6 @@ export class ScalableVectorGraphics
         svgElement.setAttribute('viewBox', `0 0 ${originalWidth} ${originalHeight}`);
         svgElement.setAttribute('preserveAspectRatio', 'xMidYMin meet');
 
-        // const rect   = document.createElementNS(ScalableVectorGraphics.NS, 'rect');
-        // rect.setAttribute('x',              0);
-        // rect.setAttribute('y',              0);
-        // rect.setAttribute('width',          originalWidth);
-        // rect.setAttribute('height',         originalHeight);
-        // rect.setAttribute('fill',           'rgba(255,0,0,0.2)');      // 20% red fill
-        // rect.setAttribute('stroke',         'rgba(255,0,0,0.8)');      // 80% red border
-        // rect.setAttribute('stroke-width',   20);
-        // rect.setAttribute('vector-effect',  'non-scaling-stroke');
-        // svgElement.appendChild(rect);
-
         // Draw polygon
         const poly = document.createElementNS(ScalableVectorGraphics.NS, "polygon");
         poly.setAttribute("points", points.map(p => `${p.x},${p.y}`).join(" "));
