@@ -1,6 +1,6 @@
 {
   "name": "cam2ocr2speech",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "main": "main.js",
   "scripts": {
     "start": "electron ."
