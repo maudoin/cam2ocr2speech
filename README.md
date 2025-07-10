@@ -42,9 +42,9 @@ This application supports individuals with "dys" disorders (e.g., dyslexia, dysp
 - 🧠 The application is developed in **JavaScript** and uses **Electron** to deliver a native desktop experience.
 - 🔍 **Tesseract v6.0.1** for Optical Character Recognition (OCR)
   [GitHub - Tesseract OCR](https://github.com/tesseract-ocr/tesseract)
-- 🗣️ **piper-tts-web** for Text-to-Speech (TTS)
+- 🗣️ **piper-tts-web (7c4b54d)** for Text-to-Speech (TTS)
   [GitHub - Piper TTS Web](https://github.com/Mintplex-Labs/piper-tts-web)
 - 📄 **pdf.js v5.3.93** by Mozilla for PDF rendering and editing
   [GitHub - Mozilla PDF.js](https://github.com/mozilla/pdf.js)
-- 🖼️ **OpenCV.js v4.0** for image processing and contour detection
-  [GitHub - opencv-js](https://github.com/TechStark/opencv-js)
+- 🖼️ **openCV.js v4.0** for image processing and contour detection
+  [docs.opencv.org](https://docs.opencv.org/4.x/d0/d84/tutorial_js_usage.html)
