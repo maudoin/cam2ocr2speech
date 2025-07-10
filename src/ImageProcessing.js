@@ -133,13 +133,53 @@ export class ImageProcessing
         return contourPoints;
     }
 
+    static sortPointClockwiseFromTopLeft(points)
+    {
+        // Compute squared distance to (0, 0)
+        const getSquaredDistanceToOrigin = p => p.x * p.x + p.y * p.y;
+        // Find the top-left point : closest to (0, 0)
+        const topLeft = points.reduce((acc, p) =>
+            getSquaredDistanceToOrigin(p) < getSquaredDistanceToOrigin(acc) ? p : acc);
+
+        const barycenter = points.reduce(
+            (acc, p) => ({
+                x: acc.x + p.x / points.length,
+                y: acc.y + p.y / points.length
+            }),
+            { x: 0, y: 0 });
+
+        // Add Clockwise Angle from barycenter of each point
+        // Compute angle from middle left location (180°)
+        // Subtract tan restult because we want clockwise
+        const pointsWithAndgle = points.map(p => ({
+            ...p,
+            angle: 180 - 180*Math.atan2(p.y - barycenter.y, p.x - barycenter.x)/Math.PI
+        }));
+        // Sort by Angle
+        const sortedPoints = pointsWithAndgle.sort((a, b) => b.angle - a.angle);
+
+        const topLeftIndex = sortedPoints.findIndex(
+            p => p.x === topLeft.x && p.y === topLeft.y
+        );
+
+        // Spread to combine points from topLeftIndex to the point right before topLeftIndex
+        const pointsFromTopLeft = [
+            // Take all points from topLeftIndex to the end of the array.
+            ...sortedPoints.slice(topLeftIndex),
+            // Take all points from the start of the array up to (but not including) topLeftIndex
+            ...sortedPoints.slice(0, topLeftIndex)
+        ];
+        return pointsFromTopLeft;
+    }
 
     // apply detected skewed sheet to the original image to get a straightened image
     // canvas: input canvas element with the image to be straightened
     // pts: array of 4 cv.Points in order [top-left, top-right, bottom-right, bottom-left]
     // return opencv image Mat instance of the straightened image
-    static fourPointTransform(canvas, pts)
+    static fourPointTransform(canvas, points)
     {
+        const pts = ImageProcessing.sortPointClockwiseFromTopLeft(points);
+
         // Compute width and height of the new image
         const widthA = Math.hypot(pts[2].x - pts[3].x, pts[2].y - pts[3].y);
         const widthB = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
