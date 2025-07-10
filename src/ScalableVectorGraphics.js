@@ -22,8 +22,8 @@ export class ScalableVectorGraphics
     {
         svgElement.innerHTML = ""; // Clear previous
 
-        svgElement.setAttribute('viewBox', `0 0 ${originalWidth} ${originalHeight}`);
-        svgElement.setAttribute('preserveAspectRatio', 'xMidYMin meet');
+        svgElement.setAttribute("viewBox", `0 0 ${originalWidth} ${originalHeight}`);
+        svgElement.setAttribute("preserveAspectRatio", "xMidYMin meet");
 
         // Draw polygon
         const poly = document.createElementNS(ScalableVectorGraphics.NS, "polygon");
@@ -93,4 +93,4 @@ export class ScalableVectorGraphics
     }
 }
 
-ScalableVectorGraphics.NS = 'http://www.w3.org/2000/svg';
+ScalableVectorGraphics.NS = "http://www.w3.org/2000/svg";

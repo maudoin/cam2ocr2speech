@@ -82,8 +82,8 @@ function enableActions()
 function switchToWebcamMode()
 {
   // toolbar update
-  imagePreview.classList.remove('activeMode');
-  webcamPreview.classList.add('activeMode');
+  imagePreview.classList.remove("activeMode");
+  webcamPreview.classList.add("activeMode");
   webcamSelect.style.display = "block";
   webcam2Img.style.display = "block";
   webcam2Pdf.style.display = "block";
@@ -104,8 +104,8 @@ function switchToWebcamMode()
 function switchToImagePreviewMode()
 {
   // toolbar update
-  imagePreview.classList.add('activeMode');
-  webcamPreview.classList.remove('activeMode');
+  imagePreview.classList.add("activeMode");
+  webcamPreview.classList.remove("activeMode");
   webcamSelect.style.display = "none";
   webcam2Img.style.display = "none";
   webcam2Pdf.style.display = "none";
