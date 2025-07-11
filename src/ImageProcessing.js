@@ -189,7 +189,7 @@ export class ImageProcessing
         const heightB = Math.hypot(pts[0].x - pts[3].x, pts[0].y - pts[3].y);
         const maxHeight = Math.max(heightA, heightB);
 
-        // Destination points for warped image
+        // Destination points for warped image (clockwise from top left)
         const dstPts = cv.matFromArray(4, 1, cv.CV_32FC2, [
             0, 0,
             maxWidth - 1, 0,
@@ -245,6 +245,120 @@ export class ImageProcessing
         const ctx = canvas.getContext("2d");
         ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
         ctx.drawImage(tempCanvas, 0, 0);
+    }
+
+    static prepareStitch(targetCanvas)
+    {
+
+      const orb = new cv.ORB(1000, 2, 8);
+      //im1 is the reference image we are trying to align
+      const im = cv.imread(targetCanvas, cv.IMREAD_GRAYSCALE);
+
+      // Variables to store keypoints and descriptors
+      let refKeypoints = new cv.KeyPointVector();
+      let refDescriptors = new cv.Mat();
+
+      // Detect ORB features and compute descriptors.
+      const mask = new cv.Mat();
+      orb.detectAndCompute(im, mask, refKeypoints, refDescriptors);
+      mask.delete();
+      im.delete();
+
+      return {orb:orb, refKeypoints:refKeypoints, refDescriptors: refDescriptors};
+    }
+
+    static stitch(stitcher, targetCanvas, sourceToAdd)
+    {
+
+        const addedKeypoints = new cv.KeyPointVector();
+        const addedDescriptors = new cv.Mat();
+
+        const mask = new cv.Mat();
+        const addedIm = cv.imread(sourceToAdd, cv.IMREAD_GRAYSCALE);
+        // 23.2% of total compute time
+        stitcher.orb.detectAndCompute(addedIm, mask, addedKeypoints, addedDescriptors);
+        mask.delete();
+
+        // Match features.
+        const bf = new cv.BFMatcher(cv.NORM_HAMMING, true);
+        const matches = new cv.DMatchVector();
+        // 47.8% of total compute time
+        bf.match(stitcher.refDescriptors, addedDescriptors, matches);
+        bf.delete();
+
+        // Suppose you have multiple DMatchVector objects
+
+        // Sort matches by score
+        const goodMatches = new cv.DMatchVector();
+        const refPoints = [];
+        const addedPoints = [];
+        for (let i = 0; i < matches.size(); i++) {
+            const match = matches.get(i);
+            if (match.distance < 50) {
+                goodMatches.push_back(match);
+                refPoints.push(stitcher.refKeypoints.get(match.queryIdx).pt.x);
+                refPoints.push(stitcher.refKeypoints.get(match.queryIdx).pt.y);
+                addedPoints.push(addedKeypoints.get(match.trainIdx).pt.x);
+                addedPoints.push(addedKeypoints.get(match.trainIdx).pt.y);
+            }
+        }
+
+        const refIm = cv.imread(targetCanvas);
+        const matchesIm = new cv.Mat();
+        cv.drawMatches(refIm,stitcher.refKeypoints,addedIm,addedKeypoints,goodMatches, matchesIm);
+        goodMatches.delete();
+
+        // const FLANN_INDEX_KDTREE = 0
+        // const index_params = {algorithm : FLANN_INDEX_KDTREE, trees : 5};
+        // const search_params = {checks:50};
+        // const flann = new cv.FlannBasedMatcher(index_params,search_params);
+        // const matchesV = flann.knnMatch(stitcher.refDescriptors,addedDescriptors,2);
+        // cv.drawMatchesKnn(refIm,stitcher.refKeypoints,addedIm,addedKeypoints,matchesV, matchesIm);
+
+        const viewCanvas = document.createElement("canvas");
+        viewCanvas.width = matchesIm.rows;
+        viewCanvas.height = matchesIm.cols;
+        document.getElementById("preview").appendChild(viewCanvas);
+        cv.imshow(viewCanvas, matchesIm);
+        matchesIm.delete();
+
+        addedKeypoints.delete();
+        addedDescriptors.delete();
+        addedIm.delete();
+
+        // Find homography
+        const refMat = cv.matFromArray(refPoints.length, 2, cv.CV_32F, refPoints);
+        const addedMat = cv.matFromArray(addedPoints.length, 2, cv.CV_32F, addedPoints);
+        const homography = cv.findHomography(addedMat, refMat, cv.RANSAC);
+        refMat.delete();
+        addedMat.delete();
+
+        // Use homography to warp added image
+        const warpedIm = new cv.Mat();
+        const colorAddedIm = cv.imread(sourceToAdd);
+        const dsize = warpedIm.size();//new cv.Size(src1.cols + src2.cols, Math.max(src1.rows, src2.rows));
+        cv.warpPerspective(colorAddedIm, warpedIm, homography, dsize);
+        homography.delete();
+        colorAddedIm.delete();
+
+        // add to target canvas
+
+        // Ensure overlay has 4 channels (RGBA)
+        if (warpedIm.channels() !== 4) {
+            cv.cvtColor(warpedIm, warpedIm, cv.COLOR_RGB2RGBA);
+        }
+
+        // Split channels to extract alpha
+        let rgba = new cv.MatVector();
+        cv.split(warpedIm, rgba);
+        let alpha = rgba.get(3); // Alpha channel becomes the mask
+
+        // Use copyTo with the alpha mask
+        warpedIm.copyTo(refIm, alpha);
+        warpedIm.delete();
+
+        cv.imshow(targetCanvas, refIm);
+
     }
 }
 // Assign static property and static method at the end
