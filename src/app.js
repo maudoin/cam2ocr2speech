@@ -9,34 +9,43 @@ import { ScalableVectorGraphics } from "./ScalableVectorGraphics.js";
 Utils.fetchUrlOverride((urlStr)=> PdfView.fetchOverride(urlStr) || TextToSpeech.fetchOverride(urlStr));
 
 // import image processing functions & enable actions ony when ready
+let stitcher = null;
 ImageProcessing.asyncImport().then(() => enableActions());
 
 
-// prepare document elements access
-const preview = document.getElementById("preview");
-const pageContainer = document.getElementById("pageContainer");
+// webcam control elements
 const webcamSelect = document.getElementById("webcamSelect");
 const imagePreview = document.getElementById("imagePreview");
 const webcamPreview = document.getElementById("webcamPreview");
-const video = document.getElementById("video");
 const webcam2Img = document.getElementById("webcam2Img");
+const stitchWebcamCapture = document.getElementById("stitchWebcamCapture");
 const webcam2Pdf = document.getElementById("webcam2Pdf");
-const img2PdfBtn = document.getElementById("img2PdfBtn");
-const pdfToWebcamPreview = document.getElementById("pdfToWebcamPreview");
-const pdfToImagePreview = document.getElementById("pdfToImagePreview");
-const openPdfBtn = document.getElementById("openPdfBtn");
-const pdfOpenButton = document.getElementById("pdfOpenButton");
-const openImage = document.getElementById("openImage");
-const rotateImgClockwise = document.getElementById("rotateImgClockwise");
-const rotateImgCounterClockwise = document.getElementById("rotateImgCounterClockwise");
-const showPdfBtn = document.getElementById("showPdfBtn");
-const canvasInput = document.getElementById("canvasInput");
-const ctxInput = canvasInput.getContext("2d");
-const svgOverlay = document.getElementById("svgOverlay");
 
-const voiceOption = document.getElementById("voiceOption");
+// image control elements
+const openImage = document.getElementById("openImage");
 const deskewImage = document.getElementById("deskewImage");
 const deskewImageLabel = document.getElementById("deskewImageLabel");
+const rotateImgClockwise = document.getElementById("rotateImgClockwise");
+const rotateImgCounterClockwise = document.getElementById("rotateImgCounterClockwise");
+const img2PdfBtn = document.getElementById("img2PdfBtn");
+
+// pdf control elements
+const showPdfBtn = document.getElementById("showPdfBtn");
+const pdfOpenButton = document.getElementById("pdfOpenButton");
+const openPdfBtn = document.getElementById("openPdfBtn");
+const pdfToWebcamPreview = document.getElementById("pdfToWebcamPreview");
+const pdfToImagePreview = document.getElementById("pdfToImagePreview");
+const voiceOption = document.getElementById("voiceOption");
+
+// parent modes
+const preview = document.getElementById("preview");
+const pageContainer = document.getElementById("pageContainer");
+
+// preview sub modes
+const video = document.getElementById("video");
+const svgOverlay = document.getElementById("svgOverlay");
+const canvasInput = document.getElementById("canvasInput");
+const ctxInput = canvasInput.getContext("2d");
 
 
 Webcam.install(webcamSelect, video);
@@ -52,6 +61,7 @@ pdfToImagePreview.onclick = switchToImagePreviewMode;
 showPdfBtn.onclick = switchToPdfMode;
 openPdfBtn.onclick = selectPdf;
 pdfOpenButton.onclick = selectPdf;
+stitchWebcamCapture.onclick = stitchCapture;
 rotateImgClockwise.onclick = rotateClockwise;
 rotateImgCounterClockwise.onclick = rotateCounterClockwise;
 document.addEventListener("mouseup", speakSelectedText);
@@ -86,6 +96,7 @@ function switchToWebcamMode()
   webcamPreview.classList.add("activeMode");
   webcamSelect.style.display = "block";
   webcam2Img.style.display = "block";
+  stitchWebcamCapture.style.display = stitcher ? "block" : "none";
   webcam2Pdf.style.display = "block";
   img2PdfBtn.style.display = "none";
   deskewImageLabel.style.display = "none";
@@ -108,6 +119,7 @@ function switchToImagePreviewMode()
   webcamPreview.classList.remove("activeMode");
   webcamSelect.style.display = "none";
   webcam2Img.style.display = "none";
+  stitchWebcamCapture.style.display = "none";
   webcam2Pdf.style.display = "none";
   img2PdfBtn.style.display = "block";
   deskewImageLabel.style.display = "block";
@@ -135,6 +147,8 @@ function findImageContour()
 {
   currentContourPoints = (deskewImage.checked)?ImageProcessing.detectContourPoints(canvasInput):[];
   ScalableVectorGraphics.setupEditablePoints(svgOverlay, currentContourPoints, canvasInput.width, canvasInput.height);
+
+  stitcher = ImageProcessing.prepareStitch(canvasInput);
 }
 
 // use Node.js or Brwoser dialog
@@ -207,6 +221,20 @@ async function webcamCaptureToPdf()
 
   findImageContour();
   imageToPdf();
+}
+
+function stitchCapture()
+{
+  // video to tmp canvas
+  const tempCanvas = document.createElement("canvas");
+  tempCanvas.width = video.videoWidth;
+  tempCanvas.height = video.videoHeight;
+  const tempCtx = tempCanvas.getContext("2d");
+  tempCtx.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
+
+  ImageProcessing.stitch(stitcher, canvasInput, tempCanvas);
+
+  switchToImagePreviewMode();
 }
 
 function rotateClockwise()
