@@ -46,7 +46,6 @@ const pageContainer = document.getElementById("pageContainer");
 const video = document.getElementById("video");
 const svgOverlay = document.getElementById("svgOverlay");
 const canvasInput = document.getElementById("canvasInput");
-const ctxInput = canvasInput.getContext("2d");
 
 
 Webcam.install(webcamSelect, video, webcamFocus);
@@ -180,6 +179,7 @@ function selectImage()
         canvasInput.width = img.naturalWidth;
         canvasInput.height = img.naturalHeight;
         // Draw the image to fill the entire canvas
+        const ctxInput = canvasInput.getContext("2d");
         ctxInput.drawImage(img, 0, 0, canvasInput.width, canvasInput.height);
 
         findImageContour();
@@ -207,9 +207,7 @@ function selectPdf()
 // webcam to canevas capture
 async function webcamCaptureToImage()
 {
-  canvasInput.width = video.videoWidth;
-  canvasInput.height = video.videoHeight;
-  ctxInput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
+  Webcam.captureToCanevas(video, canvasInput);
 
   findImageContour();
   switchToImagePreviewMode();
@@ -218,9 +216,7 @@ async function webcamCaptureToImage()
 // webcam to canevas capture
 async function webcamCaptureToPdf()
 {
-  canvasInput.width = video.videoWidth;
-  canvasInput.height = video.videoHeight;
-  ctxInput.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
+  Webcam.captureToCanevas(video, canvasInput);
 
   findImageContour();
   imageToPdf();

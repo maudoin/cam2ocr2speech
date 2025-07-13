@@ -73,4 +73,27 @@ export class Webcam
         await navigator.mediaDevices.getUserMedia(constraints).
             then((mediastream)=>{Webcam.gotMedia(mediastream, video, focusRange)});
     }
+
+    static captureToCanevas(video, targetCanvas, numFramesToAverage=5)
+    {
+        const ctxInput = targetCanvas.getContext("2d", { willReadFrequently: true });
+        targetCanvas.width = video.videoWidth;
+        targetCanvas.height = video.videoHeight;
+        ctxInput.drawImage(video, 0, 0, targetCanvas.width, targetCanvas.height);
+        let result;
+        if (numFramesToAverage>1)
+        {
+            result = cv.imread(targetCanvas);
+        }
+        for (let i = 1 ; i < numFramesToAverage ; ++i)
+        {
+            ctxInput.drawImage(video, 0, 0, targetCanvas.width, targetCanvas.height);
+            let mat = cv.imread(targetCanvas);
+            cv.addWeighted(result, 0.5, mat, 0.5, 0, result);
+        }
+        if (numFramesToAverage>1)
+        {
+            cv.imshow(targetCanvas, result);
+        }
+    }
 }
