@@ -15,6 +15,7 @@ ImageProcessing.asyncImport().then(() => enableActions());
 
 // webcam control elements
 const webcamSelect = document.getElementById("webcamSelect");
+const webcamFocus = document.getElementById("webcamFocus");
 const imagePreview = document.getElementById("imagePreview");
 const webcamPreview = document.getElementById("webcamPreview");
 const webcam2Img = document.getElementById("webcam2Img");
@@ -48,7 +49,7 @@ const canvasInput = document.getElementById("canvasInput");
 const ctxInput = canvasInput.getContext("2d");
 
 
-Webcam.install(webcamSelect, video);
+Webcam.install(webcamSelect, video, webcamFocus);
 let currentContourPoints = [];
 const tts = new TextToSpeech();
 
@@ -95,6 +96,7 @@ function switchToWebcamMode()
   imagePreview.classList.remove("activeMode");
   webcamPreview.classList.add("activeMode");
   webcamSelect.style.display = "block";
+  webcamFocus.style.display = "block";
   webcam2Img.style.display = "block";
   stitchWebcamCapture.style.display = stitcher ? "block" : "none";
   webcam2Pdf.style.display = "block";
@@ -118,6 +120,7 @@ function switchToImagePreviewMode()
   imagePreview.classList.add("activeMode");
   webcamPreview.classList.remove("activeMode");
   webcamSelect.style.display = "none";
+  webcamFocus.style.display = "none";
   webcam2Img.style.display = "none";
   stitchWebcamCapture.style.display = "none";
   webcam2Pdf.style.display = "none";
