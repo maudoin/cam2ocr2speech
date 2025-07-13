@@ -67,7 +67,11 @@ export class Webcam
     static async startStream(video, focusRange, deviceId)
     {
         const constraints = {
-            video: { deviceId: { exact: deviceId } }
+            video: {
+                deviceId: { exact: deviceId } ,
+                width: { ideal: 3840 },
+                height: { ideal: 2160 }
+            }
         };
 
         await navigator.mediaDevices.getUserMedia(constraints).
