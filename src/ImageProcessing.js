@@ -267,9 +267,9 @@ export class ImageProcessing
       return {orb:orb, refKeypoints:refKeypoints, refDescriptors: refDescriptors};
     }
 
+    // given a prepared stiching process, update a target canvas with a new (finer) canvas to overlay
     static stitch(stitcher, targetCanvas, sourceToAdd)
     {
-
         const addedKeypoints = new cv.KeyPointVector();
         const addedDescriptors = new cv.Mat();
 
@@ -303,7 +303,7 @@ export class ImageProcessing
             }
         }
 
-        const refIm = cv.imread(targetCanvas);
+        let refIm = cv.imread(targetCanvas);
         const matchesIm = new cv.Mat();
         cv.drawMatches(refIm,stitcher.refKeypoints,addedIm,addedKeypoints,goodMatches, matchesIm);
         goodMatches.delete();
@@ -318,6 +318,11 @@ export class ImageProcessing
         const viewCanvas = document.createElement("canvas");
         viewCanvas.width = matchesIm.rows;
         viewCanvas.height = matchesIm.cols;
+        viewCanvas.id = "stiching";
+        const existingStichingCanvas = document.getElementById(viewCanvas.id);
+        if (existingStichingCanvas && existingStichingCanvas.parentElement?.id === "preview") {
+            existingStichingCanvas.remove();
+        }
         document.getElementById("preview").appendChild(viewCanvas);
         cv.imshow(viewCanvas, matchesIm);
         matchesIm.delete();
@@ -333,32 +338,145 @@ export class ImageProcessing
         refMat.delete();
         addedMat.delete();
 
-        // Use homography to warp added image
-        const warpedIm = new cv.Mat();
-        const colorAddedIm = cv.imread(sourceToAdd);
-        const dsize = warpedIm.size();//new cv.Size(src1.cols + src2.cols, Math.max(src1.rows, src2.rows));
-        cv.warpPerspective(colorAddedIm, warpedIm, homography, dsize);
-        homography.delete();
-        colorAddedIm.delete();
+        const transformedSourcePolygon = ImageProcessing.transformRect(sourceToAdd.width, sourceToAdd.height, homography);
+        const transformedSourcePolygonArea = ImageProcessing.polygonArea(transformedSourcePolygon) ;
+        const areaRatio = transformedSourcePolygonArea / targetCanvas.width * targetCanvas.height;
+        const areaThreshold = 0.1;
+        // isFractional rectangle?
+        // if (( areaRatio > areaThreshold /*&& areaRatio < (1.+areaThreshold)*/) &&
+        //     ImageProcessing.isRectLikeQuadrilateral(transformedSourcePolygon))
+        {
+            // we assume both the consecutively stiched images have all the same size
+            // we want the added image resolution to be preseved so we have to scale the target if
+            // the transformed polygone is smaller than the added image
+            const requiredTargetScaling = Math.sqrt((sourceToAdd.width * sourceToAdd.height) / transformedSourcePolygonArea);
+            if (requiredTargetScaling > (1+areaThreshold))
+            {
+                console.log("Scaling target canvas image by "+requiredTargetScaling);
+            //     // Scale homography from old size to normalized
+            //     let scaleDown = cv.matFromArray(3, 3, cv.CV_64F, [
+            //     1 / targetCanvas.width, 0, 0,
+            //     0, 1 / targetCanvas.height, 0,
+            //     0, 0, 1
+            //     ]);
+            //     let normalizeHomography = new cv.Mat();
+            //     cv.gemm(homography, scaleDown, 1, new cv.Mat(), 0, normalizeHomography);
+            //     scaleDown.delete();
 
-        // add to target canvas
+                // // scale the target image
+                // // targetCanvas.width = targetCanvas.width*requiredTargetScaling;
+                // // targetCanvas.height = targetCanvas.height*requiredTargetScaling;
+                // let dst = new cv.Mat();
+                // let newSize = new cv.Size(targetCanvas.width*requiredTargetScaling, targetCanvas.height*requiredTargetScaling);
+                // cv.resize(refIm, dst, newSize, 0, 0, cv.INTER_LINEAR);
+                // // make refIm point to dst
+                // refIm.delete();
+                // refIm = dst;
 
-        // Ensure overlay has 4 channels (RGBA)
-        if (warpedIm.channels() !== 4) {
-            cv.cvtColor(warpedIm, warpedIm, cv.COLOR_RGB2RGBA);
+            //     // Scale up to new canvas
+            //     let scaleUp = cv.matFromArray(3, 3, cv.CV_64F, [
+            //     targetCanvas.width, 0, 0,
+            //     0, targetCanvas.height, 0,
+            //     0, 0, 1
+            //     ]);
+            //     cv.gemm(scaleUp, normalizeHomography, 1, new cv.Mat(), 0, homography);
+            //     scaleUp.delete();
+            }
+            // Use homography to warp added image
+            const warpedIm = new cv.Mat();
+            const colorAddedIm = cv.imread(sourceToAdd);
+            const dsize = warpedIm.size();
+            cv.warpPerspective(colorAddedIm, warpedIm, homography, dsize);
+            colorAddedIm.delete();
+
+            // add to target canvas
+
+            // Ensure overlay has 4 channels (RGBA)
+            if (warpedIm.channels() !== 4) {
+                cv.cvtColor(warpedIm, warpedIm, cv.COLOR_RGB2RGBA);
+            }
+
+            // Split channels to extract alpha
+            let rgba = new cv.MatVector();
+            cv.split(warpedIm, rgba);
+            let alpha = rgba.get(3); // Alpha channel becomes the mask
+
+            // Use copyTo with the alpha mask
+            warpedIm.copyTo(refIm, alpha);
+            warpedIm.delete();
+
+            cv.imshow(targetCanvas, refIm);
         }
+        // else
+        {
+            console.log("ignoring input image for stiching, could not find proper matches for transformation:"+
+                ImageProcessing.angleBetween(transformedSourcePolygon[3], transformedSourcePolygon[0], transformedSourcePolygon[1])+","+
+                ImageProcessing.angleBetween(transformedSourcePolygon[0], transformedSourcePolygon[1], transformedSourcePolygon[2])+","+
+                ImageProcessing.angleBetween(transformedSourcePolygon[1], transformedSourcePolygon[2], transformedSourcePolygon[3])+","+
+                ImageProcessing.angleBetween(transformedSourcePolygon[2], transformedSourcePolygon[3], transformedSourcePolygon[0])+"; "+ 
+                " transformedSourcePolygonArea:"+transformedSourcePolygonArea +
+                " targetArea:" + (targetCanvas.width * targetCanvas.height)
+            );
+        }
+        homography.delete();
+    }
 
-        // Split channels to extract alpha
-        let rgba = new cv.MatVector();
-        cv.split(warpedIm, rgba);
-        let alpha = rgba.get(3); // Alpha channel becomes the mask
+    // use shoelace formula to compute a polygon area given it's points
+    static polygonArea(points) {
+        let area = 0;
+        for (let i = 0; i < points.length; i++) {
+            const j = (i + 1) % points.length;
+            area += points[i].x * points[j].y - points[j].x * points[i].y;
+        }
+        return Math.abs(area / 2);
+    }
 
-        // Use copyTo with the alpha mask
-        warpedIm.copyTo(refIm, alpha);
-        warpedIm.delete();
+    // compute angle between two polygon edges defines by 3 points (2nd is common vertex)
+    static angleBetween(p1, p2, p3) {
+        const v1 = { x: p2.x - p1.x, y: p2.y - p1.y };
+        const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
+        const dot = v1.x * v2.x + v1.y * v2.y;
+        const mag1 = Math.sqrt(v1.x**2 + v1.y**2);
+        const mag2 = Math.sqrt(v2.x**2 + v2.y**2);
+        const cosTheta = dot / (mag1 * mag2);
+        const angle = Math.acos(cosTheta) * (180 / Math.PI);
+        return angle;
+    }
 
-        cv.imshow(targetCanvas, refIm);
+    // compute polygon points of a given rect transformed by an homography
+    static transformRect(w, h, homography)
+    {
+        const srcPoints = cv.matFromArray(4, 1, cv.CV_32FC2, [
+            0, 0,
+            w - 1, 0,
+            w - 1, h - 1,
+            0, h - 1
+        ]);
+        let dstPoints = new cv.Mat();
+        cv.perspectiveTransform(srcPoints, dstPoints, homography);
+        let transformed = [];
+        for (let i = 0; i < 4; i++) {
+            transformed.push({
+                x: dstPoints.data32F[i * 2],
+                y: dstPoints.data32F[i * 2 + 1]
+            });
+        }
+        srcPoints.delete();
+        dstPoints.delete();
 
+        return transformed;
+    }
+
+    // tell if the input quadrilateral points are defining a rectangle
+    static isRectLikeQuadrilateral(quadrilateral, anglesThreshold = 10)
+    {
+        const angles = [
+            ImageProcessing.angleBetween(quadrilateral[3], quadrilateral[0], quadrilateral[1]),
+            ImageProcessing.angleBetween(quadrilateral[0], quadrilateral[1], quadrilateral[2]),
+            ImageProcessing.angleBetween(quadrilateral[1], quadrilateral[2], quadrilateral[3]),
+            ImageProcessing.angleBetween(quadrilateral[2], quadrilateral[3], quadrilateral[0])
+        ];
+        return angles.every(a => Math.abs(a - 90) < anglesThreshold);
     }
 }
 // Assign static property and static method at the end
