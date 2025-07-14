@@ -343,8 +343,8 @@ export class ImageProcessing
         const areaRatio = transformedSourcePolygonArea / targetCanvas.width * targetCanvas.height;
         const areaThreshold = 0.1;
         // isFractional rectangle?
-        // if (( areaRatio > areaThreshold /*&& areaRatio < (1.+areaThreshold)*/) &&
-        //     ImageProcessing.isRectLikeQuadrilateral(transformedSourcePolygon))
+        if (( areaRatio <0.7/*> areaThreshold /*&& areaRatio < (1.+areaThreshold)*/) &&
+            ImageProcessing.isRectLikeQuadrilateral(transformedSourcePolygon))
         {
             // we assume both the consecutively stiched images have all the same size
             // we want the added image resolution to be preseved so we have to scale the target if
@@ -415,7 +415,8 @@ export class ImageProcessing
                 ImageProcessing.angleBetween(transformedSourcePolygon[1], transformedSourcePolygon[2], transformedSourcePolygon[3])+","+
                 ImageProcessing.angleBetween(transformedSourcePolygon[2], transformedSourcePolygon[3], transformedSourcePolygon[0])+"; "+ 
                 " transformedSourcePolygonArea:"+transformedSourcePolygonArea +
-                " targetArea:" + (targetCanvas.width * targetCanvas.height)
+                " targetArea:" + (targetCanvas.width * targetCanvas.height) +
+                " areaRatio:" + areaRatio
             );
         }
         homography.delete();
@@ -497,7 +498,6 @@ export class ImageProcessing
         detector.detectMarkers(image, corners, ids);
 
         let markers = [];
-        // Draw each marker manually
         for (let i = 0; i < corners.size(); i++) {
             let corner = corners.get(i);
             let id = ids.intPtr(i)[0];
@@ -507,17 +507,26 @@ export class ImageProcessing
                 let x = corner.data32F[j * 2];
                 let y = corner.data32F[j * 2 + 1];
                 markerCorners.push({x:x, y:y});
-                // Draw marker border
-                let pt1 = new cv.Point(corner.data32F[j * 2], corner.data32F[j * 2 + 1]);
-                let pt2 = new cv.Point(corner.data32F[((j + 1) % 4) * 2], corner.data32F[((j + 1) % 4) * 2 + 1]);
-                cv.line(image, pt1, pt2, new cv.Scalar(0, 0, 255), 2);
             }
-            markers.push({ id: id, corners: markerCorners });
-
-            // Draw marker ID
             let centerX = (corner.data32F[0] + corner.data32F[2] + corner.data32F[4] + corner.data32F[6]) / 4;
             let centerY = (corner.data32F[1] + corner.data32F[3] + corner.data32F[5] + corner.data32F[7]) / 4;
-            cv.putText(image, id.toString(), new cv.Point(centerX, centerY), cv.FONT_HERSHEY_SIMPLEX, 0.5, new cv.Scalar(0, 0, 255), 2);
+            markers.push({ id: id, corners: markerCorners, x:centerX, y:centerY });
+
+        }
+        const sortedMarkers = ImageProcessing.sortPointClockwiseFromTopLeft(markers);
+        // Draw each marker manually
+        for (let i = 0; i < sortedMarkers.length; i++) {
+            const m = sortedMarkers[i];
+            const corners = m.corners;
+            for (let j = 0; j < corners.length; j++) {
+                // Draw marker border
+                let pt1 = new cv.Point(corners[j].x, corners[j].y);
+                const other = ((j + 1) % corners.length);
+                let pt2 = new cv.Point(corners[other].x, corners[other].y);
+                cv.line(image, pt1, pt2, new cv.Scalar(0, 0, 255), 2);
+            }
+            // Draw marker ID
+            cv.putText(image, i + ":" + m.id.toString(), new cv.Point(m.x, m.y), cv.FONT_HERSHEY_SIMPLEX, 0.5, new cv.Scalar(0, 0, 255), 2);
         }
 
         cv.imshow(canvas, image);
