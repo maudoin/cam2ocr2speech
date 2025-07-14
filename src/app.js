@@ -293,16 +293,19 @@ function stitchCapture()
       const cvImageMat = ImageProcessing.fourPointTransform(imgMat, currentContourPointsAndIds.contourPoints);
       ImageProcessing.addCvMatToCanvas(cvImageMat, canvasInput);
       cvImageMat.delete();
+
+      arucoFirstStepScanMarkers = null;
+      switchToImagePreviewMode();
     }
   }
   else if (stitcher)
   {
     // generic pattern based stiching, better for images than text...
     ImageProcessing.stitch(stitcher, canvasInput, tempCanvas);
+    switchToImagePreviewMode();
   }
   imgMat.delete();
 
-  switchToImagePreviewMode();
 }
 
 function rotateClockwise()
