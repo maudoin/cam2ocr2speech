@@ -532,39 +532,53 @@ export class ImageProcessing
         }
     }
 
-    // Convert cv.Mat to ImageData
-    static matToImageData(mat) {
-        let rgbaMat = new cv.Mat();
-        if (mat.channels() === 1) {
-            cv.cvtColor(mat, rgbaMat, cv.COLOR_GRAY2RGBA);
-        } else if (mat.channels() === 3) {
-            cv.cvtColor(mat, rgbaMat, cv.COLOR_RGB2RGBA);
-        } else {
-            rgbaMat = mat.clone();
-        }
-
-        let imgData = new ImageData(
-            new Uint8ClampedArray(rgbaMat.data),
-            rgbaMat.cols,
-            rgbaMat.rows
-        );
-        rgbaMat.delete();
-        return imgData;
-    }
-
-    static addCvMatToCanvas(cvImageMat, canvas)
+    // display newImageMat below in the canvas, enlarging any is needed
+    static addCvMatToCanvas(newImageMat, canvas)
     {
         const ctx = canvas.getContext("2d");
 
-        const originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const addedImageData = ImageProcessing.matToImageData(cvImageMat)
+        // Get canvas content as cv.Mat BEFORE resizing
+        let canvasImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        let canvasMat = cv.matFromImageData(canvasImageData);
 
-        canvasInput.width = Math.max(originalImageData.width, addedImageData.width);
-        canvasInput.height = canvasInput.height+cvImageMat.rows;
+        // Determine target width
+        let targetWidth = Math.max(canvas.width, newImageMat.cols);
+        let scaleCanvas = targetWidth / canvas.width;
+        let scaleNewImage = targetWidth / newImageMat.cols;
 
-        ctx.putImageData(originalImageData, 0, 0);
-        ctx.putImageData(addedImageData, 0, originalImageData.height);
+        // Step 3: Resize both to match target width
+        let resizedCanvasMat = new cv.Mat();
+        cv.resize(canvasMat, resizedCanvasMat, new cv.Size(targetWidth, Math.round(canvas.height * scaleCanvas)));
+
+        let resizedNewImage = new cv.Mat();
+        cv.resize(newImageMat, resizedNewImage, new cv.Size(targetWidth, Math.round(newImageMat.rows * scaleNewImage)));
+
+        // Create final Mat
+        let finalHeight = resizedCanvasMat.rows + resizedNewImage.rows;
+        let finalMat = new cv.Mat();
+        finalMat.create(finalHeight, targetWidth, cv.CV_8UC4);
+
+        // Copy both into finalMat
+        let topROI = finalMat.roi(new cv.Rect(0, 0, targetWidth, resizedCanvasMat.rows));
+        resizedCanvasMat.copyTo(topROI);
+        topROI.delete();
+
+        let bottomROI = finalMat.roi(new cv.Rect(0, resizedCanvasMat.rows, targetWidth, resizedNewImage.rows));
+        resizedNewImage.copyTo(bottomROI);
+        bottomROI.delete();
+
+        // Resize canvas and display
+        canvas.width = targetWidth;
+        canvas.height = finalHeight;
+        cv.imshow(canvas, finalMat);
+
+        // Cleanup
+        canvasMat.delete();
+        resizedCanvasMat.delete();
+        resizedNewImage.delete();
+        finalMat.delete();
     }
+
 }
 // Assign static property and static method at the end
 ImageProcessing.OPENCV_SRC_PATH = "../third-parties/docs.opencv.org/4.x/opencv.js";
