@@ -174,15 +174,17 @@ function markersToContourPoints(markers, topMarkerFromBottom=false)
 // read canvas input and update contour points
 function findImageContour()
 {
-  const markers = ImageProcessing.detectAruco(canvasInput);
+  let imgMat = cv.imread(canvasInput);
+  const markers = ImageProcessing.detectAruco(imgMat);
   const currentContourPointsAndIds = markersToContourPoints(markers);
   if (currentContourPointsAndIds)
   {
     // when aruco markers are detected, we transform it immediately
-    const cvImageMat = ImageProcessing.fourPointTransform(canvasInput, currentContourPointsAndIds.contourPoints);
+    const cvImageMat = ImageProcessing.fourPointTransform(imgMat, currentContourPointsAndIds.contourPoints);
     canvasInput.width = cvImageMat.cols;
     canvasInput.height = cvImageMat.rows;
     cv.imshow(canvasInput, cvImageMat);
+    cvImageMat.delete();
 
     currentContourPoints = [];
     stitcher = null;
@@ -191,12 +193,13 @@ function findImageContour()
   else
   {
     // no aruco markers, use generic image contouring detection
-    currentContourPoints = (deskewImage.checked)?ImageProcessing.detectContourPoints(canvasInput):[];
+    currentContourPoints = (deskewImage.checked)?ImageProcessing.detectContourPoints(imgMat):[];
     ScalableVectorGraphics.setupEditablePoints(svgOverlay, currentContourPoints, canvasInput.width, canvasInput.height);
     // generic pattern based stiching, better for images than text...
-    stitcher = ImageProcessing.prepareStitch(canvasInput);
+    stitcher = ImageProcessing.prepareStitch(imgMat);
     arucoFirstStepScanMarkers = null;
   }
+  imgMat.delete();
 }
 
 // use Node.js or Brwoser dialog
@@ -277,17 +280,19 @@ function stitchCapture()
   const tempCtx = tempCanvas.getContext("2d");
   tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
 
+  let imgMat = cv.imread(tempCanvas);
   if (arucoFirstStepScanMarkers)
   {
-    const markers = ImageProcessing.detectAruco(tempCanvas);
+    const markers = ImageProcessing.detectAruco(imgMat);
     const currentContourPointsAndIds = markersToContourPoints(markers, true);
     if (currentContourPointsAndIds &&
         currentContourPointsAndIds.topLeftId === arucoFirstStepScanMarkers.bottomLeftId &&
         currentContourPointsAndIds.topRightId === arucoFirstStepScanMarkers.bottomRightId )
     {
       // match found: stich at marker location
-      const cvImageMat = ImageProcessing.fourPointTransform(tempCanvas, currentContourPointsAndIds.contourPoints);
+      const cvImageMat = ImageProcessing.fourPointTransform(imgMat, currentContourPointsAndIds.contourPoints);
       ImageProcessing.addCvMatToCanvas(cvImageMat, canvasInput);
+      cvImageMat.delete();
     }
   }
   else if (stitcher)
@@ -295,6 +300,7 @@ function stitchCapture()
     // generic pattern based stiching, better for images than text...
     ImageProcessing.stitch(stitcher, canvasInput, tempCanvas);
   }
+  imgMat.delete();
 
   switchToImagePreviewMode();
 }
@@ -319,12 +325,15 @@ async function imageToPdf()
   let tempCanvas = document.createElement("canvas");
   if (currentContourPoints.length)
   {
-    const cvImageMat = ImageProcessing.fourPointTransform(canvasInput, currentContourPoints);
+    let imgMat = cv.imread(canvasInput);
+    const cvImageMat = ImageProcessing.fourPointTransform(imgMat, currentContourPoints);
+    imgMat.delete();
     // Display the result in a temp canvas
     tempCanvas = document.createElement("canvas");
     tempCanvas.width = cvImageMat.cols;
     tempCanvas.height = cvImageMat.rows;
     cv.imshow(tempCanvas, cvImageMat);
+    cvImageMat.delete();
     processedImg = tempCanvas.toDataURL("image/png");
   }
   else
