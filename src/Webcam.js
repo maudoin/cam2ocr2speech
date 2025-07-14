@@ -78,7 +78,7 @@ export class Webcam
             then((mediastream)=>{Webcam.gotMedia(mediastream, video, focusRange)});
     }
 
-    static captureToCanevas(video, targetCanvas, numFramesToAverage=5)
+    static captureToCanevas(video, targetCanvas, numFramesToAverage=1)
     {
         const ctxInput = targetCanvas.getContext("2d", { willReadFrequently: true });
         targetCanvas.width = video.videoWidth;

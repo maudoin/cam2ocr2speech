@@ -149,6 +149,8 @@ function findImageContour()
 {
   currentContourPoints = (deskewImage.checked)?ImageProcessing.detectContourPoints(canvasInput):[];
   ScalableVectorGraphics.setupEditablePoints(svgOverlay, currentContourPoints, canvasInput.width, canvasInput.height);
+  
+  ImageProcessing.detectAruco(canvasInput);
 
   stitcher = ImageProcessing.prepareStitch(canvasInput);
 }

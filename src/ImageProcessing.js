@@ -478,6 +478,52 @@ export class ImageProcessing
         ];
         return angles.every(a => Math.abs(a - 90) < anglesThreshold);
     }
+
+    // Return found markers in instance like:
+    // [
+    //   { id: 17, corners: [ {x, y}, {x, y}, {x, y}, {x, y} ] },
+    //   ...
+    // ]
+    static detectAruco(canvas)
+    {
+        let dictionary = cv.getPredefinedDictionary(cv.DICT_5X5_100);
+        let detectorParams = new cv.aruco_DetectorParameters();
+        let refineParams = new cv.aruco_RefineParameters(10, 3, true);
+        let detector = new cv.aruco_ArucoDetector(dictionary, detectorParams, refineParams);
+
+        let image = cv.imread(canvas);
+        let corners = new cv.MatVector();
+        let ids = new cv.Mat();
+        detector.detectMarkers(image, corners, ids);
+
+        let markers = [];
+        // Draw each marker manually
+        for (let i = 0; i < corners.size(); i++) {
+            let corner = corners.get(i);
+            let id = ids.intPtr(i)[0];
+
+            let markerCorners = [];
+            for (let j = 0; j < 4; j++) {
+                let x = corner.data32F[j * 2];
+                let y = corner.data32F[j * 2 + 1];
+                markerCorners.push({x:x, y:y});
+                // Draw marker border
+                let pt1 = new cv.Point(corner.data32F[j * 2], corner.data32F[j * 2 + 1]);
+                let pt2 = new cv.Point(corner.data32F[((j + 1) % 4) * 2], corner.data32F[((j + 1) % 4) * 2 + 1]);
+                cv.line(image, pt1, pt2, new cv.Scalar(0, 0, 255), 2);
+            }
+            markers.push({ id: id, corners: markerCorners });
+
+            // Draw marker ID
+            let centerX = (corner.data32F[0] + corner.data32F[2] + corner.data32F[4] + corner.data32F[6]) / 4;
+            let centerY = (corner.data32F[1] + corner.data32F[3] + corner.data32F[5] + corner.data32F[7]) / 4;
+            cv.putText(image, id.toString(), new cv.Point(centerX, centerY), cv.FONT_HERSHEY_SIMPLEX, 0.5, new cv.Scalar(0, 0, 255), 2);
+        }
+
+        cv.imshow(canvas, image);
+        image.delete(); corners.delete(); ids.delete();
+        return markers;
+    }
 }
 // Assign static property and static method at the end
 ImageProcessing.OPENCV_SRC_PATH = "../third-parties/docs.opencv.org/4.x/opencv.js";
