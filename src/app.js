@@ -11,6 +11,7 @@ Utils.fetchUrlOverride((urlStr)=> PdfView.fetchOverride(urlStr) || TextToSpeech.
 // import image processing functions & enable actions ony when ready
 let stitcher = null;
 ImageProcessing.asyncImport().then(() => enableActions());
+let arucoFirstStepScanMarkers = null;
 
 
 // webcam control elements
@@ -97,7 +98,7 @@ function switchToWebcamMode()
   webcamSelect.style.display = "block";
   webcamFocus.style.display = "block";
   webcam2Img.style.display = "block";
-  stitchWebcamCapture.style.display = stitcher ? "block" : "none";
+  stitchWebcamCapture.style.display = (stitcher || arucoFirstStepScanMarkers) ? "block" : "none";
   webcam2Pdf.style.display = "block";
   img2PdfBtn.style.display = "none";
   deskewImageLabel.style.display = "none";
@@ -144,15 +145,58 @@ function switchToPdfMode()
   pageContainer.style.display = "block";
 }
 
+/// {contourPoints : [{x,y},{x,y},{x,y},{x,y}], bottomLeftId:number, bottomRightId:number}
+/// topMarkerFromBottom: if true, contour points the top markers will be taken from the marker's bottom, marker's top otherwise
+function markersToContourPoints(markers, topMarkerFromBottom=false)
+{
+  if (markers.length === 4)
+  {
+    const sortedMarkers = ImageProcessing.sortPointClockwiseFromTopLeft(markers);
+    const TOP_LEFT = 0;
+    const TOP_RIGHT = 1;
+    const BOTTOM_RIGHT = 2;
+    const BOTTOM_LEFT = 3;
+    // markers are on the left and right side of the sheet 
+    return {contourPoints : [
+      ImageProcessing.sortPointClockwiseFromTopLeft(sortedMarkers[TOP_LEFT].corners)[topMarkerFromBottom?BOTTOM_RIGHT:TOP_RIGHT],
+      ImageProcessing.sortPointClockwiseFromTopLeft(sortedMarkers[TOP_RIGHT].corners)[topMarkerFromBottom?BOTTOM_LEFT:TOP_LEFT],
+      ImageProcessing.sortPointClockwiseFromTopLeft(sortedMarkers[BOTTOM_RIGHT].corners)[BOTTOM_LEFT],
+      ImageProcessing.sortPointClockwiseFromTopLeft(sortedMarkers[BOTTOM_LEFT].corners)[BOTTOM_RIGHT]],
+      topLeftId : sortedMarkers[TOP_LEFT].id,
+      topRightId : sortedMarkers[TOP_RIGHT].id,
+      bottomLeftId : sortedMarkers[BOTTOM_LEFT].id,
+      bottomRightId : sortedMarkers[BOTTOM_RIGHT].id
+    };
+  }
+  return null;
+}
+
 // read canvas input and update contour points
 function findImageContour()
 {
-  currentContourPoints = (deskewImage.checked)?ImageProcessing.detectContourPoints(canvasInput):[];
-  ScalableVectorGraphics.setupEditablePoints(svgOverlay, currentContourPoints, canvasInput.width, canvasInput.height);
-  
-  ImageProcessing.detectAruco(canvasInput);
+  const markers = ImageProcessing.detectAruco(canvasInput);
+  const currentContourPointsAndIds = markersToContourPoints(markers);
+  if (currentContourPointsAndIds)
+  {
+    // when aruco markers are detected, we transform it immediately
+    const cvImageMat = ImageProcessing.fourPointTransform(canvasInput, currentContourPointsAndIds.contourPoints);
+    canvasInput.width = cvImageMat.cols;
+    canvasInput.height = cvImageMat.rows;
+    cv.imshow(canvasInput, cvImageMat);
 
-  stitcher = ImageProcessing.prepareStitch(canvasInput);
+    currentContourPoints = [];
+    stitcher = null;
+    arucoFirstStepScanMarkers = {bottomLeftId:currentContourPointsAndIds.bottomLeftId, bottomRightId:currentContourPointsAndIds.bottomRightId};
+  }
+  else
+  {
+    // no aruco markers, use generic image contouring detection
+    currentContourPoints = (deskewImage.checked)?ImageProcessing.detectContourPoints(canvasInput):[];
+    ScalableVectorGraphics.setupEditablePoints(svgOverlay, currentContourPoints, canvasInput.width, canvasInput.height);
+    // generic pattern based stiching, better for images than text...
+    stitcher = ImageProcessing.prepareStitch(canvasInput);
+    arucoFirstStepScanMarkers = null;
+  }
 }
 
 // use Node.js or Brwoser dialog
@@ -231,9 +275,26 @@ function stitchCapture()
   tempCanvas.width = video.videoWidth;
   tempCanvas.height = video.videoHeight;
   const tempCtx = tempCanvas.getContext("2d");
-  tempCtx.drawImage(video, 0, 0, canvasInput.width, canvasInput.height);
+  tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
 
-  ImageProcessing.stitch(stitcher, canvasInput, tempCanvas);
+  if (arucoFirstStepScanMarkers)
+  {
+    const markers = ImageProcessing.detectAruco(tempCanvas);
+    const currentContourPointsAndIds = markersToContourPoints(markers, true);
+    if (currentContourPointsAndIds &&
+        currentContourPointsAndIds.topLeftId === arucoFirstStepScanMarkers.bottomLeftId &&
+        currentContourPointsAndIds.topRightId === arucoFirstStepScanMarkers.bottomRightId )
+    {
+      // match found: stich at marker location
+      const cvImageMat = ImageProcessing.fourPointTransform(tempCanvas, currentContourPointsAndIds.contourPoints);
+      ImageProcessing.addCvMatToCanvas(cvImageMat, canvasInput);
+    }
+  }
+  else if (stitcher)
+  {
+    // generic pattern based stiching, better for images than text...
+    ImageProcessing.stitch(stitcher, canvasInput, tempCanvas);
+  }
 
   switchToImagePreviewMode();
 }

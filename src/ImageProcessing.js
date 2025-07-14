@@ -533,6 +533,40 @@ export class ImageProcessing
         image.delete(); corners.delete(); ids.delete();
         return markers;
     }
+
+    // Convert cv.Mat to ImageData
+    static matToImageData(mat) {
+        let rgbaMat = new cv.Mat();
+        if (mat.channels() === 1) {
+            cv.cvtColor(mat, rgbaMat, cv.COLOR_GRAY2RGBA);
+        } else if (mat.channels() === 3) {
+            cv.cvtColor(mat, rgbaMat, cv.COLOR_RGB2RGBA);
+        } else {
+            rgbaMat = mat.clone();
+        }
+
+        let imgData = new ImageData(
+            new Uint8ClampedArray(rgbaMat.data),
+            rgbaMat.cols,
+            rgbaMat.rows
+        );
+        rgbaMat.delete();
+        return imgData;
+    }
+
+    static addCvMatToCanvas(cvImageMat, canvas)
+    {
+        const ctx = canvas.getContext("2d");
+
+        const originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const addedImageData = ImageProcessing.matToImageData(cvImageMat)
+
+        canvasInput.width = Math.max(originalImageData.width, addedImageData.width);
+        canvasInput.height = canvasInput.height+cvImageMat.rows;
+
+        ctx.putImageData(originalImageData, 0, 0);
+        ctx.putImageData(addedImageData, 0, originalImageData.height);
+    }
 }
 // Assign static property and static method at the end
 ImageProcessing.OPENCV_SRC_PATH = "../third-parties/docs.opencv.org/4.x/opencv.js";
