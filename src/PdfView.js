@@ -5,7 +5,7 @@ document.title = "VocalImage";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
-link.href = "../third-parties/pdf.js/v5.3.93/web/viewer.css"; // Replace with your CSS file path
+link.href = "../third-parties/pdf.js/v5.3.93/web/viewer.css";
 document.head.appendChild(link);
 
 export class PdfView
