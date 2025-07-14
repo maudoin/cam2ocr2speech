@@ -19,14 +19,13 @@ export class ImageProcessing
     }
 
     // Read the image from the canvas and perform skewed sheet detection
-    static detectContourPoints(canvas)
+    static detectContourPoints(imgMat)
     {
-        let src = cv.imread(canvas);
         let gray = new cv.Mat();
         let blur = new cv.Mat();
         let threshold = new cv.Mat();
 
-        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+        cv.cvtColor(imgMat, gray, cv.COLOR_RGBA2GRAY, 0);
         cv.GaussianBlur(gray, blur, new cv.Size(5, 5), 0, 0);
 
         // --- Gamma correction ---
@@ -128,7 +127,7 @@ export class ImageProcessing
         // Cleanup
         gray.delete(); blur.delete(); threshold.delete();
         contours.delete(); hierarchy.delete();
-        src.delete(); documentContour.delete();
+        documentContour.delete();
 
         return contourPoints;
     }
@@ -176,7 +175,7 @@ export class ImageProcessing
     // canvas: input canvas element with the image to be straightened
     // pts: array of 4 cv.Points in order [top-left, top-right, bottom-right, bottom-left]
     // return opencv image Mat instance of the straightened image
-    static fourPointTransform(canvas, points)
+    static fourPointTransform(imgMat, points)
     {
         const pts = ImageProcessing.sortPointClockwiseFromTopLeft(points);
 
@@ -212,14 +211,12 @@ export class ImageProcessing
 
         // Return the matrix and the computed dimensions
         let dsize = new cv.Size(Math.round(maxWidth), Math.round(maxHeight));
-        let src = cv.imread(canvas);
         // Apply warp
         const dst = new cv.Mat();
-        cv.warpPerspective(src, dst, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+        cv.warpPerspective(imgMat, dst, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
 
         // Cleanup
         M.delete();
-        src.delete();
         return dst;
     }
 
@@ -485,14 +482,13 @@ export class ImageProcessing
     //   { id: 17, corners: [ {x, y}, {x, y}, {x, y}, {x, y} ] },
     //   ...
     // ]
-    static detectAruco(canvas)
+    static detectAruco(image)
     {
         let dictionary = cv.getPredefinedDictionary(cv.DICT_5X5_100);
         let detectorParams = new cv.aruco_DetectorParameters();
         let refineParams = new cv.aruco_RefineParameters(10, 3, true);
         let detector = new cv.aruco_ArucoDetector(dictionary, detectorParams, refineParams);
 
-        let image = cv.imread(canvas);
         let corners = new cv.MatVector();
         let ids = new cv.Mat();
         detector.detectMarkers(image, corners, ids);
@@ -514,24 +510,26 @@ export class ImageProcessing
 
         }
         const sortedMarkers = ImageProcessing.sortPointClockwiseFromTopLeft(markers);
+        corners.delete(); ids.delete();
+        return markers;
+    }
+
+    static drawArucoToImageMat(imageMat, markers)
+    {
         // Draw each marker manually
-        for (let i = 0; i < sortedMarkers.length; i++) {
-            const m = sortedMarkers[i];
+        for (let i = 0; i < markers.length; i++) {
+            const m = markers[i];
             const corners = m.corners;
             for (let j = 0; j < corners.length; j++) {
                 // Draw marker border
                 let pt1 = new cv.Point(corners[j].x, corners[j].y);
                 const other = ((j + 1) % corners.length);
                 let pt2 = new cv.Point(corners[other].x, corners[other].y);
-                cv.line(image, pt1, pt2, new cv.Scalar(0, 0, 255), 2);
+                cv.line(imageMat, pt1, pt2, new cv.Scalar(0, 0, 255), 2);
             }
             // Draw marker ID
-            cv.putText(image, i + ":" + m.id.toString(), new cv.Point(m.x, m.y), cv.FONT_HERSHEY_SIMPLEX, 0.5, new cv.Scalar(0, 0, 255), 2);
+            cv.putText(imageMat, i + ":" + m.id.toString(), new cv.Point(m.x, m.y), cv.FONT_HERSHEY_SIMPLEX, 0.5, new cv.Scalar(0, 0, 255), 2);
         }
-
-        cv.imshow(canvas, image);
-        image.delete(); corners.delete(); ids.delete();
-        return markers;
     }
 
     // Convert cv.Mat to ImageData
