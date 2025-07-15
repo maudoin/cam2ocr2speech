@@ -17,6 +17,7 @@ let arucoFirstStepScanMarkers = null;
 // webcam control elements
 const webcamSelect = document.getElementById("webcamSelect");
 const webcamFocus = document.getElementById("webcamFocus");
+const webcamAutoScan = document.getElementById("webcamAutoScan");
 const imagePreview = document.getElementById("imagePreview");
 const webcamPreview = document.getElementById("webcamPreview");
 const webcam2Img = document.getElementById("webcam2Img");
@@ -50,12 +51,16 @@ const canvasInput = document.getElementById("canvasInput");
 
 
 Webcam.install(webcamSelect, video, webcamFocus);
+
+video.addEventListener('play', () => requestAnimationFrame(processWebcamFrame));
+
 let currentContourPoints = [];
 const tts = new TextToSpeech();
 
 
 // plug document elements to action callbacks
 webcamPreview.onclick = switchToWebcamMode;
+webcamAutoScan.onclick = toggleWebcamAutoScan;
 imagePreview.onclick = switchToImagePreviewMode;
 pdfToWebcamPreview.onclick = switchToWebcamMode;
 pdfToImagePreview.onclick = switchToImagePreviewMode;
@@ -97,6 +102,7 @@ function switchToWebcamMode()
   webcamPreview.classList.add("activeMode");
   webcamSelect.style.display = "block";
   webcamFocus.style.display = "block";
+  webcamAutoScan.style.display = "block";
   webcam2Img.style.display = "block";
   stitchWebcamCapture.style.display = (stitcher || arucoFirstStepScanMarkers) ? "block" : "none";
   webcam2Pdf.style.display = "block";
@@ -121,6 +127,7 @@ function switchToImagePreviewMode()
   webcamPreview.classList.remove("activeMode");
   webcamSelect.style.display = "none";
   webcamFocus.style.display = "none";
+  webcamAutoScan.style.display = "none";
   webcam2Img.style.display = "none";
   stitchWebcamCapture.style.display = "none";
   webcam2Pdf.style.display = "none";
@@ -135,6 +142,8 @@ function switchToImagePreviewMode()
   // layout update
   preview.style.display = "block";
   pageContainer.style.display = "none";
+
+  disableArucoAutoDetection();
 }
 
 // switch to pdf view mode
@@ -143,6 +152,77 @@ function switchToPdfMode()
   // layout update
   preview.style.display = "none";
   pageContainer.style.display = "block";
+
+  disableArucoAutoDetection();
+}
+
+// Frame processing loop
+function processWebcamFrame() {
+  maySendVideoFrameToAutoDetection();
+  // Schedule next frame
+  requestAnimationFrame(processWebcamFrame);
+}
+
+function toggleWebcamAutoScan()
+{
+  if (webcamAutoScan.classList.contains("active"))
+  {
+    disableArucoAutoDetection();
+  }
+  else
+  {
+    enableArucoAutoDetection();
+  }
+}
+
+
+function enableArucoAutoDetection()
+{
+  webcamAutoScan.classList.add("active");
+  webcamAutoScan.textContent = "𝍌🛑";
+  if (arucoFirstStepScanMarkers)
+  {
+    webcamAutoScan.textContent = webcamAutoScan.textContent + "(" + arucoFirstStepScanMarkers.count + ")";
+  }
+}
+
+function maySendVideoFrameToAutoDetection()
+{
+  if ( webcamAutoScan.classList.contains("active") )
+  {
+    // video to tmp canvas
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = video.videoWidth;
+    tempCanvas.height = video.videoHeight;
+    const tempCtx = tempCanvas.getContext("2d");
+    tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+    const imgMat = cv.imread(tempCanvas);
+    const markers = ImageProcessing.detectAruco(imgMat);
+    if (arucoFirstStepScanMarkers)
+    {
+      if (handleSecondImageWithArucoMarkers(imgMat, markers, arucoFirstStepScanMarkers))
+      {
+        disableArucoAutoDetection();
+        imageToPdf();
+      }
+    }
+    else
+    {
+      if (handleImageWithArucoMarkers(imgMat, markers) )
+      {
+        enableArucoAutoDetection();
+      }
+    }
+    imgMat.delete();
+  }
+}
+
+function disableArucoAutoDetection()
+{
+  webcamAutoScan.classList.remove("active");
+  webcamAutoScan.textContent = "𝍌➰";
+  arucoFirstStepScanMarkers = null;
 }
 
 /// {contourPoints : [{x,y},{x,y},{x,y},{x,y}], bottomLeftId:number, bottomRightId:number}
@@ -171,11 +251,8 @@ function markersToContourPoints(markers, topMarkerFromBottom=false)
   return null;
 }
 
-// read canvas input and update contour points
-function findImageContour()
+function handleImageWithArucoMarkers(imgMat, markers)
 {
-  let imgMat = cv.imread(canvasInput);
-  const markers = ImageProcessing.detectAruco(imgMat);
   const currentContourPointsAndIds = markersToContourPoints(markers);
   if (currentContourPointsAndIds)
   {
@@ -188,9 +265,18 @@ function findImageContour()
 
     currentContourPoints = [];
     stitcher = null;
-    arucoFirstStepScanMarkers = {bottomLeftId:currentContourPointsAndIds.bottomLeftId, bottomRightId:currentContourPointsAndIds.bottomRightId};
+    arucoFirstStepScanMarkers = {bottomLeftId:currentContourPointsAndIds.bottomLeftId, bottomRightId:currentContourPointsAndIds.bottomRightId, count:1};
+    return true;
   }
-  else
+  return false;
+}
+
+// read canvas input and update contour points
+function findImageContour()
+{
+  let imgMat = cv.imread(canvasInput);
+  const markers = ImageProcessing.detectAruco(imgMat);
+  if (!handleImageWithArucoMarkers(imgMat, markers))
   {
     // no aruco markers, use generic image contouring detection
     currentContourPoints = (deskewImage.checked)?ImageProcessing.detectContourPoints(imgMat):[];
@@ -271,6 +357,28 @@ async function webcamCaptureToPdf()
   imageToPdf();
 }
 
+
+// firstStepMarkers is non null and has been tested
+function handleSecondImageWithArucoMarkers(imgMat, markers, firstStepMarkers)
+{
+  const currentContourPointsAndIds = markersToContourPoints(markers, true);
+  if (currentContourPointsAndIds &&
+      currentContourPointsAndIds.topLeftId === firstStepMarkers.bottomLeftId &&
+      currentContourPointsAndIds.topRightId === firstStepMarkers.bottomRightId )
+  {
+    // match found: stich at marker location
+    const cvImageMat = ImageProcessing.fourPointTransform(imgMat, currentContourPointsAndIds.contourPoints);
+    ImageProcessing.addCvMatToCanvas(cvImageMat, canvasInput);
+    cvImageMat.delete();
+
+    arucoFirstStepScanMarkers = {bottomLeftId:currentContourPointsAndIds.bottomLeftId, bottomRightId:currentContourPointsAndIds.bottomRightId, count:firstStepMarkers.count+1};
+    switchToImagePreviewMode();
+
+    return true;
+  }
+  return false;
+}
+
 function stitchCapture()
 {
   // video to tmp canvas
@@ -284,19 +392,7 @@ function stitchCapture()
   if (arucoFirstStepScanMarkers)
   {
     const markers = ImageProcessing.detectAruco(imgMat);
-    const currentContourPointsAndIds = markersToContourPoints(markers, true);
-    if (currentContourPointsAndIds &&
-        currentContourPointsAndIds.topLeftId === arucoFirstStepScanMarkers.bottomLeftId &&
-        currentContourPointsAndIds.topRightId === arucoFirstStepScanMarkers.bottomRightId )
-    {
-      // match found: stich at marker location
-      const cvImageMat = ImageProcessing.fourPointTransform(imgMat, currentContourPointsAndIds.contourPoints);
-      ImageProcessing.addCvMatToCanvas(cvImageMat, canvasInput);
-      cvImageMat.delete();
-
-      arucoFirstStepScanMarkers = null;
-      switchToImagePreviewMode();
-    }
+    handleSecondImageWithArucoMarkers(imgMat, markers, arucoFirstStepScanMarkers);
   }
   else if (stitcher)
   {

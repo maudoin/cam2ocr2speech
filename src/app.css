@@ -99,3 +99,16 @@ button, select, label {
   -ms-user-select: none;     /* Internet Explorer/Edge */
   user-select: none;         /* Standard syntax */
 }
+
+.toggleBtn {
+  /* padding: 10px 20px;
+  font-size: 16px; */
+  background-color: #ccc;
+  border: none;
+  cursor: pointer;
+}
+
+.toggleBtn.active {
+  background-color: red;
+  color: white;
+}
