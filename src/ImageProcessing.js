@@ -509,7 +509,6 @@ export class ImageProcessing
             markers.push({ id: id, corners: markerCorners, x:centerX, y:centerY });
 
         }
-        const sortedMarkers = ImageProcessing.sortPointClockwiseFromTopLeft(markers);
         corners.delete(); ids.delete();
         return markers;
     }
