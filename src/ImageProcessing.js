@@ -132,6 +132,14 @@ export class ImageProcessing
         return contourPoints;
     }
 
+    static sortedPointClockwiseFromTopLeft(w, h)
+    {
+        return [{x:0, y:0},
+             {x:w - 1, y:0},
+             {x:w - 1, y:h - 1},
+             {x:0, y:h - 1}];
+    }
+
     static sortPointClockwiseFromTopLeft(points)
     {
         if (points.length === 0)
