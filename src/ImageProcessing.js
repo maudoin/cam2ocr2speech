@@ -134,6 +134,10 @@ export class ImageProcessing
 
     static sortPointClockwiseFromTopLeft(points)
     {
+        if (points.length === 0)
+        {
+            return points;
+        }
         // Compute squared distance to (0, 0)
         const getSquaredDistanceToOrigin = p => p.x * p.x + p.y * p.y;
         // Find the top-left point : closest to (0, 0)

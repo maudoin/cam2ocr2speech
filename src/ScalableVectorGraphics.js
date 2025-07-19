@@ -91,6 +91,85 @@ export class ScalableVectorGraphics
         });
         svgElement.style.pointerEvents = "auto";
     }
+
+
+    // Display markers points in svg overlay
+    // points is expected to contain 4 points
+    static drawMarkersGuide(svgElement, points, w, h)
+    {
+        svgElement.innerHTML = ""; // Clear previous
+        if (points && points.length ===4)
+        {
+            svgElement.setAttribute("viewBox", `0 0 ${w} ${h}`);
+            svgElement.setAttribute("preserveAspectRatio", "xMidYMin meet");
+            // Draw lines to corners
+            [{x:0, y:0},
+             {x:w - 1, y:0},
+             {x:w - 1, y:h - 1},
+             {x:0, y:h - 1}].forEach((p, idx) =>
+            {
+                const b = points[idx];
+                const line = document.createElementNS(ScalableVectorGraphics.NS, "line");
+                line.setAttribute("x1", p.x);
+                line.setAttribute("y1", p.y);
+                line.setAttribute("x2", b.x);
+                line.setAttribute("y2", b.y);
+                line.setAttribute("stroke", "green");
+                line.setAttribute("stroke-width", "10");
+                svgElement.appendChild(line);
+
+                const headLength = (h*10)/100;
+                const polyPoints = [
+                    { x: b.x+headLength*(1-2*(p.x==0)), y: b.y },
+                    b,
+                    { x: b.x, y: b.y+headLength*(1-2*(p.y==0)) }
+                ];
+
+                const polyline = document.createElementNS(ScalableVectorGraphics.NS, "polyline");
+                const pointsAttr = polyPoints.map(p => `${p.x},${p.y}`).join(" ");
+
+                polyline.setAttribute("points", pointsAttr);
+                polyline.setAttribute("fill", "none");
+                polyline.setAttribute("stroke", "green");
+                polyline.setAttribute("stroke-width", "10");
+                svgElement.appendChild(polyline);
+            });
+        }
+    }
+    static drawPolylinesAndText(svgElement, textPoints, indexToText, color, polylines, w, h)
+    {
+        svgElement.innerHTML = ""; // Clear previous
+        svgElement.setAttribute("viewBox", `0 0 ${w} ${h}`);
+        svgElement.setAttribute("preserveAspectRatio", "xMidYMin meet");
+        if (textPoints)
+        {
+            textPoints.forEach((p, idx)=>{
+                const textElem = document.createElementNS(ScalableVectorGraphics.NS, "text");
+                textElem.setAttribute("x", p.x);
+                textElem.setAttribute("y", p.y);
+                textElem.setAttribute("font-size", (h*10)/100);
+                textElem.setAttribute("fill", color);
+                textElem.setAttribute("text-anchor", "middle"); // Center horizontally
+                textElem.setAttribute("dominant-baseline", "middle"); // Center vertically
+                textElem.textContent = indexToText(idx);
+                svgElement.appendChild(textElem);
+            });
+        }
+        if (polylines)
+        {
+            polylines.forEach((points, idx)=>{
+
+                // Draw polygon
+                const poly = document.createElementNS(ScalableVectorGraphics.NS, "polygon");
+                poly.setAttribute("points", points.map(p => `${p.x},${p.y}`).join(" "));
+                poly.setAttribute("fill", "rgba(0,255,0,0.2)");
+                poly.setAttribute("stroke", "lime");
+                poly.setAttribute("stroke-width", 2);
+                svgElement.appendChild(poly);
+
+            });
+        }
+    }
 }
 
 ScalableVectorGraphics.NS = "http://www.w3.org/2000/svg";
