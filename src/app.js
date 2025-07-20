@@ -418,7 +418,7 @@ function findImageContour()
     ScalableVectorGraphics.init(svgOverlay, canvasInput.width, canvasInput.height);
     ScalableVectorGraphics.setupEditablePoints(svgOverlay, currentContourPoints, canvasInput.width, canvasInput.height);
     // generic pattern based stiching, better for images than text...
-    stitcher = ImageProcessing.prepareStitch(imgMat);
+    stitcher = ImageProcessing.prepareStitch(canvasInput);
     arucoFirstStepScanMarkers = null;
   }
   imgMat.delete();
