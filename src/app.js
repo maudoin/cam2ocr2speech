@@ -217,7 +217,7 @@ function maySendVideoFrameToAutoDetection()
     const isSharp = (marker) => marker.variance > BEST_VARIANCE;
     const textHeightPercent = (pct)=>(video.videoHeight*pct)/100;
     const drawMatchingMarkers = ()=>ScalableVectorGraphics.drawTextAndPolyLine(svgOverlay, markers,
-      (i)=>isSharp(markers[i])?"🖒":("✲"+sharpnessPct(markers[i])),
+      (i)=>isSharp(markers[i])?"✓":("✲"+sharpnessPct(markers[i])),
       textHeightPercent(7), "black", m=>m.corners);
     const drawIncompleteMarkers = (markersToDraw)=>ScalableVectorGraphics.drawTextAndPolyLine(svgOverlay, markersToDraw,
       i=>(i+1)+"/4",
