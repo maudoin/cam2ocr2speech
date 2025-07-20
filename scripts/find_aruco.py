@@ -13,9 +13,9 @@ for i in range(num_markers):
         dist = cv2.norm(dictionary.bytesList[i], dictionary.bytesList[j], cv2.NORM_HAMMING)
         distance_matrix[i, j] = dist
         distance_matrix[j, i] = dist
-    
+
 # Greedy selection of 10 most distinct markers
-selected = [0]  # Start with marker 0
+selected = [1]  # Start with marker 1
 while len(selected) < 10:
     best_candidate = None
     best_score = -1
@@ -41,15 +41,17 @@ def marker_to_hex(marker_id):
 
 for marker in selected:
     print(f"Marker ID {marker}: 0x{marker_to_hex(marker)}")
-    
-# [0, 8, 14, 17, 18, 22, 37, 55, 72, 83]
-# Marker ID 0: 0xa2d95e00
-# Marker ID 8: 0x86b09900
-# Marker ID 14: 0xfe7e5400
-# Marker ID 17: 0x5f513701
+
+# [0, 18, 72, 17, 22, 37]
+
+# [1, 9, 10, 12, 15, 18, 33, 38, 69, 79]
+# Marker ID 1: 0x0e037300
+# Marker ID 9: 0x989fd201
+# Marker ID 10: 0x9e770101
+# Marker ID 12: 0xf3158801
+# Marker ID 15: 0x28f1bf01
 # Marker ID 18: 0x7b26e200
-# Marker ID 22: 0xb5865001
-# Marker ID 37: 0x41688001
-# Marker ID 55: 0xac65c601
-# Marker ID 72: 0xd88d2901
-# Marker ID 83: 0x05aa3e00
+# Marker ID 33: 0x25556400
+# Marker ID 38: 0x4d568e01
+# Marker ID 69: 0xf4ea1900
+# Marker ID 79: 0xcb689600

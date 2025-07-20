@@ -1,0 +1,896 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   id="arucos"
+   viewBox="0 0 80.850001 73.5"
+   width="297mm"
+   height="210mm"
+   version="1.1"
+   sodipodi:docname="arucoBook.svg"
+   inkscape:version="1.4 (86a8ad7, 2024-10-11)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview125"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     inkscape:zoom="1.2398669"
+     inkscape:cx="561.75384"
+     inkscape:cy="381.08929"
+     inkscape:window-width="2560"
+     inkscape:window-height="1377"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="arucos" />
+  <defs
+     id="defs1">
+    <rect
+       id="pixel"
+       width="1"
+       height="1"
+       fill="#ffffff"
+       x="0"
+       y="0" />
+  </defs>
+  <g
+     id="g125">
+    <path
+       id="rect125"
+       style="fill:none;stroke:#000000;stroke-width:0.7;stroke-linecap:square;paint-order:markers stroke fill"
+       d="M 77.204102,61.874907 H 3.8430483 V 13.013857 H 77.204102"
+       sodipodi:nodetypes="cccc" />
+    <g
+       x="0"
+       y="0"
+       width="7"
+       height="7"
+       id="g11"
+       transform="matrix(0.77777778,0,0,0.77777778,3.8430483,6.0138569)">
+      <rect
+         x="0"
+         y="0"
+         width="9"
+         height="9"
+         fill="#ffffff"
+         id="rect1-9" />
+      <rect
+         x="1"
+         y="1"
+         width="7"
+         height="7"
+         fill="#000000"
+         id="rect2" />
+      <use
+         href="#pixel"
+         x="6"
+         y="2"
+         id="use2-4" />
+      <use
+         href="#pixel"
+         x="2"
+         y="3"
+         id="use3-8" />
+      <use
+         href="#pixel"
+         x="3"
+         y="3"
+         id="use4-8" />
+      <use
+         href="#pixel"
+         x="6"
+         y="4"
+         id="use5-2" />
+      <use
+         href="#pixel"
+         x="2"
+         y="5"
+         id="use6-4" />
+      <use
+         href="#pixel"
+         x="4"
+         y="5"
+         id="use7-5" />
+      <use
+         href="#pixel"
+         x="5"
+         y="5"
+         id="use8-5" />
+      <use
+         href="#pixel"
+         x="6"
+         y="5"
+         id="use9-1" />
+      <use
+         href="#pixel"
+         x="4"
+         y="6"
+         id="use10-7" />
+      <use
+         href="#pixel"
+         x="5"
+         y="6"
+         id="use11-1" />
+    </g>
+    <g
+       x="0"
+       y="0"
+       width="7"
+       height="7"
+       id="g25"
+       transform="matrix(0.77777778,0,0,0.77777778,12.655534,6.0138569)">
+      <rect
+         x="10"
+         y="0"
+         width="9"
+         height="9"
+         fill="#ffffff"
+         id="rect11" />
+      <rect
+         x="11"
+         y="1"
+         width="7"
+         height="7"
+         fill="#000000"
+         id="rect12" />
+      <use
+         href="#pixel"
+         x="12"
+         y="2"
+         id="use12-1" />
+      <use
+         href="#pixel"
+         x="15"
+         y="2"
+         id="use13-5" />
+      <use
+         href="#pixel"
+         x="16"
+         y="2"
+         id="use14-2" />
+      <use
+         href="#pixel"
+         x="15"
+         y="3"
+         id="use15-7" />
+      <use
+         href="#pixel"
+         x="13"
+         y="4"
+         id="use16-6" />
+      <use
+         href="#pixel"
+         x="14"
+         y="4"
+         id="use17-1" />
+      <use
+         href="#pixel"
+         x="15"
+         y="4"
+         id="use18-4" />
+      <use
+         href="#pixel"
+         x="16"
+         y="4"
+         id="use19-2" />
+      <use
+         href="#pixel"
+         x="12"
+         y="5"
+         id="use20-3" />
+      <use
+         href="#pixel"
+         x="13"
+         y="5"
+         id="use21-2" />
+      <use
+         href="#pixel"
+         x="14"
+         y="5"
+         id="use22-2" />
+      <use
+         href="#pixel"
+         x="16"
+         y="5"
+         id="use23-1" />
+      <use
+         href="#pixel"
+         x="14"
+         y="6"
+         id="use24-6" />
+      <use
+         href="#pixel"
+         x="16"
+         y="6"
+         id="use25-8" />
+    </g>
+    <g
+       x="0"
+       y="0"
+       width="7"
+       height="7"
+       id="g38"
+       transform="matrix(0.77777778,0,0,0.77777778,21.46802,6.0138569)">
+      <rect
+         x="20"
+         y="0"
+         width="9"
+         height="9"
+         fill="#ffffff"
+         id="rect25" />
+      <rect
+         x="21"
+         y="1"
+         width="7"
+         height="7"
+         fill="#000000"
+         id="rect26" />
+      <use
+         href="#pixel"
+         x="22"
+         y="2"
+         id="use26-5" />
+      <use
+         href="#pixel"
+         x="25"
+         y="2"
+         id="use27-7" />
+      <use
+         href="#pixel"
+         x="26"
+         y="2"
+         id="use28-6" />
+      <use
+         href="#pixel"
+         x="22"
+         y="3"
+         id="use29-1" />
+      <use
+         href="#pixel"
+         x="23"
+         y="3"
+         id="use30-8" />
+      <use
+         href="#pixel"
+         x="26"
+         y="3"
+         id="use31-9" />
+      <use
+         href="#pixel"
+         x="22"
+         y="4"
+         id="use32-2" />
+      <use
+         href="#pixel"
+         x="23"
+         y="4"
+         id="use33-7" />
+      <use
+         href="#pixel"
+         x="25"
+         y="4"
+         id="use34-9" />
+      <use
+         href="#pixel"
+         x="26"
+         y="4"
+         id="use35-5" />
+      <use
+         href="#pixel"
+         x="22"
+         y="5"
+         id="use36-4" />
+      <use
+         href="#pixel"
+         x="25"
+         y="6"
+         id="use37-3" />
+      <use
+         href="#pixel"
+         x="26"
+         y="6"
+         id="use38-1" />
+    </g>
+    <g
+       x="0"
+       y="0"
+       width="7"
+       height="7"
+       id="g50"
+       transform="matrix(0.77777778,0,0,0.77777778,30.280505,6.0138569)">
+      <rect
+         x="30"
+         y="0"
+         width="9"
+         height="9"
+         fill="#ffffff"
+         id="rect38" />
+      <rect
+         x="31"
+         y="1"
+         width="7"
+         height="7"
+         fill="#000000"
+         id="rect39" />
+      <use
+         href="#pixel"
+         x="32"
+         y="2"
+         id="use39-2" />
+      <use
+         href="#pixel"
+         x="33"
+         y="2"
+         id="use40-3" />
+      <use
+         href="#pixel"
+         x="34"
+         y="2"
+         id="use41-3" />
+      <use
+         href="#pixel"
+         x="35"
+         y="2"
+         id="use42-4" />
+      <use
+         href="#pixel"
+         x="33"
+         y="3"
+         id="use43-1" />
+      <use
+         href="#pixel"
+         x="34"
+         y="3"
+         id="use44-1" />
+      <use
+         href="#pixel"
+         x="33"
+         y="4"
+         id="use45-3" />
+      <use
+         href="#pixel"
+         x="35"
+         y="4"
+         id="use46-8" />
+      <use
+         href="#pixel"
+         x="32"
+         y="5"
+         id="use47-7" />
+      <use
+         href="#pixel"
+         x="33"
+         y="5"
+         id="use48-4" />
+      <use
+         href="#pixel"
+         x="32"
+         y="6"
+         id="use49-2" />
+      <use
+         href="#pixel"
+         x="36"
+         y="6"
+         id="use50-7" />
+    </g>
+    <g
+       x="0"
+       y="0"
+       width="7"
+       height="7"
+       id="g65"
+       transform="matrix(0.77777778,0,0,0.77777778,39.092991,6.0138569)">
+      <rect
+         x="40"
+         y="0"
+         width="9"
+         height="9"
+         fill="#ffffff"
+         id="rect50" />
+      <rect
+         x="41"
+         y="1"
+         width="7"
+         height="7"
+         fill="#000000"
+         id="rect51" />
+      <use
+         href="#pixel"
+         x="44"
+         y="2"
+         id="use51-7" />
+      <use
+         href="#pixel"
+         x="46"
+         y="2"
+         id="use52-9" />
+      <use
+         href="#pixel"
+         x="45"
+         y="3"
+         id="use53-3" />
+      <use
+         href="#pixel"
+         x="46"
+         y="3"
+         id="use54-1" />
+      <use
+         href="#pixel"
+         x="42"
+         y="4"
+         id="use55-9" />
+      <use
+         href="#pixel"
+         x="43"
+         y="4"
+         id="use56-8" />
+      <use
+         href="#pixel"
+         x="42"
+         y="5"
+         id="use57-6" />
+      <use
+         href="#pixel"
+         x="43"
+         y="5"
+         id="use58-5" />
+      <use
+         href="#pixel"
+         x="45"
+         y="5"
+         id="use59-0" />
+      <use
+         href="#pixel"
+         x="46"
+         y="5"
+         id="use60-2" />
+      <use
+         href="#pixel"
+         x="42"
+         y="6"
+         id="use61-8" />
+      <use
+         href="#pixel"
+         x="43"
+         y="6"
+         id="use62-6" />
+      <use
+         href="#pixel"
+         x="44"
+         y="6"
+         id="use63-0" />
+      <use
+         href="#pixel"
+         x="45"
+         y="6"
+         id="use64-2" />
+      <use
+         href="#pixel"
+         x="46"
+         y="6"
+         id="use65-4" />
+    </g>
+    <g
+       x="0"
+       y="0"
+       width="7"
+       height="7"
+       id="g78"
+       transform="matrix(0.77777778,0,0,0.77777778,-35.045841,61.874907)">
+      <rect
+         x="50"
+         y="0"
+         width="9"
+         height="9"
+         fill="#ffffff"
+         id="rect65" />
+      <rect
+         x="51"
+         y="1"
+         width="7"
+         height="7"
+         fill="#000000"
+         id="rect66" />
+      <use
+         href="#pixel"
+         x="53"
+         y="2"
+         id="use66-8" />
+      <use
+         href="#pixel"
+         x="54"
+         y="2"
+         id="use67-4" />
+      <use
+         href="#pixel"
+         x="55"
+         y="2"
+         id="use68-9" />
+      <use
+         href="#pixel"
+         x="56"
+         y="2"
+         id="use69-6" />
+      <use
+         href="#pixel"
+         x="53"
+         y="3"
+         id="use70-3" />
+      <use
+         href="#pixel"
+         x="54"
+         y="3"
+         id="use71-7" />
+      <use
+         href="#pixel"
+         x="52"
+         y="4"
+         id="use72-8" />
+      <use
+         href="#pixel"
+         x="55"
+         y="4"
+         id="use73-8" />
+      <use
+         href="#pixel"
+         x="56"
+         y="4"
+         id="use74-2" />
+      <use
+         href="#pixel"
+         x="53"
+         y="5"
+         id="use75-9" />
+      <use
+         href="#pixel"
+         x="54"
+         y="5"
+         id="use76-1" />
+      <use
+         href="#pixel"
+         x="55"
+         y="5"
+         id="use77-3" />
+      <use
+         href="#pixel"
+         x="54"
+         y="6"
+         id="use78-5" />
+    </g>
+    <g
+       x="0"
+       y="0"
+       width="7"
+       height="7"
+       id="g88"
+       transform="matrix(0.77777778,0,0,0.77777778,-26.233355,61.874907)">
+      <rect
+         x="60"
+         y="0"
+         width="9"
+         height="9"
+         fill="#ffffff"
+         id="rect78" />
+      <rect
+         x="61"
+         y="1"
+         width="7"
+         height="7"
+         fill="#000000"
+         id="rect79" />
+      <use
+         href="#pixel"
+         x="64"
+         y="2"
+         id="use79-9" />
+      <use
+         href="#pixel"
+         x="62"
+         y="3"
+         id="use80-8" />
+      <use
+         href="#pixel"
+         x="64"
+         y="3"
+         id="use81-4" />
+      <use
+         href="#pixel"
+         x="66"
+         y="3"
+         id="use82-0" />
+      <use
+         href="#pixel"
+         x="63"
+         y="4"
+         id="use83-7" />
+      <use
+         href="#pixel"
+         x="65"
+         y="4"
+         id="use84-6" />
+      <use
+         href="#pixel"
+         x="62"
+         y="5"
+         id="use85-3" />
+      <use
+         href="#pixel"
+         x="64"
+         y="5"
+         id="use86-6" />
+      <use
+         href="#pixel"
+         x="65"
+         y="5"
+         id="use87-1" />
+      <use
+         href="#pixel"
+         x="63"
+         y="6"
+         id="use88-5" />
+    </g>
+    <g
+       x="0"
+       y="0"
+       width="7"
+       height="7"
+       id="g101"
+       transform="matrix(0.77777778,0,0,0.77777778,-17.42087,61.874907)">
+      <rect
+         x="70"
+         y="0"
+         width="9"
+         height="9"
+         fill="#ffffff"
+         id="rect88" />
+      <rect
+         x="71"
+         y="1"
+         width="7"
+         height="7"
+         fill="#000000"
+         id="rect89" />
+      <use
+         href="#pixel"
+         x="73"
+         y="2"
+         id="use89-4" />
+      <use
+         href="#pixel"
+         x="76"
+         y="2"
+         id="use90-2" />
+      <use
+         href="#pixel"
+         x="72"
+         y="3"
+         id="use91-0" />
+      <use
+         href="#pixel"
+         x="74"
+         y="3"
+         id="use92-9" />
+      <use
+         href="#pixel"
+         x="76"
+         y="3"
+         id="use93-7" />
+      <use
+         href="#pixel"
+         x="73"
+         y="4"
+         id="use94-3" />
+      <use
+         href="#pixel"
+         x="75"
+         y="4"
+         id="use95-7" />
+      <use
+         href="#pixel"
+         x="76"
+         y="4"
+         id="use96-2" />
+      <use
+         href="#pixel"
+         x="73"
+         y="5"
+         id="use97-6" />
+      <use
+         href="#pixel"
+         x="72"
+         y="6"
+         id="use98-0" />
+      <use
+         href="#pixel"
+         x="73"
+         y="6"
+         id="use99-1" />
+      <use
+         href="#pixel"
+         x="74"
+         y="6"
+         id="use100-6" />
+      <use
+         href="#pixel"
+         x="76"
+         y="6"
+         id="use101-5" />
+    </g>
+    <g
+       x="0"
+       y="0"
+       width="7"
+       height="7"
+       id="g114"
+       transform="matrix(0.77777778,0,0,0.77777778,-8.6083841,61.874907)">
+      <rect
+         x="80"
+         y="0"
+         width="9"
+         height="9"
+         fill="#ffffff"
+         id="rect101" />
+      <rect
+         x="81"
+         y="1"
+         width="7"
+         height="7"
+         fill="#000000"
+         id="rect102" />
+      <use
+         href="#pixel"
+         x="82"
+         y="2"
+         id="use102-7" />
+      <use
+         href="#pixel"
+         x="83"
+         y="2"
+         id="use103-5" />
+      <use
+         href="#pixel"
+         x="84"
+         y="2"
+         id="use104-4" />
+      <use
+         href="#pixel"
+         x="85"
+         y="2"
+         id="use105-1" />
+      <use
+         href="#pixel"
+         x="82"
+         y="3"
+         id="use106-2" />
+      <use
+         href="#pixel"
+         x="85"
+         y="3"
+         id="use107-0" />
+      <use
+         href="#pixel"
+         x="86"
+         y="3"
+         id="use108-0" />
+      <use
+         href="#pixel"
+         x="82"
+         y="4"
+         id="use109-1" />
+      <use
+         href="#pixel"
+         x="84"
+         y="4"
+         id="use110-4" />
+      <use
+         href="#pixel"
+         x="86"
+         y="4"
+         id="use111-6" />
+      <use
+         href="#pixel"
+         x="86"
+         y="5"
+         id="use112-0" />
+      <use
+         href="#pixel"
+         x="82"
+         y="6"
+         id="use113-7" />
+      <use
+         href="#pixel"
+         x="85"
+         y="6"
+         id="use114-1" />
+    </g>
+    <g
+       x="0"
+       y="0"
+       width="7"
+       height="7"
+       id="g126"
+       transform="matrix(0.77777778,0,0,0.77777778,0.20410158,61.874907)">
+      <rect
+         x="90"
+         y="0"
+         width="9"
+         height="9"
+         fill="#ffffff"
+         id="rect114" />
+      <rect
+         x="91"
+         y="1"
+         width="7"
+         height="7"
+         fill="#000000"
+         id="rect115" />
+      <use
+         href="#pixel"
+         x="92"
+         y="2"
+         id="use115-7" />
+      <use
+         href="#pixel"
+         x="93"
+         y="2"
+         id="use116-7" />
+      <use
+         href="#pixel"
+         x="96"
+         y="2"
+         id="use117-7" />
+      <use
+         href="#pixel"
+         x="93"
+         y="3"
+         id="use118-7" />
+      <use
+         href="#pixel"
+         x="94"
+         y="3"
+         id="use119-3" />
+      <use
+         href="#pixel"
+         x="96"
+         y="3"
+         id="use120-3" />
+      <use
+         href="#pixel"
+         x="92"
+         y="4"
+         id="use121-5" />
+      <use
+         href="#pixel"
+         x="94"
+         y="4"
+         id="use122-9" />
+      <use
+         href="#pixel"
+         x="93"
+         y="5"
+         id="use123-9" />
+      <use
+         href="#pixel"
+         x="96"
+         y="5"
+         id="use124-8" />
+      <use
+         href="#pixel"
+         x="93"
+         y="6"
+         id="use125-1" />
+      <use
+         href="#pixel"
+         x="94"
+         y="6"
+         id="use126" />
+    </g>
+  </g>
+</svg>
