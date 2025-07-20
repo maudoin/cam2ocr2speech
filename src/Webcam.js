@@ -1,16 +1,16 @@
 export class Webcam
 {
 
-    static install(webcamSelect, video, focusRange)
+    static install(webcamSelect, w, h, setupStream)
     {
         // handle webcam device selection change
-        webcamSelect.addEventListener("change", (event) => Webcam.startStream(video, event.target.value));
+        webcamSelect.addEventListener("change", (event) => Webcam.startStream(event.target.value, w, h, setupStream));
 
         // setup webcam stream on page load
         Webcam.listWebcams().then(() => {
             const defaultDeviceId = webcamSelect.value;
             if (defaultDeviceId) {
-                Webcam.startStream(video, focusRange, defaultDeviceId);
+                Webcam.startStream(defaultDeviceId, w, h, setupStream);
             }
         });
     }
@@ -34,8 +34,7 @@ export class Webcam
             });
     }
 
-    static gotMedia(mediastream, video, focusRange) {
-        video.srcObject = mediastream;
+    static setupFocusSlider(mediastream, focusRange) {
 
         const track = mediastream.getVideoTracks()[0];
         const capabilities = track.getCapabilities();
@@ -63,19 +62,27 @@ export class Webcam
         };
         focusRange.hidden = false;
     }
+
     // start webcam stream with selected device
-    static async startStream(video, focusRange, deviceId)
+    static async startStream(deviceId, w, h, setupStream)
     {
         const constraints = {
             video: {
                 deviceId: { exact: deviceId } ,
-                width: { ideal: 3840 },
-                height: { ideal: 2160 }
+                width: { ideal: w },
+                height: { ideal: h }
             }
         };
 
         await navigator.mediaDevices.getUserMedia(constraints).
-            then((mediastream)=>{Webcam.gotMedia(mediastream, video, focusRange)});
+            then(setupStream);
+    }
+
+    static async changeResolution(mediastream, w, h)
+    {
+        const track = mediastream.getVideoTracks()[0];
+        track.applyConstraints({ width: w, height: h })
+        .catch(error => console.error("Resolution change failed:", error));
     }
 
     static captureToCanevas(video, targetCanvas, numFramesToAverage=1)

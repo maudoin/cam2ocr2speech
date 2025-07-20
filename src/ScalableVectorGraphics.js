@@ -129,11 +129,20 @@ export class ScalableVectorGraphics
             svgElement.appendChild(polyline);
         });
     }
-    static drawPolylinesAndText(svgElement, textPoints, indexToText, textHeight, color, polylines)
+    static drawTextAndPolyLine(svgElement, locations, indexToText, textHeight, color, getPolyline)
     {
-        if (textPoints)
+        if (locations)
         {
-            textPoints.forEach((p, idx)=>{
+            locations.forEach((loc, idx)=>{
+                let points = getPolyline(loc);
+                const poly = document.createElementNS(ScalableVectorGraphics.NS, "polygon");
+                poly.setAttribute("points", points.map(p => `${p.x},${p.y}`).join(" "));
+                poly.setAttribute("fill", "rgba(0, 255, 0, 0.5)");
+                poly.setAttribute("stroke", "none");
+                svgElement.appendChild(poly);
+            });
+
+            locations.forEach((p, idx)=>{
                 const textElem = document.createElementNS(ScalableVectorGraphics.NS, "text");
                 textElem.setAttribute("x", p.x);
                 textElem.setAttribute("y", p.y);
@@ -143,20 +152,6 @@ export class ScalableVectorGraphics
                 textElem.setAttribute("dominant-baseline", "middle"); // Center vertically
                 textElem.textContent = indexToText(idx);
                 svgElement.appendChild(textElem);
-            });
-        }
-        if (polylines)
-        {
-            polylines.forEach((points, idx)=>{
-
-                // Draw polygon
-                const poly = document.createElementNS(ScalableVectorGraphics.NS, "polygon");
-                poly.setAttribute("points", points.map(p => `${p.x},${p.y}`).join(" "));
-                poly.setAttribute("fill", "rgba(0,255,0,0.2)");
-                poly.setAttribute("stroke", "lime");
-                poly.setAttribute("stroke-width", 2);
-                svgElement.appendChild(poly);
-
             });
         }
     }

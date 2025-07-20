@@ -142,7 +142,7 @@ export class ImageProcessing
 
     static sortPointClockwiseFromTopLeft(points)
     {
-        if (points.length === 0)
+        if (points && points.length === 0)
         {
             return points;
         }
@@ -489,11 +489,29 @@ export class ImageProcessing
         return angles.every(a => Math.abs(a - 90) < anglesThreshold);
     }
 
+
+    // points = array of {x, y}, e.g. [{x: 1, y: 2}, {x: 4, y: 5}, ...]
+    static computeBoundingBox(points)
+    {
+        let minX = Math.min(...points.map(p => p.x));
+        let maxX = Math.max(...points.map(p => p.x));
+        let minY = Math.min(...points.map(p => p.y));
+        let maxY = Math.max(...points.map(p => p.y));
+
+        return {
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY
+        };
+    }
+
     // Return found markers in instance like:
     // [
     //   { id: 17, corners: [ {x, y}, {x, y}, {x, y}, {x, y} ] },
     //   ...
     // ]
+    // points are sorted clockwise from top left
     static detectAruco(image)
     {
         let dictionary = cv.getPredefinedDictionary(cv.DICT_5X5_100);
@@ -516,13 +534,29 @@ export class ImageProcessing
                 let y = corner.data32F[j * 2 + 1];
                 markerCorners.push({x:x, y:y});
             }
+
+            const bbox = ImageProcessing.computeBoundingBox(markerCorners);
+            let roi = image.roi(new cv.Rect(bbox.x, bbox.y, bbox.width, bbox.height));
+            let laplacian = new cv.Mat();
+            cv.Laplacian(roi, laplacian, cv.CV_64F);
+
+            let mean = new cv.Mat();
+            let stddev = new cv.Mat();
+            cv.meanStdDev(laplacian, mean, stddev);
+
+            let variance = stddev.doubleAt(0, 0) ** 2;
+            laplacian.delete();
+            mean.delete();
+            stddev.delete();
+            roi.delete();  // If you created a region of interest Mat
+
             let centerX = (corner.data32F[0] + corner.data32F[2] + corner.data32F[4] + corner.data32F[6]) / 4;
             let centerY = (corner.data32F[1] + corner.data32F[3] + corner.data32F[5] + corner.data32F[7]) / 4;
-            markers.push({ id: id, corners: markerCorners, x:centerX, y:centerY });
+            markers.push({ id: id, corners: markerCorners, x:centerX, y:centerY, variance });
 
         }
         corners.delete(); ids.delete();
-        return markers;
+        return  ImageProcessing.sortPointClockwiseFromTopLeft(markers);
     }
 
     static drawArucoToImageMat(imageMat, markers)
