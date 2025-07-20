@@ -23,6 +23,16 @@ Cette application est conçue pour aider les personnes atteintes de troubles "dy
 ## Mode PDF / Lecture vocale:
 ![image](doc/pdfMode.jpg)
 
+## Mode Redressement/Recollage automatique:
+| Mise en place de la feuille | Vérificaction du cadrage | Vérificaction de la netteté |
+| --- | --- | --- |
+| <img src="doc/arucoMode_1.jpg" alt="Mise en place de la page sur les marqueurs" width="200"/> | <img src="doc/arucoMode_2.jpg" alt="Placement des marqueurs" width="200"/> | <img src="doc/arucoMode_3.jpg" alt="Controle de netteté" width="200"/> |
+
+
+| Passage à la page 2 automatique | Cadrage de la page 2 | Vérificaction de la netteté de la page 2 avant capture finale |
+| --- | --- | --- |
+| <img src="doc/arucoMode_4.jpg" alt="Placement des marqueurs de la page 2" width="200"/> | <img src="doc/arucoMode_5.jpg" alt="Placement des marqueurs de la page 2" width="200"/> | <img src="doc/arucoMode_6.jpg" alt="Placement des marqueurs de la page 2" width="200"/> |
+
 ---
 
 # 📘 PDF Document Voice Reader & PDF text creation from image
