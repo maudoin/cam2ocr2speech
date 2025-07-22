@@ -5,6 +5,9 @@ import { OpticalCharacterRecognition } from "./OpticalCharacterRecognition.js";
 import { PdfView } from "./PdfView.js";
 import { Webcam } from "./Webcam.js";
 import { ScalableVectorGraphics } from "./ScalableVectorGraphics.js";
+import { Localize } from "./Localize.js";
+
+Localize.setTitlesFromIds();
 
 Utils.fetchUrlOverride((urlStr)=> PdfView.fetchOverride(urlStr) || TextToSpeech.fetchOverride(urlStr));
 

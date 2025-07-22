@@ -1,0 +1,16 @@
+{
+    "webcamPreview":"Webcam mode",
+    "webcamSelect":"Select device",
+    "webcamFocus":"Focus",
+    "webcamAutoScan":"Start automatic A4 cropping from two half sheets capture (requires aruco guides)",
+    "webcam2Img":"Capture to image",
+    "stitchWebcamCapture":"Add webcam capture to the previous image capture",
+    "webcam2Pdf":"Capture directly to PDF with text recognition",
+    "imagePreview":"Image mode",
+    "openImage":"Select existing image file...",
+    "rotateImgClockwise":"Rotate on the right",
+    "rotateImgCounterClockwise":"Rotate on the left",
+    "img2PdfBtn":"Generate PDF with text recognition",
+    "showPdfBtn":"PDF mode with voiced text",
+    "openPdfBtn":"Select existing PDF file..."
+}
