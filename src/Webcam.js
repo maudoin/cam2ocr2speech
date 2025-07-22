@@ -1,18 +1,41 @@
 export class Webcam
 {
 
-    static install(webcamSelect, w, h, setupStream)
+    static async install(webcamSelect, setupStream)
     {
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        let ids = devices.filter(device => device.kind === "videoinput").map(device=>device.deviceId);
+        let capPerStream = {};
+        for (let deviceId of ids) {
+            capPerStream[deviceId] = await Webcam.getDeviceCapabilities(deviceId);
+        }
+
         // handle webcam device selection change
-        webcamSelect.addEventListener("change", (event) => Webcam.startStream(event.target.value, w, h, setupStream));
+        webcamSelect.addEventListener("change", (event) => Webcam.startStream(event.target.value, capPerStream[defaultDeviceId], setupStream));
 
         // setup webcam stream on page load
         Webcam.listWebcams().then(() => {
             const defaultDeviceId = webcamSelect.value;
             if (defaultDeviceId) {
-                Webcam.startStream(defaultDeviceId, w, h, setupStream);
+                Webcam.startStream(defaultDeviceId, capPerStream[defaultDeviceId], setupStream);
             }
         });
+
+
+    }
+
+    static async getDeviceCapabilities(deviceId) {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { deviceId: { exact: deviceId } }
+        });
+
+        const track = stream.getVideoTracks()[0];
+        const capabilities = track.getCapabilities();
+
+        // Stop the stream to release the camera
+        track.stop();
+
+        return capabilities;
     }
 
     // retrieve webcam devices and populate the select element
@@ -64,13 +87,14 @@ export class Webcam
     }
 
     // start webcam stream with selected device
-    static async startStream(deviceId, w, h, setupStream)
+    static async startStream(deviceId, caps, setupStream)
     {
         const constraints = {
             video: {
                 deviceId: { exact: deviceId } ,
-                width: { ideal: w },
-                height: { ideal: h }
+                width: caps.width.max,
+                height: caps.height.max,
+                // sharpness: 255
             }
         };
 

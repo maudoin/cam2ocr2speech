@@ -54,11 +54,7 @@ const svgOverlay = document.getElementById("svgOverlay");
 const canvasInput = document.getElementById("canvasInput");
 
 let videoMediaStream;
-const VIDEO_WIDTH_HD = 1920;
-const VIDEO_HEIGHT_HD = 1080;
-const VIDEO_WIDTH_4K = 3840;
-const VIDEO_HEIGHT_4K = 2160;
-Webcam.install(webcamSelect, VIDEO_WIDTH_4K, VIDEO_HEIGHT_4K, (mediastream)=>{
+Webcam.install(webcamSelect, (mediastream)=>{
   videoMediaStream = mediastream;
   video.srcObject = mediastream;
   Webcam.setupFocusSlider(mediastream, webcamFocus)
