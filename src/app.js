@@ -16,6 +16,7 @@ let stitcher = null;
 ImageProcessing.asyncImport().then(() => enableActions());
 let arucoFirstStepScanMarkers = null;
 
+const FOCUS_VALUE_WHEN_ENTERING_ARUCO_MODE = 15;
 
 // webcam control elements
 const webcamSelect = document.getElementById("webcamSelect");
@@ -195,6 +196,9 @@ function enableArucoAutoDetection()
   {
     webcamAutoScan.textContent = webcamAutoScan.textContent + "(" + arucoFirstStepScanMarkers.count + ")";
   }
+  webcamFocus.value = FOCUS_VALUE_WHEN_ENTERING_ARUCO_MODE;
+  webcamFocus.dispatchEvent(new Event('input', { bubbles: true }));
+
 }
 
 function maySendVideoFrameToAutoDetection()
