@@ -357,7 +357,7 @@ function maySendVideoFrameToAutoDetection()
 function disableArucoAutoDetection()
 {
   webcamAutoScan.classList.remove("active");
-  webcamAutoScan.textContent = "𝍌➰";
+  webcamAutoScan.textContent = "𝍌▶️";
   arucoFirstStepScanMarkers = null;
   svgOverlay.innerHTML = ""; // Clear previous
 }
