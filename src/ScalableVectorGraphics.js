@@ -23,7 +23,7 @@ export class ScalableVectorGraphics
         svgElement.innerHTML = ""; // Clear previous
 
         svgElement.setAttribute("viewBox", `0 0 ${originalWidth} ${originalHeight}`);
-        svgElement.setAttribute("preserveAspectRatio", "xMidYMin meet");
+        svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet");
     }
 
     // Display points in svg overlay
