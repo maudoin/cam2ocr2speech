@@ -262,7 +262,7 @@ async function maySendVideoFrameToAutoDetection()
             if (markers.every(isSharp))
             {
               handleSecondImageWithArucoMarkers(imgMat, currentContourPointsAndIds, arucoFirstStepScanMarkers);
-              disableArucoAutoDetection();
+              disableArucoAutoDetection(true);
               imageToPdf();
             }
             else
@@ -356,12 +356,15 @@ async function maySendVideoFrameToAutoDetection()
   }
 }
 
-function disableArucoAutoDetection()
+function disableArucoAutoDetection(clearFirstStepMarkers = false)
 {
   webcamAutoScan.classList.remove("active");
   webcamAutoScan.textContent = "𝍌▶️";
-  arucoFirstStepScanMarkers = null;
   svgOverlay.innerHTML = ""; // Clear previous
+  if (clearFirstStepMarkers)
+  {
+    arucoFirstStepScanMarkers = null;
+  }
 }
 
 /// {contourPoints : [{x,y},{x,y},{x,y},{x,y}], bottomLeftId:number, bottomRightId:number}
