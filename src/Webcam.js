@@ -94,19 +94,52 @@ export class Webcam
                 deviceId: { exact: deviceId } ,
                 width: caps.width.max,
                 height: caps.height.max,
+                // frameRate: caps.frameRate.max,
                 // sharpness: 255
             }
         };
 
         await navigator.mediaDevices.getUserMedia(constraints).
-            then(setupStream);
+            then(str=>setupStream(str, caps));
     }
-
-    static async changeResolution(mediastream, w, h)
+    static async waitForResolutionChange(track, targetWidth, targetHeight) {
+        return new Promise(resolve => {
+            const check = () => {
+            const { width, height } = track.getSettings();
+            if (width === targetWidth && height === targetHeight) {
+                resolve();
+            } else {
+                setTimeout(check, 100);
+            }
+            };
+            check();
+        });
+    }
+    static async setMaxResolution(mediastream, caps)
     {
         const track = mediastream.getVideoTracks()[0];
-        track.applyConstraints({ width: w, height: h })
+        track.applyConstraints({
+            width: caps.width.max,
+            height: caps.height.max,
+         })
         .catch(error => console.error("Resolution change failed:", error));
+        await Webcam.waitForResolutionChange(track, caps.width.max, caps.height.max);
+        const imageCapture = new ImageCapture(track);
+        const blob = await imageCapture.takePhoto();
+        const bitmap = await createImageBitmap(blob);
+        const offscreen = new OffscreenCanvas(bitmap.width, bitmap.height);
+        const ctx = offscreen.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0);
+        return ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+    }
+    static async setMaxFramerate(mediastream, caps)
+    {
+        const track = mediastream.getVideoTracks()[0];
+        track.applyConstraints({
+                frameRate: caps.frameRate.max,
+         })
+        .catch(error => console.error("Framerate change failed:", error));
+        await Webcam.waitForResolutionChange(track, caps.width.max, caps.height.max);
     }
 
     static captureToCanevas(video, targetCanvas, numFramesToAverage=1)

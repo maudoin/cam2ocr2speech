@@ -54,8 +54,10 @@ const svgOverlay = document.getElementById("svgOverlay");
 const canvasInput = document.getElementById("canvasInput");
 
 let videoMediaStream;
-Webcam.install(webcamSelect, (mediastream)=>{
+let videoMediaStreamCaps;
+Webcam.install(webcamSelect, (mediastream, caps)=>{
   videoMediaStream = mediastream;
+  videoMediaStreamCaps = caps;
   video.srcObject = mediastream;
   Webcam.setupFocusSlider(mediastream, webcamFocus)
 });
@@ -165,8 +167,8 @@ function switchToPdfMode()
 }
 
 // Frame processing loop
-function processWebcamFrame() {
-  maySendVideoFrameToAutoDetection();
+async function processWebcamFrame() {
+  await maySendVideoFrameToAutoDetection();
   // Schedule next frame
   requestAnimationFrame(processWebcamFrame);
 }
@@ -197,7 +199,7 @@ function enableArucoAutoDetection()
 
 }
 
-function maySendVideoFrameToAutoDetection()
+async function maySendVideoFrameToAutoDetection()
 {
   if ( webcamAutoScan.classList.contains("active") )
   {
