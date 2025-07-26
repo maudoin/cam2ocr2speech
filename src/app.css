@@ -1,3 +1,34 @@
+
+:root{
+  --toolbar-height:32px;
+  --toolbar-horizontal-padding:1px;
+  --toolbar-vertical-padding:2px;
+
+  --csstools-light-dark-toggle--0:var(--csstools-color-scheme--light) rgb(249 249 250);
+  --main-color:var(--csstools-light-dark-toggle--0, rgb(12 12 13));
+  --csstools-light-dark-toggle--1:var(--csstools-color-scheme--light) rgb(42 42 46);
+  --body-bg-color:var(--csstools-light-dark-toggle--1, rgb(212 212 215));
+  --csstools-light-dark-toggle--7:var(--csstools-color-scheme--light) rgb(255 255 255);
+  --toolbar-icon-bg-color:var(--csstools-light-dark-toggle--7, rgb(0 0 0));
+  --csstools-light-dark-toggle--8:var(--csstools-color-scheme--light) rgb(255 255 255);
+  --toolbar-icon-hover-bg-color:var(--csstools-light-dark-toggle--8, rgb(0 0 0));
+
+  --toolbar-border-color:var(--csstools-light-dark-toggle--12, rgb(184 184 184));
+  --toolbar-box-shadow:0 1px 0 var(--toolbar-border-color);
+  --button-hover-color:color-mix(in srgb, currentColor 17%, transparent);
+}
+
+@supports (color: light-dark(red, red)) and (color: rgb(0 0 0 / 0)){
+:root{
+  --toolbar-icon-bg-color:light-dark(rgb(0 0 0), rgb(255 255 255));
+  --toolbar-icon-hover-bg-color:light-dark(rgb(0 0 0), rgb(255 255 255));
+  --toolbar-bg-color:light-dark(rgb(249 249 250), rgb(56 56 61));
+  --toolbar-border-color:light-dark(rgb(184 184 184), rgb(12 12 13));
+  --toggled-btn-color:light-dark(rgb(0 0 0), rgb(255 255 255));
+}
+}
+
+
 html, body {
   margin: 0;
   height: 100vh; /* Full viewport height */
@@ -18,10 +49,14 @@ html, body {
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
-  padding: 8px 16px;
+  height:var(--toolbar-height);
+  padding:var(--toolbar-vertical-padding) var(--toolbar-horizontal-padding);
+  box-sizing:border-box;
+  font:message-box;
   gap: 16px;
-  border-bottom: 1px solid gray; 
-  background-color: azure;
+  border-bottom: 1px solid black; 
+  background-color: var(--toolbar-bg-color);
+  box-shadow:var(--toolbar-box-shadow);
 }
 
 .previewToolbarSection {
@@ -38,7 +73,7 @@ html, body {
 
 .previewToolbarSection button,
 .previewToolbarSection input {
-  background-color: azure;
+  background-color: var(--toolbar-bg-color);
   border: none;
 }
 
@@ -47,20 +82,21 @@ html, body {
   pointer-events: none; /* disables mouse interaction */
   opacity: 1;           /* keep normal visual appearance */
   cursor: default;      /* avoid “clickable” pointer */
-  background-color: lightgray;
+  background-color: var(--button-hover-color);
   font-weight: bold;
 }
 
 .previewToolbarSection button:hover
 {
-  background-color: gainsboro;
+  color: var(--toggled-btn-color);
+  background-color: var(--button-hover-color);
 }
 
 #mainContent {
   overflow: auto;
   position: relative;
   flex-grow: 1;
-  background-color: lightgray;
+  background-color: var(--body-bg-color);
   display: grid;
 }
 
@@ -103,7 +139,7 @@ button, select, label {
 .toggleBtn {
   /* padding: 10px 20px;
   font-size: 16px; */
-  background-color: #ccc;
+  /*background-color: #ccc;*/
   border: none;
   cursor: pointer;
 }

@@ -1,5 +1,9 @@
 const { app, BrowserWindow, dialog, ipcMain, Menu } = require('electron');
 const path = require('path');
+const { nativeTheme } = require('electron');
+
+// Force dark mode
+nativeTheme.themeSource = 'dark';
 
 Menu.setApplicationMenu(null);
 
