@@ -1,4 +1,4 @@
-# 📘 Application déconnectée pour la lecture vocale de document PDF et creation de PDF textuel à partir d'image
+# 📘 Application déconnectée pour la lecture vocale de document PDF et création de PDF textuel à partir d'image
 
 ## 📄 Présentation
 
@@ -6,11 +6,11 @@ Cette application est conçue pour aider les personnes atteintes de troubles "dy
 
 - 🔊 De lire à voix haute le texte sélectionné dans un PDF.
 - 📝 D'ajouter du texte sur un PDF et de l'imprimer.
-- 🖼️ De transformer une image en PDF avec une couche de texte sélectionnable par reconaissance de charactères.
-- ✂️ De détecter automatiquement le contour d'une feuille sur une image pour redresser le texte ou de redresser manuellement.
-- ⌧ D'utiliser des marqueurs (cf. [Aruco](doc/aruco.pdf)) pour redresser et recoller rapidement deux captures depuis une page A4
+- 🖼️ De transformer une image en PDF avec une couche de texte sélectionnable par reconnaissance de caractères.
+- ✂️ De détecter automatiquement le contour d'une feuille sur une image pour redresser automatiquement le texte ou le redresser manuellement.
+- ⌧ D'utiliser des marqueurs (cf. masque de page [Aruco](doc/aruco.pdf) à découper) pour redresser et recoller rapidement deux captures d’une même page A4
 - 📷 De capturer une image depuis une webcam ou d'importer une image depuis un fichier.
-- 🌐 Tout est calculé dans l'application **hors connexion internet**
+- 🌐 Tout est calculé dans l'application **sans connexion internet**
 
 ---
 
