@@ -5,7 +5,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('myAPI', {
   listFiles: (folderPath) => {
     try {
-      folderPath = "src/"+folderPath;
+      folderPath = path.join(__dirname, "src", folderPath);
       return fs.readdirSync(folderPath).filter(file => fs.statSync(path.join(folderPath, file)).isFile());
     } catch (err) {
       console.error('Error reading files:', err);
@@ -14,7 +14,7 @@ contextBridge.exposeInMainWorld('myAPI', {
   },
   listFolders: (folderPath) => {
     try {
-      folderPath = "src/"+folderPath;
+      folderPath = path.join(__dirname, "src", folderPath);
       return fs.readdirSync(folderPath).filter(file => !fs.statSync(path.join(folderPath, file)).isFile());
     } catch (err) {
       console.error('Error reading folders:', err);
