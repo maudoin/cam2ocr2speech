@@ -44,6 +44,7 @@ const openPdfBtn = document.getElementById("openPdfBtn");
 const pdfToWebcamPreview = document.getElementById("pdfToWebcamPreview");
 const pdfToImagePreview = document.getElementById("pdfToImagePreview");
 const voiceOption = document.getElementById("voiceOption");
+const voiceLangInput = document.getElementById("voiceLangInput");
 
 // parent modes
 const preview = document.getElementById("preview");
@@ -55,6 +56,7 @@ const svgOverlay = document.getElementById("svgOverlay");
 const canvasInput = document.getElementById("canvasInput");
 
 OpticalCharacterRecognition.setupSelectFromAvailableModels(imageOcrLangInput, path => myAPI.listFiles(path));
+TextToSpeech.setupSelectFromAvailableModels(voiceLangInput, path => myAPI.listFolders(path), path => myAPI.listFiles(path));
 
 let videoMediaStream;
 let videoMediaStreamCaps;
@@ -604,7 +606,7 @@ function speakSelectedText()
     const selectedText = Utils.getSelectedText();
     if (selectedText && selectedText.length > 1)
     {
-      tts.speak(selectedText);
+      tts.speak(selectedText, voiceLangInput.value);
     }
   }
   else

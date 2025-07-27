@@ -12,6 +12,15 @@ contextBridge.exposeInMainWorld('myAPI', {
       return [];
     }
   },
+  listFolders: (folderPath) => {
+    try {
+      folderPath = "src/"+folderPath;
+      return fs.readdirSync(folderPath).filter(file => !fs.statSync(path.join(folderPath, file)).isFile());
+    } catch (err) {
+      console.error('Error reading folders:', err);
+      return [];
+    }
+  },
   readFile: (filePath, options) => fs.readFile(filePath, options),
   joinPath: (...args) => path.join(...args),
   dirname: () => __dirname,
