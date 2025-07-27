@@ -1,0 +1,16 @@
+{
+    "webcamPreview": "Modo cámara web",
+    "webcamSelect": "Seleccionar dispositivo",
+    "webcamFocus": "Enfoque",
+    "webcamAutoScan": "Iniciar recorte automático de una hoja A4 desde dos capturas parciales (requiere guías Aruco)",
+    "webcam2Img": "Capturar como imagen",
+    "stitchWebcamCapture": "Agregar la captura de la cámara web a la captura de imagen anterior",
+    "webcam2Pdf": "Capturar directamente en PDF con reconocimiento de texto",
+    "imagePreview": "Modo imagen",
+    "openImage": "Seleccionar archivo de imagen existente...",
+    "rotateImgClockwise": "Girar a la derecha",
+    "rotateImgCounterClockwise": "Girar a la izquierda",
+    "img2PdfBtn": "Generar PDF con reconocimiento de texto",
+    "showPdfBtn": "Modo PDF con lectura en voz alta",
+    "openPdfBtn": "Seleccionar archivo PDF existente..."
+}

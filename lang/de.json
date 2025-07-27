@@ -1,0 +1,16 @@
+{
+    "webcamPreview": "Webcam-Modus",
+    "webcamSelect": "Gerät auswählen",
+    "webcamFocus": "Fokus",
+    "webcamAutoScan": "Automatisches Zuschneiden einer A4-Seite aus zwei Halbseiten starten (benötigt Aruco-Markierungen)",
+    "webcam2Img": "Als Bild erfassen",
+    "stitchWebcamCapture": "Webcam-Aufnahme zur vorherigen Bildaufnahme hinzufügen",
+    "webcam2Pdf": "Direkt als PDF mit Texterkennung erfassen",
+    "imagePreview": "Bildmodus",
+    "openImage": "Vorhandene Bilddatei auswählen...",
+    "rotateImgClockwise": "Nach rechts drehen",
+    "rotateImgCounterClockwise": "Nach links drehen",
+    "img2PdfBtn": "PDF mit Texterkennung erstellen",
+    "showPdfBtn": "PDF-Modus mit Sprachausgabe",
+    "openPdfBtn": "Vorhandene PDF-Datei auswählen..."
+}

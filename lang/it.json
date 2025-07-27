@@ -1,0 +1,16 @@
+{
+    "webcamPreview": "Modalità webcam",
+    "webcamSelect": "Seleziona dispositivo",
+    "webcamFocus": "Messa a fuoco",
+    "webcamAutoScan": "Avvia il ritaglio automatico di una pagina A4 da due mezze immagini (richiede guide Aruco)",
+    "webcam2Img": "Cattura come immagine",
+    "stitchWebcamCapture": "Aggiungi la cattura webcam alla precedente cattura immagine",
+    "webcam2Pdf": "Cattura direttamente in PDF con riconoscimento del testo",
+    "imagePreview": "Modalità immagine",
+    "openImage": "Seleziona file immagine esistente...",
+    "rotateImgClockwise": "Ruota a destra",
+    "rotateImgCounterClockwise": "Ruota a sinistra",
+    "img2PdfBtn": "Genera PDF con riconoscimento del testo",
+    "showPdfBtn": "Modalità PDF con lettura vocale",
+    "openPdfBtn": "Seleziona file PDF esistente..."
+}

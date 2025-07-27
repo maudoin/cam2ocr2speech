@@ -62,3 +62,69 @@ This offline application supports individuals with "dys" disorders (e.g., dyslex
   [GitHub - Mozilla PDF.js](https://github.com/mozilla/pdf.js/tree/v5.3.93)
 - 🖼️ **openCV.js v4.0** for image processing and contour detection
   [docs.opencv.org](https://docs.opencv.org/4.x/d0/d84/tutorial_js_usage.html)
+
+---
+
+### 🇩🇪 Deutsch (automatisch generiert)
+
+---
+
+# 📘 PDF-Dokumenten-Sprachleser & PDF-Text-Erstellung aus Bildern
+
+## 📄 Übersicht
+
+Diese Offline-Anwendung unterstützt Personen mit „Dys“-Störungen (z. B. Dyslexie, Dyspraxie) bei der Arbeit mit physischen Textdokumenten am Computer. Sie bietet folgende Funktionen:
+
+- 🔊 Liest ausgewählten Text aus PDFs mit Text-to-Speech (TTS) vor.
+- 📝 Text hinzufügen und PDF drucken
+- 🖼️ Generiert ein PDF aus einem Bild mit auswählbarer Textebene mittels optischer Zeichenerkennung (OCR).
+- ✂️ Erkennt automatisch Dokumentgrenzen in Bildern zur Perspektivkorrektur und ermöglicht manuelle Konturbearbeitung.
+- ⌧ Erkennt Aruco-Marker zum Entzerren und Zusammenfügen von zwei Aufnahmen einer A4-Seite.
+- 📷 Erfasst Bilder mit einer Webcam oder lädt Bilder aus Dateien.
+- 🌐 Vollständig offline
+
+*Dieser Text wurde automatisch generiert.*
+
+---
+
+### 🇮🇹 Italiano (testo generato automaticamente)
+
+---
+
+# 📘 Lettore vocale PDF & Creazione di testo PDF da immagine
+
+## 📄 Panoramica
+
+Questa applicazione offline supporta persone con disturbi “dys” (ad es. dislessia, disprassia) nella gestione di documenti di testo cartacei con il computer. Offre le seguenti funzionalità:
+
+- 🔊 Legge ad alta voce il testo selezionato dai PDF con Text-to-Speech (TTS).
+- 📝 Aggiungi testo e stampa PDF
+- 🖼️ Genera un PDF da un’immagine con livello di testo selezionabile tramite riconoscimento ottico dei caratteri (OCR).
+- ✂️ Rileva automaticamente i confini del documento nelle immagini per la correzione prospettica e consente la modifica manuale dei contorni.
+- ⌧ Rileva i marker Aruco per correggere la distorsione e unire due acquisizioni di un foglio A4.
+- 📷 Acquisisce immagini tramite webcam o carica file di immagini.
+- 🌐 Completamente offline
+
+*Questo testo è stato generato automaticamente.*
+
+---
+
+### 🇪🇸 Español (texto generado automáticamente)
+
+---
+
+# 📘 Lector de voz de PDF y creación de texto PDF desde imagen
+
+## 📄 Descripción general
+
+Esta aplicación offline ayuda a personas con trastornos “dys” (p. ej., dislexia, dispraxia) a trabajar con documentos de texto físicos con la ayuda de un ordenador. Ofrece las siguientes funciones:
+
+- 🔊 Lee en voz alta el texto seleccionado de archivos PDF con Text-to-Speech (TTS).
+- 📝 Agrega texto e imprime PDF
+- 🖼️ Genera un PDF desde una imagen con capa de texto seleccionable mediante reconocimiento óptico de caracteres (OCR).
+- ✂️ Detecta automáticamente los límites del documento en las imágenes para corregir la perspectiva y permite editar manualmente los contornos.
+- ⌧ Detecta marcadores Aruco para corregir la distorsión y unir dos capturas de una sola hoja A4.
+- 📷 Captura imágenes con una cámara web o carga archivos de imagen.
+- 🌐 Totalmente offline
+
+*Este texto ha sido generado automáticamente.*
