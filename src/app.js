@@ -35,6 +35,7 @@ const deskewImageLabel = document.getElementById("deskewImageLabel");
 const rotateImgClockwise = document.getElementById("rotateImgClockwise");
 const rotateImgCounterClockwise = document.getElementById("rotateImgCounterClockwise");
 const img2PdfBtn = document.getElementById("img2PdfBtn");
+const imageOcrLangInput = document.getElementById("imageOcrLangInput");
 
 // pdf control elements
 const showPdfBtn = document.getElementById("showPdfBtn");
@@ -52,6 +53,8 @@ const pageContainer = document.getElementById("pageContainer");
 const video = document.getElementById("video");
 const svgOverlay = document.getElementById("svgOverlay");
 const canvasInput = document.getElementById("canvasInput");
+
+OpticalCharacterRecognition.setupSelectFromAvailableModels(imageOcrLangInput, path => myAPI.listFiles(path));
 
 let videoMediaStream;
 let videoMediaStreamCaps;
@@ -583,7 +586,7 @@ async function imageToPdf()
   {
     processedImg = canvasInput.toDataURL("image/png");
   }
-  const { data: { pdf } } = await OpticalCharacterRecognition.recognize(processedImg, "fra");
+  const { data: { pdf } } = await OpticalCharacterRecognition.recognize(processedImg, imageOcrLangInput.value);
 
   // Display PDF
   const pdfBlob = new Blob([new Uint8Array(pdf)], { type: "application/pdf" });
