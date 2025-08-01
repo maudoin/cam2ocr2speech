@@ -86,6 +86,12 @@ export class Webcam
         focusRange.hidden = false;
     }
 
+    static getFps(mediastream) {
+        const track = mediastream.getVideoTracks()[0];
+        const settings = track.getSettings();
+        return settings.frameRate ? settings.frameRate : 30;
+    }
+
     // start webcam stream with selected device
     static async startStream(deviceId, caps, setupStream)
     {

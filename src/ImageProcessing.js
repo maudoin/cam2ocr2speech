@@ -458,6 +458,23 @@ export class ImageProcessing
         return maxDistance;
     }
 
+    static averageSquaredDistance(pointsA, pointsB) {
+        if (!pointsA || ! pointsB || pointsA.length !== pointsB.length) {
+            return Number.MAX_SAFE_INTEGER;
+        }
+        let totalSquaredDistance = 0;
+        for (let i = 0; i < pointsA.length; i++) {
+            const {x:x1, y:y1} = pointsA[i];
+            const {x:x2, y:y2} = pointsB[i];
+
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+
+            totalSquaredDistance += dx * dx + dy * dy;
+        }
+        return totalSquaredDistance / pointsA.length;
+    }
+
     // compute angle between two polygon edges defines by 3 points (2nd is common vertex)
     static angleBetween(p1, p2, p3) {
         const v1 = { x: p2.x - p1.x, y: p2.y - p1.y };
@@ -552,24 +569,24 @@ export class ImageProcessing
                 markerCorners.push({x:x, y:y});
             }
 
-            const bbox = ImageProcessing.computeBoundingBox(markerCorners);
-            let roi = image.roi(new cv.Rect(bbox.x, bbox.y, bbox.width, bbox.height));
-            let laplacian = new cv.Mat();
-            cv.Laplacian(roi, laplacian, cv.CV_64F);
+            // const bbox = ImageProcessing.computeBoundingBox(markerCorners);
+            // let roi = image.roi(new cv.Rect(bbox.x, bbox.y, bbox.width, bbox.height));
+            // let laplacian = new cv.Mat();
+            // cv.Laplacian(roi, laplacian, cv.CV_64F);
 
-            let mean = new cv.Mat();
-            let stddev = new cv.Mat();
-            cv.meanStdDev(laplacian, mean, stddev);
+            // let mean = new cv.Mat();
+            // let stddev = new cv.Mat();
+            // cv.meanStdDev(laplacian, mean, stddev);
 
-            let variance = stddev.doubleAt(0, 0) ** 2;
-            laplacian.delete();
-            mean.delete();
-            stddev.delete();
-            roi.delete();  // If you created a region of interest Mat
+            // let variance = stddev.doubleAt(0, 0) ** 2;
+            // laplacian.delete();
+            // mean.delete();
+            // stddev.delete();
+            // roi.delete();  // If you created a region of interest Mat
 
             let centerX = (corner.data32F[0] + corner.data32F[2] + corner.data32F[4] + corner.data32F[6]) / 4;
             let centerY = (corner.data32F[1] + corner.data32F[3] + corner.data32F[5] + corner.data32F[7]) / 4;
-            markers.push({ id: id, corners: markerCorners, x:centerX, y:centerY, variance });
+            markers.push({ id: id, corners: markerCorners, x:centerX, y:centerY/*, variance*/ });
 
         }
         corners.delete(); ids.delete();

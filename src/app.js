@@ -15,6 +15,34 @@ Utils.fetchUrlOverride((urlStr)=> PdfView.fetchOverride(urlStr) || TextToSpeech.
 let stitcher = null;
 ImageProcessing.asyncImport().then(() => enableActions());
 let arucoFirstStepScanMarkers = null;
+let previousContourPoints = null;
+let previousContourPointsStableCount = 0;
+const STABLE_CONTOUR_SUCCESSIVE_FRAMES_THRESHOLD = 4;
+function stabilityIndicator(){
+  return previousContourPointsStableCount + "/" + STABLE_CONTOUR_SUCCESSIVE_FRAMES_THRESHOLD;
+}
+function isStable(canvasWidth, contourPoints){
+  const STABLE_AVG_SQ_DISTANCE_PCT_WIDTH = (0.01); // allow only 1 pct
+  const STABLE_AVG_SQ_DISTANCE = (canvasWidth) => (STABLE_AVG_SQ_DISTANCE_PCT_WIDTH*canvasWidth)**2; // allow only 5 pixels
+  if (!previousContourPoints)
+  {
+    // first time
+    previousContourPoints = contourPoints;
+    previousContourPointsStableCount = 0;
+  }
+  else if (ImageProcessing.averageSquaredDistance(contourPoints, previousContourPoints) < STABLE_AVG_SQ_DISTANCE(canvasWidth))
+  {
+    // increment
+    previousContourPointsStableCount++;
+  }
+  else
+  {
+    // unstable, reset with current
+    previousContourPoints = contourPoints;
+    previousContourPointsStableCount = 0;
+  }
+  return previousContourPointsStableCount >= STABLE_CONTOUR_SUCCESSIVE_FRAMES_THRESHOLD;
+};
 
 const FOCUS_VALUE_WHEN_ENTERING_ARUCO_MODE = 10;
 
@@ -70,11 +98,13 @@ webcamAutoScanPartSelect.addEventListener("change", function () {
 
 let videoMediaStream;
 let videoMediaStreamCaps;
+let videoMediaStreamFrameIntervalMs;
 Webcam.install(webcamSelect, (mediastream, caps)=>{
   videoMediaStream = mediastream;
   videoMediaStreamCaps = caps;
   video.srcObject = mediastream;
-  Webcam.setupFocusSlider(mediastream, webcamFocus)
+  Webcam.setupFocusSlider(mediastream, webcamFocus);
+  videoMediaStreamFrameIntervalMs = 1000./Webcam.getFps(mediastream);
 });
 
 video.addEventListener('play', () => requestAnimationFrame(processWebcamFrame));
@@ -181,10 +211,22 @@ function switchToPdfMode()
   disableArucoAutoDetection();
 }
 
+
 // Frame processing loop
-async function processWebcamFrame() {
-  await maySendVideoFrameToAutoDetection();
-  // Schedule next frame
+let lastTimestamp = 0;
+// keeps track of how much time has passed.
+let accumulatedTime = 0;
+async function processWebcamFrame(timestamp) {
+  if (!lastTimestamp) lastTimestamp = timestamp;
+  accumulatedTime += timestamp - lastTimestamp;
+  lastTimestamp = timestamp;
+
+  // process frames only when enough time has accumulated to match the desired interval.
+  while (accumulatedTime >= videoMediaStreamFrameIntervalMs) {
+    // leftover time is carried forward, preventing drift.
+    accumulatedTime -= videoMediaStreamFrameIntervalMs;
+    await maySendVideoFrameToAutoDetection();
+  }
   requestAnimationFrame(processWebcamFrame);
 }
 
@@ -243,11 +285,7 @@ async function maySendVideoFrameToAutoDetection()
     const markers = ImageProcessing.detectAruco(imgMat);
     const currentContourPointsAndIds = markersToContourPoints(markers, arucoFirstStepScanMarkers != null);
 
-    const BEST_VARIANCE = 222;
-    const sharpnessPct = (marker)=>((100*marker.variance/BEST_VARIANCE).toFixed(0)+"%");
-    const isSharp = (marker) => marker.variance > BEST_VARIANCE;
-    const drawMatchingMarkers = ()=>ScalableVectorGraphics.drawTextAndPolyLine(svgOverlay, markers,
-      (i)=>isSharp(markers[i])?"✓":("✲"+sharpnessPct(markers[i])),
+    const drawMatchingMarkers = ()=>ScalableVectorGraphics.drawTextAndPolyLine(svgOverlay, markers,()=>"✓ "+stabilityIndicator(),
       textHeightPercent(7), "black", m=>m.corners);
     const drawIncompleteMarkers = (markersToDraw)=>ScalableVectorGraphics.drawTextAndPolyLine(svgOverlay, markersToDraw,
       i=>(i+1)+"/4",
@@ -293,7 +331,7 @@ async function maySendVideoFrameToAutoDetection()
         {
           if (currentTopIsFirstStepBottom())
           {
-            if (markers.every(isSharp))
+            if (isStable(tempCanvas.width, currentContourPointsAndIds.contourPoints))
             {
               handleNextImageWithArucoMarkers(imgMat, currentContourPointsAndIds, arucoFirstStepScanMarkers);
               if (arucoFirstStepScanMarkers.count >= webcamAutoScanPartSelect.value)
@@ -325,7 +363,7 @@ async function maySendVideoFrameToAutoDetection()
         }
         else
         {
-          if (markers.every(isSharp))
+          if (isStable(tempCanvas.width, currentContourPointsAndIds.contourPoints))
           {
             if (handleImageWithArucoMarkers(imgMat, currentContourPointsAndIds) )
             {
