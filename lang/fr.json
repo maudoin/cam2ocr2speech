@@ -3,6 +3,7 @@
     "webcamSelect":"Changer d'appareil",
     "webcamFocus":"Mise au point",
     "webcamAutoScan":"Démarrer le cadrage automatique d'une page A4 en captures successives (nécessite des guides aruco)",
+    "webcamAutoScanPartSelect":"Nombre de parties successives pour la capture automatique d'une page A4 (bouton précédent)",
     "webcam2Img":"Capturer en une image",
     "stitchWebcamCapture":"Ajouter la capture de la caméra à la capture précédente du mode image",
     "webcam2Pdf":"Capturer directement en PDF avec reconnaissance de caractères",

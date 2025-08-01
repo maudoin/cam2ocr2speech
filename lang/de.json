@@ -3,6 +3,7 @@
     "webcamSelect": "Gerät auswählen",
     "webcamFocus": "Fokus",
     "webcamAutoScan": "Automatisches Zuschneiden einer A4-Seite aus zwei Halbseiten starten (benötigt Aruco-Markierungen)",
+    "webcamAutoScanPartSelect":"Anzahl aufeinanderfolgender Teile für die automatische Erfassung einer A4-Seite (vorherige Schaltfläche)",
     "webcam2Img": "Als Bild erfassen",
     "stitchWebcamCapture": "Webcam-Aufnahme zur vorherigen Bildaufnahme hinzufügen",
     "webcam2Pdf": "Direkt als PDF mit Texterkennung erfassen",

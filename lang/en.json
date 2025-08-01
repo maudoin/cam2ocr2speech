@@ -3,6 +3,7 @@
     "webcamSelect":"Select device",
     "webcamFocus":"Focus",
     "webcamAutoScan":"Start automatic A4 cropping from two half sheets capture (requires aruco guides)",
+    "webcamAutoScanPartSelect":"Number of successive parts for automatic A4 page capture (previous button)",
     "webcam2Img":"Capture to image",
     "stitchWebcamCapture":"Add webcam capture to the previous image capture",
     "webcam2Pdf":"Capture directly to PDF with text recognition",

@@ -22,6 +22,7 @@ const FOCUS_VALUE_WHEN_ENTERING_ARUCO_MODE = 10;
 const webcamSelect = document.getElementById("webcamSelect");
 const webcamFocus = document.getElementById("webcamFocus");
 const webcamAutoScan = document.getElementById("webcamAutoScan");
+const webcamAutoScanPartSelect = document.getElementById("webcamAutoScanPartSelect");
 const imagePreview = document.getElementById("imagePreview");
 const webcamPreview = document.getElementById("webcamPreview");
 const webcam2Img = document.getElementById("webcam2Img");
@@ -57,6 +58,12 @@ const canvasInput = document.getElementById("canvasInput");
 
 OpticalCharacterRecognition.setupSelectFromAvailableModels(imageOcrLangInput, path => myAPI.listFiles(path));
 TextToSpeech.setupSelectFromAvailableModels(voiceLangInput, path => myAPI.listFolders(path), path => myAPI.listFiles(path));
+webcamAutoScanPartSelect.addEventListener("change", function () {
+  if ( webcamAutoScan.classList.contains("active") )
+  {
+    updateArucoAutoDetectionButton();
+  }
+});
 
 let videoMediaStream;
 let videoMediaStreamCaps;
@@ -191,17 +198,21 @@ function toggleWebcamAutoScan()
 }
 
 
+function updateArucoAutoDetectionButton()
+{
+  webcamAutoScan.textContent = "𝍌🛑";
+  webcamAutoScan.textContent = webcamAutoScan.textContent + "("
+    + ((arucoFirstStepScanMarkers?arucoFirstStepScanMarkers.count:0)+1)
+    + "/" + webcamAutoScanPartSelect.value + ")";
+}
+
+
 function enableArucoAutoDetection()
 {
   webcamAutoScan.classList.add("active");
-  webcamAutoScan.textContent = "𝍌🛑";
-  if (arucoFirstStepScanMarkers)
-  {
-    webcamAutoScan.textContent = webcamAutoScan.textContent + "(" + arucoFirstStepScanMarkers.count + ")";
-  }
   webcamFocus.value = FOCUS_VALUE_WHEN_ENTERING_ARUCO_MODE;
   webcamFocus.dispatchEvent(new Event('input', { bubbles: true }));
-
+  updateArucoAutoDetectionButton();
 }
 
 async function maySendVideoFrameToAutoDetection()
@@ -215,7 +226,14 @@ async function maySendVideoFrameToAutoDetection()
     const tempCtx = tempCanvas.getContext("2d");
     tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
 
+    const textHeightPercent = (pct)=>(video.videoHeight*pct)/100;
+
+    const targetSquareSize = textHeightPercent(3);
+    const targetOffset = targetSquareSize * 1.2;
     const viewCorners = ImageProcessing.sortedPointClockwiseFromTopLeft(tempCanvas.width, tempCanvas.height);
+    const [{ x: x1, y: y1 }, { x: x2, y: y2 }, { x: x3, y: y3 }, { x: x4, y: y4 }] = viewCorners;
+    const targetCorners = [{ x: x1 + targetOffset, y: y1 + targetOffset }, { x: x2 - targetOffset, y: y2 + targetOffset },
+                           { x: x3 - targetOffset, y: y3 - targetOffset }, { x: x4 + targetOffset, y: y4 - targetOffset }];
     ScalableVectorGraphics.init(svgOverlay, video.videoWidth, video.videoHeight);
 
     const imgMat = cv.imread(tempCanvas);
@@ -225,7 +243,6 @@ async function maySendVideoFrameToAutoDetection()
     const BEST_VARIANCE = 222;
     const sharpnessPct = (marker)=>((100*marker.variance/BEST_VARIANCE).toFixed(0)+"%");
     const isSharp = (marker) => marker.variance > BEST_VARIANCE;
-    const textHeightPercent = (pct)=>(video.videoHeight*pct)/100;
     const drawMatchingMarkers = ()=>ScalableVectorGraphics.drawTextAndPolyLine(svgOverlay, markers,
       (i)=>isSharp(markers[i])?"✓":("✲"+sharpnessPct(markers[i])),
       textHeightPercent(7), "black", m=>m.corners);
@@ -238,14 +255,24 @@ async function maySendVideoFrameToAutoDetection()
       ScalableVectorGraphics.drawTextAndPolyLine(svgOverlay, filterOutFirstStepTopMarkers(), i=>(i+1)+"/4",
         textHeightPercent(10), "red", m=>m.corners);
     const drawArrows = ()=>{
-      const lines = viewCorners.map((p, idx)=>{return {start:p, end:markers[idx]};});
-      ScalableVectorGraphics.drawArrows(svgOverlay, lines, textHeightPercent(10));
+      const lines = targetCorners.map((p, idx)=>{let m=markers[idx];return {start:{x:p.x, y:m.y}, end:m};});
+      ScalableVectorGraphics.drawArrows(svgOverlay, lines, targetSquareSize);
     }
     const drawTopArrowsToBottomMarkers = ()=>{
       ScalableVectorGraphics.drawArrows(svgOverlay,[
-        {start:viewCorners[0], end:markers[3]},
-        {start:viewCorners[1], end:markers[2]}],
-        textHeightPercent(10));
+        {start:targetCorners[0], end:markers[3]},
+        {start:targetCorners[1], end:markers[2]}],
+        targetSquareSize);
+    }
+    const drawTopLeftArrowToMarker = (prevBottomLeftIndex)=>{
+      ScalableVectorGraphics.drawArrows(svgOverlay,[
+        {start:targetCorners[0], end:markers[prevBottomLeftIndex]}],
+        targetSquareSize);
+    }
+    const drawTopRightArrowToMarker = (prevBottomRightIndex)=>{
+      ScalableVectorGraphics.drawArrows(svgOverlay,[
+        {start:targetCorners[1], end:markers[prevBottomRightIndex]}],
+        targetSquareSize);
     }
     const currentTopIsFirstStepBottom = ()=>currentContourPointsAndIds.ids.topLeftId === arucoFirstStepScanMarkers.ids.bottomLeftId &&
                                             currentContourPointsAndIds.ids.topRightId === arucoFirstStepScanMarkers.ids.bottomRightId;
@@ -253,11 +280,10 @@ async function maySendVideoFrameToAutoDetection()
                                          currentContourPointsAndIds.ids.topRightId === arucoFirstStepScanMarkers.ids.topRightId;
     if (currentContourPointsAndIds)
     {
-      const transformedSourcePolygonArea = ImageProcessing.polygonArea(markers) ;
-      const maximumArea = (tempCanvas.width * tempCanvas.height) ;
-      const areaRatio = transformedSourcePolygonArea / maximumArea;
-      const REQUIRED_AREA_RATIO = 0.6;// 72% or each side -> 0.72²=0.6
-      if (areaRatio > REQUIRED_AREA_RATIO)
+      const maxDx = ImageProcessing.maxXDistance(markers) ;
+      const dxRatio = maxDx / tempCanvas.width;
+      const REQUIRED_DX_RATIO = 0.9;
+      if (dxRatio > REQUIRED_DX_RATIO)
       {
         // are we scanning second part ?
         if (arucoFirstStepScanMarkers)
@@ -266,9 +292,17 @@ async function maySendVideoFrameToAutoDetection()
           {
             if (markers.every(isSharp))
             {
-              handleSecondImageWithArucoMarkers(imgMat, currentContourPointsAndIds, arucoFirstStepScanMarkers);
-              disableArucoAutoDetection(true);
-              imageToPdf();
+              handleNextImageWithArucoMarkers(imgMat, currentContourPointsAndIds, arucoFirstStepScanMarkers);
+              if (arucoFirstStepScanMarkers.count >= webcamAutoScanPartSelect.value)
+              {
+                disableArucoAutoDetection(true);
+                switchToImagePreviewMode();
+                imageToPdf();
+              }
+              else
+              {
+                updateArucoAutoDetectionButton();
+              }
             }
             else
             {
@@ -292,9 +326,18 @@ async function maySendVideoFrameToAutoDetection()
           {
             if (handleImageWithArucoMarkers(imgMat, currentContourPointsAndIds) )
             {
-              enableArucoAutoDetection();
-              // display not ok for bottom scan part
-              drawIncompleteBottomMarkers();
+              if (webcamAutoScanPartSelect.value == 1)
+              {
+                disableArucoAutoDetection(true);
+                switchToImagePreviewMode();
+                imageToPdf();
+              }
+              else
+              {
+                updateArucoAutoDetectionButton();
+                // display not ok for bottom scan part
+                drawIncompleteBottomMarkers();
+              }
             }
             else
             {
@@ -343,12 +386,12 @@ async function maySendVideoFrameToAutoDetection()
         const prevBottomLeftIndex = markers.findIndex(m => m.id === arucoFirstStepScanMarkers.ids.bottomLeftId);
         if (prevBottomLeftIndex != -1)
         {
-          ScalableVectorGraphics.drawArrows(svgOverlay,[{start:viewCorners[0], end:markers[prevBottomLeftIndex]}], textHeightPercent(10));
+          drawTopLeftArrowToMarker(prevBottomLeftIndex);
         }
         const prevBottomRightIndex = markers.findIndex(m => m.id === arucoFirstStepScanMarkers.ids.bottomRightId);
         if (prevBottomRightIndex != -1)
         {
-          ScalableVectorGraphics.drawArrows(svgOverlay,[{start:viewCorners[1], end:markers[prevBottomRightIndex]}], textHeightPercent(10));
+          drawTopRightArrowToMarker(prevBottomRightIndex);
         }
         drawIncompleteBottomMarkers();
       }
@@ -508,7 +551,7 @@ async function webcamCaptureToPdf()
 
 
 // firstStepMarkers is non null and has been tested
-function handleSecondImageWithArucoMarkers(imgMat, currentContourPointsAndIds, firstStepMarkers)
+function handleNextImageWithArucoMarkers(imgMat, currentContourPointsAndIds, firstStepMarkers)
 {
   if (currentContourPointsAndIds &&
       currentContourPointsAndIds.ids.topLeftId === firstStepMarkers.ids.bottomLeftId &&
@@ -520,7 +563,6 @@ function handleSecondImageWithArucoMarkers(imgMat, currentContourPointsAndIds, f
     cvImageMat.delete();
 
     arucoFirstStepScanMarkers = {ids:currentContourPointsAndIds.ids, count:firstStepMarkers.count+1};
-    switchToImagePreviewMode();
 
     return true;
   }
@@ -541,7 +583,8 @@ function stitchCapture()
   {
     const markers = ImageProcessing.detectAruco(imgMat);
     const currentContourPointsAndIds = markersToContourPoints(markers, true);
-    handleSecondImageWithArucoMarkers(imgMat, currentContourPointsAndIds, arucoFirstStepScanMarkers);
+    handleNextImageWithArucoMarkers(imgMat, currentContourPointsAndIds, arucoFirstStepScanMarkers);
+    switchToImagePreviewMode();
   }
   else if (stitcher)
   {

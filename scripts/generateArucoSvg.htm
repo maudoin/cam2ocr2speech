@@ -7,20 +7,12 @@ function arucoBitsToSvg(xOffset, size, bits) {
 	const group = document.createElementNS(svgNS, "g");
     group.setAttribute("x",0);
     group.setAttribute("y",0);
-    group.setAttribute("width",size + 4);
-    group.setAttribute("height",size + 4);
-
-	const whiteBg = document.createElementNS(svgNS, "rect");
-	whiteBg.setAttribute("x",xOffset);
-	whiteBg.setAttribute("y",0);
-	whiteBg.setAttribute("width",size + 4);
-	whiteBg.setAttribute("height",size + 4);
-	whiteBg.setAttribute("fill",'white');
-	group.appendChild(whiteBg);
+    group.setAttribute("width",size + 2);
+    group.setAttribute("height",size + 2);
 
 	const blackBg = document.createElementNS(svgNS, "rect");
-	blackBg.setAttribute("x",xOffset+1);
-	blackBg.setAttribute("y",1);
+	blackBg.setAttribute("x",xOffset);
+	blackBg.setAttribute("y",0);
 	blackBg.setAttribute("width",size + 2);
 	blackBg.setAttribute("height",size + 2);
 	blackBg.setAttribute("fill",'black');
@@ -32,8 +24,8 @@ function arucoBitsToSvg(xOffset, size, bits) {
 			if (fill) {
 				const point = document.createElementNS(svgNS, "use");
 				point.setAttribute("href","#pixel");
-				point.setAttribute("x",xOffset + j + 2);
-				point.setAttribute("y",i + 2);
+				point.setAttribute("x",xOffset + j + 1);
+				point.setAttribute("y",i + 1);
 				group.appendChild(point);
 			}
         }
@@ -64,7 +56,7 @@ function updateMarkers() {
 
   const markerIds = idsInput.value.split(/[ ,]+/).map(Number);
   //one pixel on each side for the black background, one more on each for the white bg
-  const arucoPixelCount = aruco_size + 4;
+  const arucoPixelCount = aruco_size + 2;
   arucosSvg.innerHTML = "";
   arucosSvg.setAttribute("xmlns", svgNS);
   arucosSvg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");

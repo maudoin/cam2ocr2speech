@@ -441,6 +441,23 @@ export class ImageProcessing
         return Math.abs(area / 2);
     }
 
+    static maxXDistance(points) {
+        if (points.length < 2) return 0;
+
+        let maxDistance = 0;
+
+        for (let i = 0; i < points.length; i++) {
+            const current = points[i];
+            const next = points[(i + 1) % points.length]; // wraps around to first
+
+            const distance = Math.abs(next.x - current.x);
+            if (distance > maxDistance) {
+            maxDistance = distance;
+            }
+        }
+        return maxDistance;
+    }
+
     // compute angle between two polygon edges defines by 3 points (2nd is common vertex)
     static angleBetween(p1, p2, p3) {
         const v1 = { x: p2.x - p1.x, y: p2.y - p1.y };

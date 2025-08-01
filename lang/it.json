@@ -3,6 +3,7 @@
     "webcamSelect": "Seleziona dispositivo",
     "webcamFocus": "Messa a fuoco",
     "webcamAutoScan": "Avvia il ritaglio automatico di una pagina A4 da due mezze immagini (richiede guide Aruco)",
+    "webcamAutoScanPartSelect":"Numero di parti successive per la cattura automatica di una pagina A4 (pulsante precedente)",
     "webcam2Img": "Cattura come immagine",
     "stitchWebcamCapture": "Aggiungi la cattura webcam alla precedente cattura immagine",
     "webcam2Pdf": "Cattura direttamente in PDF con riconoscimento del testo",

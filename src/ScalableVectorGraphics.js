@@ -114,10 +114,17 @@ export class ScalableVectorGraphics
             svgElement.appendChild(line);
 
             const polyPoints = [
-                { x: b.x+headLength*(1-2*(a.x<b.x)), y: b.y },
-                b,
-                { x: b.x, y: b.y+headLength*(1-2*(a.y<b.y)) }
+                { x: a.x - headLength, y: a.y - headLength }, // top-left
+                { x: a.x + headLength, y: a.y - headLength }, // top-right
+                { x: a.x + headLength, y: a.y + headLength }, // bottom-right
+                { x: a.x - headLength, y: a.y + headLength }, // bottom-left
+                { x: a.x - headLength, y: a.y - headLength }  // top-left
             ];
+            // const polyPoints = [
+            //     { x: b.x+headLength*(1-2*(a.x<b.x)), y: b.y },
+            //     b,
+            //     { x: b.x, y: b.y+headLength*(1-2*(a.y<b.y)) }
+            // ];
 
             const polyline = document.createElementNS(ScalableVectorGraphics.NS, "polyline");
             const pointsAttr = polyPoints.map(p => `${p.x},${p.y}`).join(" ");
