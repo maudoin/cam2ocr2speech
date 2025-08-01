@@ -58,6 +58,9 @@ const canvasInput = document.getElementById("canvasInput");
 
 OpticalCharacterRecognition.setupSelectFromAvailableModels(imageOcrLangInput, path => myAPI.listFiles(path));
 TextToSpeech.setupSelectFromAvailableModels(voiceLangInput, path => myAPI.listFolders(path), path => myAPI.listFiles(path));
+imageOcrLangInput.addEventListener("change", function () {
+  Localize.setTitlesFromIds(this.value.slice(0, 2));
+});
 webcamAutoScanPartSelect.addEventListener("change", function () {
   if ( webcamAutoScan.classList.contains("active") )
   {
