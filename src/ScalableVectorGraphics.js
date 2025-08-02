@@ -162,6 +162,165 @@ export class ScalableVectorGraphics
             });
         }
     }
+
+
+    static async mergeImages({
+      svg,
+      svgNS,
+      imageTopSrc,
+      imageTopHeight,
+      imageBottomSrc,
+      imageBottomHeight,
+      svgWidth,
+      svgHeight,
+      clipHeight})
+    {
+      const loadImage = (src) =>
+        new Promise((resolve) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => resolve(img);
+          img.src = src;
+        });
+
+      const [topImg, bottomImg] = await Promise.all([
+        loadImage(imageTopSrc),
+        loadImage(imageBottomSrc),
+      ]);
+
+      const visibleBottomHeight = svgHeight - clipHeight;
+      const overlap = Math.min(visibleBottomHeight, imageBottomHeight);
+      const sourceY = imageBottomHeight - overlap;
+      const mergedHeight = clipHeight + overlap;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = svgWidth;
+      canvas.height = mergedHeight;
+      const ctx = canvas.getContext("2d");
+
+      const topClipHeight = Math.min(clipHeight, imageTopHeight);
+      ctx.drawImage(
+        topImg,
+        0, 0, svgWidth, topClipHeight,
+        0, 0, svgWidth, topClipHeight
+      );
+
+      ctx.drawImage(
+        bottomImg,
+        0, sourceY, svgWidth, overlap,
+        0, clipHeight, svgWidth, overlap
+      );
+
+      const mergedUrl = canvas.toDataURL("image/png");
+
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+      const mergedImage = document.createElementNS(svgNS, "image");
+      mergedImage.setAttribute("href", mergedUrl);
+      mergedImage.setAttribute("width", svgWidth);
+      mergedImage.setAttribute("height", mergedHeight);
+      mergedImage.setAttribute("x", 0);
+      mergedImage.setAttribute("y", 0);
+      svg.appendChild(mergedImage);
+    }
+
+    // usage: imageComparisonSlider().then(mergeImages);
+    static imageComparisonSlider(
+      svgWidth = 600,
+      svgHeight = 500,
+      imageBottomSrc = "https://placehold.co/600x450?text=Hello\nWorld",
+      imageBottomHeight = 450,
+      imageTopSrc = "https://placehold.co/600x400/orange/white",
+      imageTopHeight = 400)
+    {
+      return new Promise((resolve) => {
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNS, "svg");
+        svg.setAttribute("width", svgWidth);
+        svg.setAttribute("height", svgHeight);
+        svg.setAttribute("id", "svg-slider");
+
+        const imageBottom = document.createElementNS(svgNS, "image");
+        imageBottom.setAttribute("href", imageBottomSrc);
+        imageBottom.setAttribute("width", svgWidth);
+        imageBottom.setAttribute("height", imageBottomHeight);
+        imageBottom.setAttribute("y", svgHeight - imageBottomHeight);
+        svg.appendChild(imageBottom);
+
+        const clipPath = document.createElementNS(svgNS, "clipPath");
+        clipPath.setAttribute("id", "clip");
+
+        const clipRect = document.createElementNS(svgNS, "rect");
+        clipRect.setAttribute("x", 0);
+        clipRect.setAttribute("y", 0);
+        clipRect.setAttribute("width", svgWidth);
+        clipRect.setAttribute("height", imageTopHeight / 2);
+        clipPath.appendChild(clipRect);
+        svg.appendChild(clipPath);
+
+        const imageTop = document.createElementNS(svgNS, "image");
+        imageTop.setAttribute("href", imageTopSrc);
+        imageTop.setAttribute("width", svgWidth);
+        imageTop.setAttribute("height", imageTopHeight);
+        imageTop.setAttribute("y", 0);
+        imageTop.setAttribute("clip-path", "url(#clip)");
+        svg.appendChild(imageTop);
+
+        const sliderBar = document.createElementNS(svgNS, "rect");
+        sliderBar.setAttribute("x", 0);
+        sliderBar.setAttribute("y", imageTopHeight / 2);
+        sliderBar.setAttribute("width", svgWidth);
+        sliderBar.setAttribute("height", 5);
+        sliderBar.setAttribute("fill", "white");
+        sliderBar.setAttribute("opacity", "0.7");
+        sliderBar.setAttribute("cursor", "ns-resize");
+        svg.appendChild(sliderBar);
+
+        document.body.appendChild(svg);
+
+        let isDragging = false;
+
+        sliderBar.addEventListener("mousedown", () => {
+          isDragging = true;
+        });
+
+        window.addEventListener("mouseup", () => {
+          isDragging = false;
+        });
+
+        window.addEventListener("mousemove", (e) => {
+          if (!isDragging) return;
+
+          const svgRect = svg.getBoundingClientRect();
+          let y = e.clientY - svgRect.top;
+
+          y = Math.max(0, Math.min(y, imageTopHeight));
+
+          clipRect.setAttribute("height", y);
+          sliderBar.setAttribute("y", y);
+        });
+
+        sliderBar.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+
+          const clipHeight = parseFloat(clipRect.getAttribute("height"));
+
+          resolve({
+            svg,
+            svgNS,
+            imageTopSrc,
+            imageTopHeight,
+            imageBottomSrc,
+            imageBottomHeight,
+            svgWidth,
+            svgHeight,
+            clipHeight
+          });
+        });
+      });
+    }
+
+
 }
 
 ScalableVectorGraphics.NS = "http://www.w3.org/2000/svg";
