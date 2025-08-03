@@ -17,12 +17,12 @@ ImageProcessing.asyncImport().then(() => enableActions());
 let arucoFirstStepScanMarkers = null;
 let previousContourPoints = null;
 let previousContourPointsStableCount = 0;
-const STABLE_CONTOUR_SUCCESSIVE_FRAMES_THRESHOLD = 4;
+const STABLE_CONTOUR_SUCCESSIVE_FRAMES_THRESHOLD = 3;
 function stabilityIndicator(){
   return previousContourPointsStableCount + "/" + STABLE_CONTOUR_SUCCESSIVE_FRAMES_THRESHOLD;
 }
 function isStable(canvasWidth, contourPoints){
-  const STABLE_AVG_SQ_DISTANCE_PCT_WIDTH = (0.01); // allow only 1 pct
+  const STABLE_AVG_SQ_DISTANCE_PCT_WIDTH = (0.004); // allow only 0.4% of the canvas width
   const STABLE_AVG_SQ_DISTANCE = (canvasWidth) => (STABLE_AVG_SQ_DISTANCE_PCT_WIDTH*canvasWidth)**2; // allow only 5 pixels
   if (!previousContourPoints)
   {
@@ -30,16 +30,21 @@ function isStable(canvasWidth, contourPoints){
     previousContourPoints = contourPoints;
     previousContourPointsStableCount = 0;
   }
-  else if (ImageProcessing.averageSquaredDistance(contourPoints, previousContourPoints) < STABLE_AVG_SQ_DISTANCE(canvasWidth))
-  {
-    // increment
-    previousContourPointsStableCount++;
-  }
   else
-  {
-    // unstable, reset with current
-    previousContourPoints = contourPoints;
-    previousContourPointsStableCount = 0;
+  { const squareDist = ImageProcessing.averageSquaredDistance(contourPoints, previousContourPoints);
+    // ScalableVectorGraphics.drawText(svgOverlay, {x:canvasWidth/2, y:50}, Math.trunc(Math.sqrt(squareDist))+" vs "+(STABLE_AVG_SQ_DISTANCE_PCT_WIDTH*canvasWidth),
+    //     50, squareDist < STABLE_AVG_SQ_DISTANCE(canvasWidth)?"black":"red");
+    if ( squareDist < STABLE_AVG_SQ_DISTANCE(canvasWidth))
+    {
+      // increment
+      previousContourPointsStableCount++;
+    }
+    else
+    {
+      // unstable, reset with current
+      previousContourPoints = contourPoints;
+      previousContourPointsStableCount = 0;
+    }
   }
   return previousContourPointsStableCount >= STABLE_CONTOUR_SUCCESSIVE_FRAMES_THRESHOLD;
 };
@@ -285,8 +290,12 @@ async function maySendVideoFrameToAutoDetection()
     const markers = ImageProcessing.detectAruco(imgMat);
     const currentContourPointsAndIds = markersToContourPoints(markers, arucoFirstStepScanMarkers != null);
 
-    const drawMatchingMarkers = ()=>ScalableVectorGraphics.drawTextAndPolyLine(svgOverlay, markers,()=>"✓ "+stabilityIndicator(),
-      textHeightPercent(7), "black", m=>m.corners);
+    const drawMatchingMarkers = ()=>{
+        ScalableVectorGraphics.drawTextAndPolyLine(svgOverlay, markers,()=>"✓",
+          textHeightPercent(7), "black", m=>m.corners);
+        ScalableVectorGraphics.drawText(svgOverlay, {x:tempCanvas.width/2, y:tempCanvas.height/2}, stabilityIndicator(),
+        textHeightPercent(20), "green");
+    }
     const drawIncompleteMarkers = (markersToDraw)=>ScalableVectorGraphics.drawTextAndPolyLine(svgOverlay, markersToDraw,
       i=>(i+1)+"/4",
       textHeightPercent(10), "red", m=>m.corners);
@@ -296,7 +305,7 @@ async function maySendVideoFrameToAutoDetection()
       ScalableVectorGraphics.drawTextAndPolyLine(svgOverlay, filterOutFirstStepTopMarkers(), i=>(i+1)+"/4",
         textHeightPercent(10), "red", m=>m.corners);
     const drawArrows = ()=>{
-      const lines = targetCorners.map((p, idx)=>{let m=markers[idx];return {start:{x:p.x, y:m.y}, end:m};});
+      const lines = targetCorners.map((p, idx)=>{let m=markers[idx];return {start:p, end:m};});
       ScalableVectorGraphics.drawArrows(svgOverlay, lines, targetSquareSize);
     }
     const drawTopArrowsToBottomMarkers = ()=>{
@@ -321,10 +330,11 @@ async function maySendVideoFrameToAutoDetection()
                                          currentContourPointsAndIds.ids.topRightId === arucoFirstStepScanMarkers.ids.topRightId;
     if (currentContourPointsAndIds)
     {
-      const maxDx = ImageProcessing.maxXDistance(markers) ;
-      const dxRatio = maxDx / tempCanvas.width;
-      const REQUIRED_DX_RATIO = 0.9;
-      if (dxRatio > REQUIRED_DX_RATIO)
+      const transformedSourcePolygonArea = ImageProcessing.polygonArea(markers) ;
+      const maximumArea = (tempCanvas.width * tempCanvas.height) ;
+      const areaRatio = transformedSourcePolygonArea / maximumArea;
+      const REQUIRED_AREA_RATIO = 0.68;// 68% of area is 82% or each side
+      if (areaRatio > REQUIRED_AREA_RATIO)
       {
         // are we scanning second part ?
         if (arucoFirstStepScanMarkers)

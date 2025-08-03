@@ -136,6 +136,18 @@ export class ScalableVectorGraphics
             svgElement.appendChild(polyline);
         });
     }
+    static drawText(svgElement, p, txt, textHeight, color)
+    {
+      const textElem = document.createElementNS(ScalableVectorGraphics.NS, "text");
+      textElem.setAttribute("x", p.x);
+      textElem.setAttribute("y", p.y);
+      textElem.setAttribute("font-size", textHeight);
+      textElem.setAttribute("fill", color);
+      textElem.setAttribute("text-anchor", "middle"); // Center horizontally
+      textElem.setAttribute("dominant-baseline", "middle"); // Center vertically
+      textElem.textContent = txt;
+      svgElement.appendChild(textElem);
+    }
     static drawTextAndPolyLine(svgElement, locations, indexToText, textHeight, color, getPolyline)
     {
         if (locations)
@@ -149,17 +161,7 @@ export class ScalableVectorGraphics
                 svgElement.appendChild(poly);
             });
 
-            locations.forEach((p, idx)=>{
-                const textElem = document.createElementNS(ScalableVectorGraphics.NS, "text");
-                textElem.setAttribute("x", p.x);
-                textElem.setAttribute("y", p.y);
-                textElem.setAttribute("font-size", textHeight);
-                textElem.setAttribute("fill", color);
-                textElem.setAttribute("text-anchor", "middle"); // Center horizontally
-                textElem.setAttribute("dominant-baseline", "middle"); // Center vertically
-                textElem.textContent = indexToText(idx);
-                svgElement.appendChild(textElem);
-            });
+            locations.forEach((p, idx)=>ScalableVectorGraphics.drawText(svgElement, p, indexToText(idx), textHeight, color));
         }
     }
 
