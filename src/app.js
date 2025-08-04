@@ -348,7 +348,9 @@ async function maySendVideoFrameToAutoDetection()
               {
                 disableArucoAutoDetection(true);
                 switchToImagePreviewMode();
-                imageToPdf();
+
+                showSvgComparisonSlider(imgMat, currentContourPointsAndIds.fullAreaContourPoints);
+
               }
               else
               {
@@ -476,12 +478,23 @@ function markersToContourPoints(markersClockwiseFromTopLeft, topMarkerFromBottom
     const TOP_RIGHT = 1;
     const BOTTOM_RIGHT = 2;
     const BOTTOM_LEFT = 3;
-    // markers are on the left and right side of the sheet 
+    let topLeftMarkerCorners = ImageProcessing.sortPointClockwiseFromTopLeft(markersClockwiseFromTopLeft[TOP_LEFT].corners);
+    let topRightMarkerCorners = ImageProcessing.sortPointClockwiseFromTopLeft(markersClockwiseFromTopLeft[TOP_RIGHT].corners);
+    let bottomRightMarkerCorners = ImageProcessing.sortPointClockwiseFromTopLeft(markersClockwiseFromTopLeft[BOTTOM_RIGHT].corners);
+    let bottomLeftMarkerCorners = ImageProcessing.sortPointClockwiseFromTopLeft(markersClockwiseFromTopLeft[BOTTOM_LEFT].corners);
+    // markers are on the left and right side of the sheet
     return {contourPoints : [
-      ImageProcessing.sortPointClockwiseFromTopLeft(markersClockwiseFromTopLeft[TOP_LEFT].corners)[topMarkerFromBottom?BOTTOM_RIGHT:TOP_RIGHT],
-      ImageProcessing.sortPointClockwiseFromTopLeft(markersClockwiseFromTopLeft[TOP_RIGHT].corners)[topMarkerFromBottom?BOTTOM_LEFT:TOP_LEFT],
-      ImageProcessing.sortPointClockwiseFromTopLeft(markersClockwiseFromTopLeft[BOTTOM_RIGHT].corners)[BOTTOM_LEFT],
-      ImageProcessing.sortPointClockwiseFromTopLeft(markersClockwiseFromTopLeft[BOTTOM_LEFT].corners)[BOTTOM_RIGHT]],
+        topLeftMarkerCorners[topMarkerFromBottom?BOTTOM_RIGHT:TOP_RIGHT],
+        topRightMarkerCorners[topMarkerFromBottom?BOTTOM_LEFT:TOP_LEFT],
+        bottomRightMarkerCorners[BOTTOM_LEFT],
+        bottomLeftMarkerCorners[BOTTOM_RIGHT]
+      ],
+      fullAreaContourPoints : [
+        topLeftMarkerCorners[TOP_RIGHT],
+        topRightMarkerCorners[TOP_LEFT],
+        bottomRightMarkerCorners[BOTTOM_LEFT],
+        bottomLeftMarkerCorners[BOTTOM_RIGHT]
+      ],
       ids : {
         topLeftId :     markersClockwiseFromTopLeft[TOP_LEFT].id,
         topRightId :    markersClockwiseFromTopLeft[TOP_RIGHT].id,
@@ -620,6 +633,39 @@ function handleNextImageWithArucoMarkers(imgMat, currentContourPointsAndIds, fir
   return false;
 }
 
+
+function showSvgComparisonSlider(imgMat, contourPoints)
+{
+  const cvImageMat = ImageProcessing.fourPointTransform(imgMat, contourPoints);
+  let scaleNewImage = canvasInput.width / cvImageMat.cols;
+  let resizedNewImage = new cv.Mat();
+  cv.resize(cvImageMat, resizedNewImage, new cv.Size(canvasInput.width, Math.round(cvImageMat.rows * scaleNewImage)));
+  cvImageMat.delete();
+
+  // get bottom image from resized transformed capture
+  const bottomCanvas = document.createElement("canvas");
+  bottomCanvas.width = resizedNewImage.cols;
+  bottomCanvas.height = resizedNewImage.rows;
+  cv.imshow(bottomCanvas, resizedNewImage);
+  resizedNewImage.delete();
+
+  ScalableVectorGraphics.init(svgOverlay, canvasInput.width, canvasInput.height);
+  ScalableVectorGraphics.imageComparisonSlider(
+    svgOverlay,
+    canvasInput.width,
+    canvasInput.height,
+    bottomCanvas.toDataURL(),
+    bottomCanvas.height,
+    // top image comes from canvasInput
+    canvasInput.toDataURL(),
+    canvasInput.height
+  ).then(async (params) => {
+    await ScalableVectorGraphics.createMergedCanvas(canvasInput, params);
+    svgOverlay.innerHTML = "";
+  });
+
+}
+
 function stitchCapture()
 {
   // video to tmp canvas
@@ -636,6 +682,8 @@ function stitchCapture()
     const currentContourPointsAndIds = markersToContourPoints(markers, true);
     handleNextImageWithArucoMarkers(imgMat, currentContourPointsAndIds, arucoFirstStepScanMarkers);
     switchToImagePreviewMode();
+
+    showSvgComparisonSlider(imgMat, currentContourPointsAndIds.fullAreaContourPoints);
   }
   else if (stitcher)
   {

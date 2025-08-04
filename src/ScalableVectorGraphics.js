@@ -165,18 +165,15 @@ export class ScalableVectorGraphics
         }
     }
 
-
-    static async mergeImages({
-      svg,
-      svgNS,
+    static async createMergedCanvas(canvas, {
       imageTopSrc,
       imageTopHeight,
       imageBottomSrc,
       imageBottomHeight,
       svgWidth,
       svgHeight,
-      clipHeight})
-    {
+      clipHeight
+    }) {
       const loadImage = (src) =>
         new Promise((resolve) => {
           const img = new Image();
@@ -190,14 +187,8 @@ export class ScalableVectorGraphics
         loadImage(imageBottomSrc),
       ]);
 
-      const visibleBottomHeight = svgHeight - clipHeight;
-      const overlap = Math.min(visibleBottomHeight, imageBottomHeight);
-      const sourceY = imageBottomHeight - overlap;
-      const mergedHeight = clipHeight + overlap;
-
-      const canvas = document.createElement("canvas");
       canvas.width = svgWidth;
-      canvas.height = mergedHeight;
+      canvas.height = svgHeight;
       const ctx = canvas.getContext("2d");
 
       const topClipHeight = Math.min(clipHeight, imageTopHeight);
@@ -207,99 +198,86 @@ export class ScalableVectorGraphics
         0, 0, svgWidth, topClipHeight
       );
 
+      const visibleBottomHeight = svgHeight - clipHeight;
+      const overlap = Math.min(visibleBottomHeight, imageBottomHeight);
+      const sourceY = imageBottomHeight - overlap;
       ctx.drawImage(
         bottomImg,
         0, sourceY, svgWidth, overlap,
         0, clipHeight, svgWidth, overlap
       );
 
-      const mergedUrl = canvas.toDataURL("image/png");
-
-      while (svg.firstChild) svg.removeChild(svg.firstChild);
-
-      const mergedImage = document.createElementNS(svgNS, "image");
-      mergedImage.setAttribute("href", mergedUrl);
-      mergedImage.setAttribute("width", svgWidth);
-      mergedImage.setAttribute("height", mergedHeight);
-      mergedImage.setAttribute("x", 0);
-      mergedImage.setAttribute("y", 0);
-      svg.appendChild(mergedImage);
+      return canvas;
     }
 
-    // usage: imageComparisonSlider().then(mergeImages);
+    // returns a promise with parameters to call mergeCanvas
     static imageComparisonSlider(
-      svgWidth = 600,
-      svgHeight = 500,
-      imageBottomSrc = "https://placehold.co/600x450?text=Hello\nWorld",
-      imageBottomHeight = 450,
-      imageTopSrc = "https://placehold.co/600x400/orange/white",
-      imageTopHeight = 400)
+      svgElement, svgWidth, svgHeight,
+      imageBottomSrc, imageBottomHeight,
+      imageTopSrc, imageTopHeight)
     {
       return new Promise((resolve) => {
-        const svgNS = "http://www.w3.org/2000/svg";
-        const svg = document.createElementNS(svgNS, "svg");
-        svg.setAttribute("width", svgWidth);
-        svg.setAttribute("height", svgHeight);
-        svg.setAttribute("id", "svg-slider");
-
-        const imageBottom = document.createElementNS(svgNS, "image");
+        const imageBottom = document.createElementNS(ScalableVectorGraphics.NS, "image");
         imageBottom.setAttribute("href", imageBottomSrc);
         imageBottom.setAttribute("width", svgWidth);
         imageBottom.setAttribute("height", imageBottomHeight);
         imageBottom.setAttribute("y", svgHeight - imageBottomHeight);
-        svg.appendChild(imageBottom);
+        svgElement.appendChild(imageBottom);
 
-        const clipPath = document.createElementNS(svgNS, "clipPath");
+        const clipPath = document.createElementNS(ScalableVectorGraphics.NS, "clipPath");
         clipPath.setAttribute("id", "clip");
 
-        const clipRect = document.createElementNS(svgNS, "rect");
+        const clipRect = document.createElementNS(ScalableVectorGraphics.NS, "rect");
         clipRect.setAttribute("x", 0);
         clipRect.setAttribute("y", 0);
         clipRect.setAttribute("width", svgWidth);
-        clipRect.setAttribute("height", imageTopHeight / 2);
+        clipRect.setAttribute("height", svgHeight-imageBottomHeight);
         clipPath.appendChild(clipRect);
-        svg.appendChild(clipPath);
+        svgElement.appendChild(clipPath);
 
-        const imageTop = document.createElementNS(svgNS, "image");
+        const imageTop = document.createElementNS(ScalableVectorGraphics.NS, "image");
         imageTop.setAttribute("href", imageTopSrc);
         imageTop.setAttribute("width", svgWidth);
         imageTop.setAttribute("height", imageTopHeight);
         imageTop.setAttribute("y", 0);
         imageTop.setAttribute("clip-path", "url(#clip)");
-        svg.appendChild(imageTop);
+        svgElement.appendChild(imageTop);
 
-        const sliderBar = document.createElementNS(svgNS, "rect");
+        const sliderBar = document.createElementNS(ScalableVectorGraphics.NS, "rect");
         sliderBar.setAttribute("x", 0);
-        sliderBar.setAttribute("y", imageTopHeight / 2);
+        sliderBar.setAttribute("y", svgHeight-imageBottomHeight);
         sliderBar.setAttribute("width", svgWidth);
         sliderBar.setAttribute("height", 5);
         sliderBar.setAttribute("fill", "white");
         sliderBar.setAttribute("opacity", "0.7");
         sliderBar.setAttribute("cursor", "ns-resize");
-        svg.appendChild(sliderBar);
+        sliderBar.style.cursor = "row-resize";
+        sliderBar.style.pointerEvents = "auto";
+        svgElement.appendChild(sliderBar);
+        svgElement.style.pointerEvents = "auto";
 
-        document.body.appendChild(svg);
+        function onPointerMove(e) {
+          const pt = svgElement.createSVGPoint();
+          pt.x = 0;
+          pt.y = e.clientY;
+          const CTM = svgElement.getScreenCTM();
+          const svgP = pt.matrixTransform(CTM.inverse());
 
-        let isDragging = false;
-
-        sliderBar.addEventListener("mousedown", () => {
-          isDragging = true;
-        });
-
-        window.addEventListener("mouseup", () => {
-          isDragging = false;
-        });
-
-        window.addEventListener("mousemove", (e) => {
-          if (!isDragging) return;
-
-          const svgRect = svg.getBoundingClientRect();
-          let y = e.clientY - svgRect.top;
-
-          y = Math.max(0, Math.min(y, imageTopHeight));
+          const y = Math.max(svgHeight-imageBottomHeight, Math.min(svgP.y, imageTopHeight));
 
           clipRect.setAttribute("height", y);
           sliderBar.setAttribute("y", y);
+        }
+
+        function onPointerUp() {
+            svgElement.removeEventListener("pointermove", onPointerMove);
+            svgElement.removeEventListener("pointerup", onPointerUp);
+        }
+        sliderBar.addEventListener("pointerdown", function(e) {
+            svgElement.addEventListener("pointermove", onPointerMove);
+            svgElement.addEventListener("pointerup", onPointerUp);
+            e.preventDefault();
+            e.stopPropagation();
         });
 
         sliderBar.addEventListener("contextmenu", (e) => {
@@ -308,8 +286,7 @@ export class ScalableVectorGraphics
           const clipHeight = parseFloat(clipRect.getAttribute("height"));
 
           resolve({
-            svg,
-            svgNS,
+            svgElement,
             imageTopSrc,
             imageTopHeight,
             imageBottomSrc,
@@ -320,9 +297,8 @@ export class ScalableVectorGraphics
           });
         });
       });
-    }
-
-
+  }
 }
+
 
 ScalableVectorGraphics.NS = "http://www.w3.org/2000/svg";
