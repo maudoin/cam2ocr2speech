@@ -152,6 +152,22 @@ function enableActions()
   deskewImage.addEventListener("click", findImageContour);
   voiceOption.addEventListener("click", speakSelectedText);
 
+  document.addEventListener("keydown", (event) => {
+    if (event.code === "Space" || event.key === " " || event.key === "Spacebar") {
+      if (webcamPreview.classList.contains("activeMode"))
+      {
+        if (stitchWebcamCapture.style.display != "none")
+        {
+          stitchCapture();
+        }
+        else
+        {
+          webcamCaptureToImage();
+        }
+        event.preventDefault(); // prevent scrolling
+      }
+    }
+  });
 }
 
 // switch to scan from video preview mode
