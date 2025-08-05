@@ -23,6 +23,9 @@ const STABLE_CONTOUR_SUCCESSIVE_FRAMES_THRESHOLD = 3;
 function stabilityIndicator(){
   return previousContourPointsStableCount + "/" + STABLE_CONTOUR_SUCCESSIVE_FRAMES_THRESHOLD;
 }
+function resetStabilityIndicator(){
+  previousContourPointsStableCount = 0;
+}
 function isStable(canvasWidth, contourPoints){
   const STABLE_AVG_SQ_DISTANCE_PCT_WIDTH = (0.004); // allow only 0.4% of the canvas width
   const STABLE_AVG_SQ_DISTANCE = (canvasWidth) => (STABLE_AVG_SQ_DISTANCE_PCT_WIDTH*canvasWidth)**2; // allow only 5 pixels
@@ -160,12 +163,30 @@ function enableActions()
     if (event.code === "Space" || event.key === " " || event.key === "Spacebar") {
       if (webcamPreview.classList.contains("activeMode"))
       {
-        if (stitchWebcamCapture.style.display != "none")
+        if (stitchWebcamCapture.style.display != "none" || arucoFirstStepScanMarkers)
         {
           stitchCapture();
         }
+        else if (webcamAutoScan.classList.contains("active") && webcamAutoScanPartSelect.value > 1)
+        {
+          // advance auto scan
+          const tempCanvas = document.createElement("canvas");
+          tempCanvas.width = video.videoWidth;
+          tempCanvas.height = video.videoHeight;
+          const tempCtx = tempCanvas.getContext("2d");
+          tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+          const imgMat = cv.imread(tempCanvas);
+          const markers = ImageProcessing.detectAruco(imgMat);
+          const currentContourPointsAndIds = markersToContourPoints(markers, arucoFirstStepScanMarkers != null);
+          if (handleImageWithArucoMarkers(imgMat, currentContourPointsAndIds) )
+          {
+            updateArucoAutoDetectionButton();
+          }
+        }
         else
         {
+          // capture
+          disableArucoAutoDetection();
           webcamCaptureToImage();
         }
         event.preventDefault(); // prevent scrolling
@@ -198,6 +219,8 @@ function switchToWebcamMode()
   // layout update
   preview.style.display = "block";
   pageContainer.style.display = "none";
+
+  svgOverlay.innerHTML = ""; // Clear previous
 }
 
 // switch to image view mode
@@ -281,6 +304,10 @@ function updateArucoAutoDetectionButton()
 
 function enableArucoAutoDetection()
 {
+  if (arucoFirstStepScanMarkers && arucoFirstStepScanMarkers.count >= webcamAutoScanPartSelect.value)
+  {
+    arucoFirstStepScanMarkers = null;
+  }
   webcamAutoScan.classList.add("active");
   webcamFocus.value = FOCUS_VALUE_WHEN_ENTERING_ARUCO_MODE;
   webcamFocus.dispatchEvent(new Event('input', { bubbles: true }));
@@ -309,7 +336,7 @@ async function maySendVideoFrameToAutoDetection()
     ScalableVectorGraphics.init(svgOverlay, video.videoWidth, video.videoHeight);
 
     const imgMat = cv.imread(tempCanvas);
-    const markers = ImageProcessing.detectAruco(imgMat);
+    let markers = ImageProcessing.detectAruco(imgMat);
     const currentContourPointsAndIds = markersToContourPoints(markers, arucoFirstStepScanMarkers != null);
 
     const drawMatchingMarkers = ()=>{
@@ -346,10 +373,10 @@ async function maySendVideoFrameToAutoDetection()
         {start:targetCorners[1], end:markers[prevBottomRightIndex]}],
         targetSquareSize);
     }
-    const currentTopIsFirstStepBottom = ()=>currentContourPointsAndIds.ids.topLeftId === arucoFirstStepScanMarkers.ids.bottomLeftId &&
-                                            currentContourPointsAndIds.ids.topRightId === arucoFirstStepScanMarkers.ids.bottomRightId;
-    const currentTopIsFirstStepTop = ()=>currentContourPointsAndIds.ids.topLeftId === arucoFirstStepScanMarkers.ids.topLeftId &&
-                                         currentContourPointsAndIds.ids.topRightId === arucoFirstStepScanMarkers.ids.topRightId;
+    const currentTopIsPrevStepBottom = ()=>currentContourPointsAndIds.ids.topLeftId === arucoFirstStepScanMarkers.ids.bottomLeftId &&
+                                           currentContourPointsAndIds.ids.topRightId === arucoFirstStepScanMarkers.ids.bottomRightId;
+    const currentTopIsPrevStepTop = ()=>currentContourPointsAndIds.ids.topLeftId === arucoFirstStepScanMarkers.ids.topLeftId &&
+                                        currentContourPointsAndIds.ids.topRightId === arucoFirstStepScanMarkers.ids.topRightId;
     if (currentContourPointsAndIds)
     {
       const transformedSourcePolygonArea = ImageProcessing.polygonArea(markers) ;
@@ -361,7 +388,7 @@ async function maySendVideoFrameToAutoDetection()
         // are we scanning second part ?
         if (arucoFirstStepScanMarkers)
         {
-          if (currentTopIsFirstStepBottom())
+          if (currentTopIsPrevStepBottom())
           {
             if (isStable(tempCanvas.width, currentContourPointsAndIds.contourPoints))
             {
@@ -385,7 +412,7 @@ async function maySendVideoFrameToAutoDetection()
               drawMatchingMarkers();
             }
           }
-          else if (currentTopIsFirstStepTop())
+          else if (currentTopIsPrevStepTop())
           {
             // markers detected but must move to next area
             drawTopArrowsToBottomMarkers();
@@ -410,8 +437,6 @@ async function maySendVideoFrameToAutoDetection()
               else
               {
                 updateArucoAutoDetectionButton();
-                // display not ok for bottom scan part
-                drawIncompleteBottomMarkers();
               }
             }
             else
@@ -428,22 +453,23 @@ async function maySendVideoFrameToAutoDetection()
       }
       else // too far
       {
+        resetStabilityIndicator();
         if (arucoFirstStepScanMarkers)
         {
           const markersExceptFirstTop = filterOutFirstStepTopMarkers();
-          if (markersExceptFirstTop.length !== 4)
-          {
-            drawIncompleteMarkers(markersExceptFirstTop);
-          }
-          else if (currentTopIsFirstStepTop())
+          if (currentTopIsPrevStepTop())
           {
             // markers detected but must move to next area
             drawTopArrowsToBottomMarkers();
           }
-          else
+          else if (markersExceptFirstTop.length === 4)
           {
             // markers detected but camera must be adjusted to fit the page better
             drawArrows();
+          }
+          else
+          {
+            drawIncompleteMarkers(markersExceptFirstTop);
           }
         }
         else
@@ -457,6 +483,7 @@ async function maySendVideoFrameToAutoDetection()
     {
       if (arucoFirstStepScanMarkers)
       {
+        resetStabilityIndicator();
         // draw top guides for bottom corners of completed part
         const prevBottomLeftIndex = markers.findIndex(m => m.id === arucoFirstStepScanMarkers.ids.bottomLeftId);
         if (prevBottomLeftIndex != -1)
@@ -542,6 +569,8 @@ function handleImageWithArucoMarkers(imgMat, currentContourPointsAndIds)
     currentContourPoints = [];
     stitcher = null;
     arucoFirstStepScanMarkers = {ids:currentContourPointsAndIds.ids, count:1};
+    // stitching is now available
+    stitchWebcamCapture.style.display = "block";
     return true;
   }
   return false;
@@ -549,7 +578,7 @@ function handleImageWithArucoMarkers(imgMat, currentContourPointsAndIds)
 
 function getTopAndBottomLinesFromMarkers(markers)
 {
-  if (markers && markers.length % 2 === 0)
+  if (markers && markers.length > 4 && markers.length % 2 === 0)
   {
     let polygonTop = [];
     let polygonBottom = [];
