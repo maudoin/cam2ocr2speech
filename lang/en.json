@@ -12,6 +12,8 @@
     "rotateImgClockwise":"Rotate on the right",
     "rotateImgCounterClockwise":"Rotate on the left",
     "img2PdfBtn":"Generate PDF with text recognition",
+    "imageOcrLangInput":"Select text recognition language",
+    "imgSaveBtn":"Save image...",
     "showPdfBtn":"PDF mode with voiced text",
     "openPdfBtn":"Select existing PDF file..."
 }

@@ -12,6 +12,8 @@
     "rotateImgClockwise":"Tourner à droite",
     "rotateImgCounterClockwise":"Tourner à gauche",
     "img2PdfBtn":"Générer un PDF avec reconnaissance de caractères",
+    "imageOcrLangInput":"Selection de la langue reconnaissance de caractères",
+    "imgSaveBtn":"Enregistrer l'image...",
     "showPdfBtn":"Mode PDF et lecture vocale",
     "openPdfBtn":"Choisir un ficher PDF existant..."
 }

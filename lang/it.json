@@ -12,6 +12,8 @@
     "rotateImgClockwise": "Ruota a destra",
     "rotateImgCounterClockwise": "Ruota a sinistra",
     "img2PdfBtn": "Genera PDF con riconoscimento del testo",
+    "imageOcrLangInput": "Seleziona la lingua per il riconoscimento del testo",
+    "imgSaveBtn": "Salva immagine...",
     "showPdfBtn": "Modalità PDF con lettura vocale",
     "openPdfBtn": "Seleziona file PDF esistente..."
 }

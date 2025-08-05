@@ -71,6 +71,7 @@ const rotateImgClockwise = document.getElementById("rotateImgClockwise");
 const rotateImgCounterClockwise = document.getElementById("rotateImgCounterClockwise");
 const img2PdfBtn = document.getElementById("img2PdfBtn");
 const imageOcrLangInput = document.getElementById("imageOcrLangInput");
+const imgSaveBtn = document.getElementById("imgSaveBtn");
 
 // pdf control elements
 const showPdfBtn = document.getElementById("showPdfBtn");
@@ -149,6 +150,7 @@ function enableActions()
   webcam2Pdf.disabled = false;
 
   img2PdfBtn.onclick = imageToPdf;
+  imgSaveBtn.onclick = imageSave;
   openImage.onclick = selectImage;
   deskewImage.addEventListener("click", findImageContour);
   voiceOption.addEventListener("click", speakSelectedText);
@@ -184,6 +186,7 @@ function switchToWebcamMode()
   stitchWebcamCapture.style.display = (stitcher || arucoFirstStepScanMarkers) ? "block" : "none";
   webcam2Pdf.style.display = "block";
   img2PdfBtn.style.display = "none";
+  imgSaveBtn.style.display = "none";
   deskewImageLabel.style.display = "none";
   rotateImgClockwise.style.display = "none";
   rotateImgCounterClockwise.style.display = "none";
@@ -209,6 +212,7 @@ function switchToImagePreviewMode()
   stitchWebcamCapture.style.display = "none";
   webcam2Pdf.style.display = "none";
   img2PdfBtn.style.display = "block";
+  imgSaveBtn.style.display = "block";
   deskewImageLabel.style.display = "block";
   rotateImgClockwise.style.display = "block";
   rotateImgCounterClockwise.style.display = "block";
@@ -857,6 +861,16 @@ async function imageToPdf()
   PdfView.openUrl(blobUrl);
 
   switchToPdfMode();
+}
+
+async function imageSave()
+{
+  canvasInput.toBlob(function(blob) {
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "capture.png";
+    link.click();
+  }, "image/png");
 }
 
 // Add event listener for text selection and trigger speach automatically
