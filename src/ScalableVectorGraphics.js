@@ -213,15 +213,15 @@ export class ScalableVectorGraphics
         0, sourceY, svgWidth, overlap,
         0, clipHeight, svgWidth, overlap
       );
-
-      return canvas;
     }
 
     // returns a promise with parameters to call mergeCanvas
     static imageComparisonSlider(
-      svgElement, svgWidth, svgHeight,
-      imageBottomSrc, imageBottomHeight,
-      imageTopSrc, imageTopHeight)
+      svgElement,
+      { svgWidth, svgHeight,
+        imageBottomSrc, imageBottomHeight,
+        imageTopSrc, imageTopHeight
+      })
     {
       return new Promise((resolve) => {
         const imageBottom = document.createElementNS(ScalableVectorGraphics.NS, "image");
@@ -235,6 +235,7 @@ export class ScalableVectorGraphics
         clipPath.setAttribute("id", "clip");
 
         const clipRect = document.createElementNS(ScalableVectorGraphics.NS, "rect");
+        clipRect.setAttribute("id", ScalableVectorGraphics.SvgComparisonclipRectId);
         clipRect.setAttribute("x", 0);
         clipRect.setAttribute("y", 0);
         clipRect.setAttribute("width", svgWidth);
@@ -293,7 +294,6 @@ export class ScalableVectorGraphics
           const clipHeight = parseFloat(clipRect.getAttribute("height"));
 
           resolve({
-            svgElement,
             imageTopSrc,
             imageTopHeight,
             imageBottomSrc,
@@ -305,7 +305,14 @@ export class ScalableVectorGraphics
         });
       });
   }
+
+  static findSvgComparisonSlider(svgElement)
+  {
+    let clipRect = svgElement.querySelector("#"+ScalableVectorGraphics.SvgComparisonclipRectId);
+    return clipRect ? parseFloat(clipRect.getAttribute("height")) : null;
+  }
 }
 
 
 ScalableVectorGraphics.NS = "http://www.w3.org/2000/svg";
+ScalableVectorGraphics.SvgComparisonclipRectId = "SvgComparisonclipRectId";

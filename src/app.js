@@ -14,6 +14,7 @@ Utils.fetchUrlOverride((urlStr)=> PdfView.fetchOverride(urlStr) || TextToSpeech.
 
 // import image processing functions & enable actions ony when ready
 let stitcher = null;
+let stitchingAdjustmentParams = null;
 ImageProcessing.asyncImport().then(() => enableActions());
 let arucoFirstStepScanMarkers = null;
 let previousContourPoints = null;
@@ -370,7 +371,7 @@ async function maySendVideoFrameToAutoDetection()
                 disableArucoAutoDetection(true);
                 switchToImagePreviewMode();
 
-                showSvgComparisonSlider(imgMat, currentContourPointsAndIds.fullAreaContourPoints);
+                showStitchingAdjustmentSvgSlider(imgMat, currentContourPointsAndIds.fullAreaContourPoints);
 
               }
               else
@@ -756,8 +757,7 @@ function handleNextImageWithArucoMarkers(imgMat, currentContourPointsAndIds, fir
   return false;
 }
 
-
-function showSvgComparisonSlider(imgMat, contourPoints)
+function showStitchingAdjustmentSvgSlider(imgMat, contourPoints)
 {
   const cvImageMat = ImageProcessing.fourPointTransform(imgMat, contourPoints);
   let scaleNewImage = canvasInput.width / cvImageMat.cols;
@@ -772,21 +772,33 @@ function showSvgComparisonSlider(imgMat, contourPoints)
   cv.imshow(bottomCanvas, resizedNewImage);
   resizedNewImage.delete();
 
-  ScalableVectorGraphics.init(svgOverlay, canvasInput.width, canvasInput.height);
-  ScalableVectorGraphics.imageComparisonSlider(
-    svgOverlay,
-    canvasInput.width,
-    canvasInput.height,
-    bottomCanvas.toDataURL(),
-    bottomCanvas.height,
+  stitchingAdjustmentParams = {
+    svgWidth:canvasInput.width,
+    svgHeight:canvasInput.height,
+    imageBottomSrc:bottomCanvas.toDataURL(),
+    imageBottomHeight:bottomCanvas.height,
     // top image comes from canvasInput
-    canvasInput.toDataURL(),
-    canvasInput.height
-  ).then(async (params) => {
-    await ScalableVectorGraphics.createMergedCanvas(canvasInput, params);
-    svgOverlay.innerHTML = "";
-  });
+    imageTopSrc:canvasInput.toDataURL(),
+    imageTopHeight:canvasInput.height
+  };
+  ScalableVectorGraphics.init(svgOverlay, canvasInput.width, canvasInput.height);
+  ScalableVectorGraphics.imageComparisonSlider(svgOverlay, stitchingAdjustmentParams).
+    then(async (params) => {
+      await ScalableVectorGraphics.createMergedCanvas(canvasInput, params);
+      svgOverlay.innerHTML = "";
+      stitchingAdjustmentParams = null;
+    });
+}
 
+async function mayValidateStitchingAdjustment()
+{
+  const clipHeight = ScalableVectorGraphics.findSvgComparisonSlider(svgOverlay);
+  if (clipHeight)
+  {
+    await ScalableVectorGraphics.createMergedCanvas(canvasInput, { ...stitchingAdjustmentParams, clipHeight});
+    svgOverlay.innerHTML = "";
+    stitchingAdjustmentParams = null;
+  }
 }
 
 function stitchCapture()
@@ -806,7 +818,7 @@ function stitchCapture()
     handleNextImageWithArucoMarkers(imgMat, currentContourPointsAndIds, arucoFirstStepScanMarkers);
     switchToImagePreviewMode();
 
-    showSvgComparisonSlider(imgMat, currentContourPointsAndIds.fullAreaContourPoints);
+    showStitchingAdjustmentSvgSlider(imgMat, currentContourPointsAndIds.fullAreaContourPoints);
   }
   else if (stitcher)
   {
@@ -818,14 +830,18 @@ function stitchCapture()
 
 }
 
-function rotateClockwise()
+async function rotateClockwise()
 {
+  await mayValidateStitchingAdjustment();
+
   ImageProcessing.rotate(canvasInput, true);
   findImageContour();
 }
 
-function rotateCounterClockwise()
+async function rotateCounterClockwise()
 {
+  await mayValidateStitchingAdjustment();
+
   ImageProcessing.rotate(canvasInput, false);
   findImageContour();
 }
@@ -833,6 +849,7 @@ function rotateCounterClockwise()
 // process image with OCR and display PDF
 async function imageToPdf()
 {
+  await mayValidateStitchingAdjustment();
   // prepare image by using contour points to deskey image
   let processedImg;
   let tempCanvas = document.createElement("canvas");
@@ -865,6 +882,8 @@ async function imageToPdf()
 
 async function imageSave()
 {
+  await mayValidateStitchingAdjustment();
+
   canvasInput.toBlob(function(blob) {
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
