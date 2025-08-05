@@ -5,6 +5,7 @@ import { OpticalCharacterRecognition } from "./OpticalCharacterRecognition.js";
 import { PdfView } from "./PdfView.js";
 import { Webcam } from "./Webcam.js";
 import { ScalableVectorGraphics } from "./ScalableVectorGraphics.js";
+import { CatmullRomSpline } from "./CatmullRomSpline.js";
 import { Localize } from "./Localize.js";
 
 Localize.setTitlesFromIds();
@@ -464,7 +465,7 @@ async function maySendVideoFrameToAutoDetection()
         }
         drawIncompleteBottomMarkers();
       }
-      else
+      else if (!drawImageWithArucoMarkersBook(markers) )
       {
         drawIncompleteMarkers(markers);
       }
@@ -541,13 +542,110 @@ function handleImageWithArucoMarkers(imgMat, currentContourPointsAndIds)
   return false;
 }
 
+function getTopAndBottomLinesFromMarkers(markers)
+{
+  if (markers && markers.length % 2 === 0)
+  {
+    let polygonTop = [];
+    let polygonBottom = [];
+    let markersSortedCorners = markers.map((m)=>ImageProcessing.sortPointClockwiseFromTopLeft(m.corners));
+    const n = markers.length/2;
+    const TOP_LEFT = 0;
+    const TOP_RIGHT = 1;
+    const BOTTOM_RIGHT = 2;
+    const BOTTOM_LEFT = 3;
+    let maxMarkerWidth = 0;
+    let maxMarkerSpacing = 0;
+    for (let i = 0; i < n; ++i) {
+      let top = markersSortedCorners[i];
+      let bottom = markersSortedCorners[markers.length-1-i];
+      maxMarkerWidth = Math.max(maxMarkerWidth,
+        Math.max(
+          ImageProcessing.dist(top[BOTTOM_LEFT], top[BOTTOM_RIGHT]),
+          ImageProcessing.dist(bottom[TOP_LEFT], bottom[TOP_RIGHT])));
+      if (i>0)
+      {
+        let prevTop = markersSortedCorners[i-1];
+        let prevBottom = markersSortedCorners[markers.length-i];
+        maxMarkerSpacing = Math.max(maxMarkerSpacing,
+          Math.max(
+            ImageProcessing.dist(prevTop[BOTTOM_RIGHT], top[BOTTOM_LEFT]),
+            ImageProcessing.dist(prevBottom[TOP_RIGHT], bottom[TOP_LEFT])));
+      }
+    }
+    let polygonX = [];
+    let x = 0;
+    for (let i = 0; i < n; ++i) {
+      let top = markersSortedCorners[i];
+      let bottom = markersSortedCorners[markers.length-1-i];
+      if (i>0)
+      {
+        let prevTop = markersSortedCorners[i-1];
+        let prevBottom = markersSortedCorners[markers.length-i];
+        const INTERMEDIATE_COUNT = 4;
+        const topPoints = CatmullRomSpline.chordalDistanceSplinePoints(prevTop[BOTTOM_LEFT], prevTop[BOTTOM_RIGHT], top[BOTTOM_LEFT], top[BOTTOM_RIGHT], INTERMEDIATE_COUNT);
+        const bottomPoints = CatmullRomSpline.chordalDistanceSplinePoints(prevBottom[TOP_LEFT], prevBottom[TOP_RIGHT], bottom[TOP_LEFT], bottom[TOP_RIGHT], INTERMEDIATE_COUNT);
+
+        const xStart = x;
+        for (let j = 0; j < topPoints.length; ++j) {
+            x += maxMarkerSpacing/INTERMEDIATE_COUNT;
+            polygonX.push(x);
+            polygonTop.push(topPoints[j]);
+            polygonBottom.push(bottomPoints[j]);
+        }
+        // avoid rounding errors
+        x = xStart + maxMarkerSpacing;
+      }
+
+      polygonX.push(x);
+      x += maxMarkerWidth;
+      polygonX.push(x);
+
+      polygonTop.push(top[BOTTOM_LEFT]);
+      polygonTop.push(top[BOTTOM_RIGHT]);
+      polygonBottom.push(bottom[TOP_LEFT]);
+      polygonBottom.push(bottom[TOP_RIGHT]);
+    }
+    return {polygonTop, polygonBottom, polygonX};
+  }
+  return {polygonTop:null, polygonBottom:null, polygonX:null};
+}
+
+function drawImageWithArucoMarkersBook(markers)
+{
+  const {polygonTop, polygonBottom} = getTopAndBottomLinesFromMarkers(markers);
+  if (polygonTop && polygonBottom)
+  {
+    const polygon = polygonTop.concat(polygonBottom.reverse());
+    ScalableVectorGraphics.drawPolyLine(svgOverlay, polygon, "rgba(0, 255, 0, 0.5)");
+    return true;
+  }
+  return false;
+}
+
+function handleImageWithArucoMarkersBook(imgMat, markers)
+{
+  const {polygonTop, polygonBottom, polygonX} = getTopAndBottomLinesFromMarkers(markers);
+  if (polygonTop && polygonBottom && polygonX)
+  {
+    const cvImageMat = ImageProcessing.unwarpWithPerPixelMap(imgMat, polygonTop, polygonBottom, polygonX);
+    canvasInput.width = cvImageMat.cols;
+    canvasInput.height = cvImageMat.rows;
+    cv.imshow(canvasInput, cvImageMat);
+    cvImageMat.delete();
+    return true;
+  }
+  return false;
+}
+
 // read canvas input and update contour points
 function findImageContour()
 {
   let imgMat = cv.imread(canvasInput);
   const markers = ImageProcessing.detectAruco(imgMat);
   const currentContourPointsAndIds = markersToContourPoints(markers);
-  if (!handleImageWithArucoMarkers(imgMat, currentContourPointsAndIds))
+  if (!handleImageWithArucoMarkers(imgMat, currentContourPointsAndIds) &&
+      !handleImageWithArucoMarkersBook(imgMat, markers))
   {
     // no aruco markers, use generic image contouring detection
     currentContourPoints = (deskewImage.checked)?ImageProcessing.detectContourPoints(imgMat):[];

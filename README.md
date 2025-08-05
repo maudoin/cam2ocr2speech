@@ -1,4 +1,5 @@
 # 📘 Application déconnectée pour la lecture vocale de document PDF et création de PDF textuel à partir d'image
+# 📘 PDF Document Voice Reader & PDF text creation from image
 
 ## 📄 Présentation
 
@@ -8,35 +9,11 @@ Cette application est conçue pour aider les personnes atteintes de troubles "dy
 - 📝 D'ajouter du texte sur un PDF et de l'imprimer.
 - 🖼️ De transformer une image en PDF avec une couche de texte sélectionnable par reconnaissance de caractères.
 - ✂️ De détecter automatiquement le contour d'une feuille sur une image pour redresser automatiquement le texte ou le redresser manuellement.
-- ⌧ D'utiliser des marqueurs (cf. masque de page [Aruco](doc/aruco.pdf) à découper) pour redresser et recoller rapidement deux captures d’une même page A4
+- ⌹ D'utiliser des marqueurs (cf. masque de page [Aruco](doc/aruco.pdf) à découper) pour redresser et recoller rapidement deux captures d’une même page A4
+- 🕮 D'utiliser des marqueurs (cf. masque de page [Aruco Book](doc/arucoBook.pdf) à découper) pour redresser rapidement un extrait de livre
 - 📷 De capturer une image depuis une webcam ou d'importer une image depuis un fichier.
 - 🇫🇷 De choisir la langue de reconnaissance de texte et la voix parmi: français, anglais, allemand, italien et espagnol.
 - 🌐 Tout est calculé dans l'application **sans connexion internet**
-
----
-
-## Mode webcam:
-![image](doc/webcamMode.jpg)
-
-## Mode image / redressement:
-![image](doc/imageMode.jpg)
-
-## Mode PDF / Lecture vocale:
-![image](doc/pdfMode.jpg)
-
-## Mode Redressement/Recollage automatique:
-| Mise en place de la feuille | Vérificaction du cadrage | Vérificaction de la netteté |
-| --- | --- | --- |
-| <img src="doc/arucoMode_1.jpg" alt="Mise en place de la page sur les marqueurs" width="200"/> | <img src="doc/arucoMode_2.jpg" alt="Placement des marqueurs" width="200"/> | <img src="doc/arucoMode_3.jpg" alt="Controle de netteté" width="200"/> |
-
-
-| Passage à la page 2 automatique | Cadrage de la page 2 | Vérificaction de la netteté de la page 2 avant capture finale |
-| --- | --- | --- |
-| <img src="doc/arucoMode_4.jpg" alt="Placement des marqueurs de la page 2" width="200"/> | <img src="doc/arucoMode_5.jpg" alt="Placement des marqueurs de la page 2" width="200"/> | <img src="doc/arucoMode_6.jpg" alt="Placement des marqueurs de la page 2" width="200"/> |
-
----
-
-# 📘 PDF Document Voice Reader & PDF text creation from image
 
 ## 📄 Overview
 
@@ -46,12 +23,46 @@ This offline application supports individuals with "dys" disorders (e.g., dyslex
 - 📝 Adding Text and Printing PDF
 - 🖼️ Generates a PDF from an image with selectable text layer via character recognition (OCR).
 - ✂️ Automatically detects document boundaries in images for perspective correction and edit contours manually.
-- ⌧ [Aruco](doc/aruco.pdf) marker detection to unskew and stitch two capture from a single A4 sheet.
+- ⌹ [Aruco](doc/aruco.pdf) marker detection to de-skew and stitch two capture from a single A4 sheet.
+- 🕮 [Aruco Book](doc/arucoBook.pdf) marker detection to de-skew curved book pages.
 - 📷 Captures images using a webcam or loads images from files.
 - 🇬🇧 UI, OCR, and Voice are available in the following languages: French, English, German, Italian, and Spanish.
 - 🌐 Fully Offline
 
 ---
+
+## Mode webcam:
+## *Webcam mode:*
+![image](doc/webcamMode.jpg)
+
+## Mode image / redressement:
+## *Image / Deskewing mode:*
+![image](doc/imageMode.jpg)
+
+## Mode PDF / Lecture vocale:
+## *PDF / Read aloud mode:*
+![image](doc/pdfMode.jpg)
+
+## Mode Redressement de livre:
+## *Book de-skewing capture mode:*
+
+| Mise en place de la feuille<br>*Sheet positioning*                                                    | Cadrage vidéo<br>*Video framing*                                 | Image redressed<br>*De-skewed image*                       |
+| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------- |
+| <img src="doc/arucoBook_1.jpg" alt="Mise en place de la page de marqueurs syr le livre" width="200"/> | <img src="doc/arucoBook_2.jpg" alt="Capture vidéo" width="200"/> | <img src="doc/arucoBook_3.jpg" alt="Résulat" width="200"/> |
+
+## Mode Redressement/Recollage automatique:
+## *Automatic multipart A4 sheet stitching:*
+
+| Mise en place de la feuille<br>*Sheet positioning*                                            | Verification du cadrage<br>*Framing checkup*                               | Verification de la netteté<br>*Focus checkup*                          |
+| --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| <img src="doc/arucoMode_1.jpg" alt="Mise en place de la page sur les marqueurs" width="200"/> | <img src="doc/arucoMode_2.jpg" alt="Placement des marqueurs" width="200"/> | <img src="doc/arucoMode_3.jpg" alt="Controle de netteté" width="200"/> |
+
+| Passage automatique à la partie 2<br>*Automatic switch to part 2*                       | Cadrage de la partie 2<br>*Part 2 framing*                                               | Stabilisation de la partie 2 <br>*Part 2 focus*                                         |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| <img src="doc/arucoMode_4.jpg" alt="Placement des marqueurs de la page 2" width="200"/> | <img src="doc/arucoMode_5.jpg" alt="Placement des marqueurs de la page 2" width="200"/> | <img src="doc/arucoMode_6.jpg" alt="Placement des marqueurs de la page 2" width="200"/> |
+
+---
+
 
 ## ⚙️ Technologies Used
 
@@ -65,6 +76,7 @@ This offline application supports individuals with "dys" disorders (e.g., dyslex
 - 🖼️ **openCV.js v4.0** for image processing and contour detection
   [docs.opencv.org](https://docs.opencv.org/4.x/d0/d84/tutorial_js_usage.html)
 
+---
 ---
 
 ### 🇩🇪 Deutsch (automatisch generiert)
@@ -81,7 +93,8 @@ Diese Offline-Anwendung unterstützt Personen mit „Dys“-Störungen (z. B. Dy
 - 📝 Text hinzufügen und PDF drucken
 - 🖼️ Generiert ein PDF aus einem Bild mit auswählbarer Textebene mittels optischer Zeichenerkennung (OCR).
 - ✂️ Erkennt automatisch Dokumentgrenzen in Bildern zur Perspektivkorrektur und ermöglicht manuelle Konturbearbeitung.
-- ⌧ Erkennt Aruco-Marker zum Entzerren und Zusammenfügen von zwei Aufnahmen einer A4-Seite.
+- ⌹ Erkennt Aruco-Marker zum Entzerren und Zusammenfügen von zwei Aufnahmen einer A4-Seite.
+- 🕮 Aruco-Buch (doc/arucoBook.pdf): Markererkennung zur Entzerrung von gebogenen Buchseiten.
 - 📷 Erfasst Bilder mit einer Webcam oder lädt Bilder aus Dateien.
 - 🇩🇪 Benutzeroberfläche (UI), OCR und Sprache sind in den folgenden Sprachen verfügbar: Französisch, Englisch, Deutsch, Italienisch und Spanisch.
 - 🌐 Vollständig offline
@@ -104,7 +117,8 @@ Questa applicazione offline supporta persone con disturbi “dys” (ad es. disl
 - 📝 Aggiungi testo e stampa PDF
 - 🖼️ Genera un PDF da un’immagine con livello di testo selezionabile tramite riconoscimento ottico dei caratteri (OCR).
 - ✂️ Rileva automaticamente i confini del documento nelle immagini per la correzione prospettica e consente la modifica manuale dei contorni.
-- ⌧ Rileva i marker Aruco per correggere la distorsione e unire due acquisizioni di un foglio A4.
+- ⌹ Rileva i marker Aruco per correggere la distorsione e unire due acquisizioni di un foglio A4.
+- 🕮 Libro Aruco (doc/arucoBook.pdf): rilevamento dei marker per correggere la distorsione delle pagine curve dei libri.
 - 📷 Acquisisce immagini tramite webcam o carica file di immagini.
 - 🇮🇹 Interfaccia utente (UI), OCR e voce disponibili nelle seguenti lingue: francese, inglese, tedesco, italiano e spagnolo.
 - 🌐 Completamente offline
@@ -127,7 +141,8 @@ Esta aplicación offline ayuda a personas con trastornos “dys” (p. ej., disl
 - 📝 Agrega texto e imprime PDF
 - 🖼️ Genera un PDF desde una imagen con capa de texto seleccionable mediante reconocimiento óptico de caracteres (OCR).
 - ✂️ Detecta automáticamente los límites del documento en las imágenes para corregir la perspectiva y permite editar manualmente los contornos.
-- ⌧ Detecta marcadores Aruco para corregir la distorsión y unir dos capturas de una sola hoja A4.
+- ⌹ Detecta marcadores Aruco para corregir la distorsión y unir dos capturas de una sola hoja A4.
+- 🕮 Libro Aruco (doc/arucoBook.pdf): detección de marcadores para corregir la distorsión de páginas curvas de libros.
 - 📷 Captura imágenes con una cámara web o carga archivos de imagen.
 - 🇪🇸 Interfaz de usuario (UI), OCR y voz disponibles en los siguientes idiomas: francés, inglés, alemán, italiano y español.
 - 🌐 Totalmente offline

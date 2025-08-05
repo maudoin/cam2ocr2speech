@@ -185,11 +185,12 @@ export class ImageProcessing
 
     // apply detected skewed sheet to the original image to get a straightened image
     // canvas: input canvas element with the image to be straightened
-    // pts: array of 4 cv.Points in order [top-left, top-right, bottom-right, bottom-left]
+    // points: array of 4 cv.Points in order [top-left, top-right, bottom-right, bottom-left]
+    // sortInput: true for sort points before processing
     // return opencv image Mat instance of the straightened image
-    static fourPointTransform(imgMat, points)
+    static fourPointTransform(imgMat, points, sortInput = true)
     {
-        const pts = ImageProcessing.sortPointClockwiseFromTopLeft(points);
+        const pts = sortInput ? ImageProcessing.sortPointClockwiseFromTopLeft(points) : points;
 
         // Compute width and height of the new image
         const widthA = Math.hypot(pts[2].x - pts[3].x, pts[2].y - pts[3].y);
@@ -231,6 +232,184 @@ export class ImageProcessing
         M.delete();
         return dst;
     }
+
+    /**
+     * Given pts[0…m−1], returns linear interp at t∈[0,1].
+     */
+    static lerpAlong(pts, t) {
+        const m = pts.length;
+        if (t <= 0) return pts[0];
+        if (t >= 1) return pts[m-1];
+        const idx = Math.floor(t * (m - 1));
+        const u   = (t * (m - 1)) - idx;
+        const p0  = pts[idx], p1 = pts[idx + 1];
+        return {
+            x: p0.x + (p1.x - p0.x) * u,
+            y: p0.y + (p1.y - p0.y) * u
+        };
+    }
+
+    // Helper: polyline length
+    // @param {{x:number,y:number}[]} pts
+    static polylineLength(pts) {
+        let len = 0;
+        for (let i = 1; i < pts.length; i++) {
+        const dx = pts[i].x - pts[i - 1].x;
+        const dy = pts[i].y - pts[i - 1].y;
+        len += Math.hypot(dx, dy);
+        }
+        return len;
+    }
+
+    // Distance between corresponding points
+    static dist(p, q) {
+        return Math.hypot(p.x - q.x, p.y - q.y);
+    }
+
+    /**
+     * Unwarps a curved page by straightening top/bottom polylines
+     * into horizontal lines using per-point target X coordinates.
+     * It builds a pixel-wise mapping from the distorted image to a rectified one.
+     *
+     * @param {cv.Mat} src - The input image (e.g., a scanned curved page).
+     * @param {{x,y}[]} topPts - Array of points along the top edge of the page.
+     * @param {{x,y}[]} botPts - Array of points along the bottom edge of the page.
+     * @param {number[]} xTargets - Desired horizontal positions for each edge point.
+     * @param {int} [inter=cv.INTER_LINEAR] - Interpolation method for remapping.
+     * @param {int} [bMode=cv.BORDER_CONSTANT] - Border mode for remapping.
+     * @returns {cv.Mat} - The output image with straightened content.
+     */
+    static unwarpWithPerPixelMap(
+        src,
+        topPts,
+        botPts,
+        xTargets,
+        inter = cv.INTER_LINEAR,
+        bMode = cv.BORDER_CONSTANT
+        )
+    {
+        const N = topPts.length;
+
+        // Validate input: all arrays must be of equal length and contain at least 2 points
+        if (
+            N < 2 ||
+            botPts.length !== N ||
+            xTargets.length !== N
+        ) {
+            throw new Error(
+            'Need equal-length ≥2 arrays: topPts, botPts, xTargets'
+            );
+        }
+
+        // Determine the width of the output image based on the last target X coordinate
+        const dstW = Math.ceil(xTargets[N - 1]);
+
+        // Estimate the output image height using the vertical distance between
+        // the top and bottom edge points at the start and end of the page
+        const h0 = ImageProcessing.dist(topPts[0], botPts[0]);       // height at left edge
+        const h1 = ImageProcessing.dist(topPts[N - 1], botPts[N - 1]); // height at right edge
+        const dstH = Math.ceil(Math.max(h0, h1)); // use the larger of the two for uniform height
+
+        // Create two maps to store the source coordinates for each pixel in the output image
+        const mapX = new cv.Mat(dstH, dstW, cv.CV_32FC1); // stores X coordinates
+        const mapY = new cv.Mat(dstH, dstW, cv.CV_32FC1); // stores Y coordinates
+
+        // Helper function to interpolate between two points
+        function lerpPt(p0, p1, t) {
+            return {
+                x: p0.x + (p1.x - p0.x) * t,
+                y: p0.y + (p1.y - p0.y) * t
+            };
+        }
+
+        // build an array of all segment‐lengths
+        const segCount   = N - 1;
+        const lenTopsAll = new Array(segCount);
+        const lenBotsAll = new Array(segCount);
+        for (let idx = 0; idx < segCount; idx++) {
+            lenTopsAll[idx] = ImageProcessing.dist(topPts[idx],    topPts[idx + 1]);
+            lenBotsAll[idx] = ImageProcessing.dist(botPts[idx],    botPts[idx + 1]);
+        }
+
+        // First & last lengths
+        const lenTopFirst = lenTopsAll[0];
+        const lenTopLast  = lenTopsAll[segCount - 1];
+        const lenBotFirst = lenBotsAll[0];
+        const lenBotLast  = lenBotsAll[segCount - 1];
+
+        // Full horizontal span (often xTargets[0]==0, but we generalize)
+        const xMin = xTargets[0];
+        const xMax = xTargets[N - 1];
+
+        // Loop over each column in the output image
+        for (let i = 0; i < dstW; i++) {
+            // 1. Find the segment index k such that xTargets[k] ≤ i < xTargets[k+1]
+            let k = 0;
+            while ( k + 1 < N && xTargets[k + 1] < i ) {
+                k++;
+            }
+
+            // 2. Compute interpolation factor α between xTargets[k] and xTargets[k+1]
+            const t0 = xTargets[k];
+            const t1 = xTargets[k + 1];
+            const alpha = (i - t0) / (t1 - t0); // normalized position between two edge points
+
+            // 3. Interpolate top and bottom edge points at column i
+            const top = lerpPt(topPts[k], topPts[k + 1], alpha); // top edge point at column i
+            const bot = lerpPt(botPts[k], botPts[k + 1], alpha); // bottom edge point at column i
+
+            // lengths of the two horizontal segments in the source image
+            // 4. Inside your `for (let i …)` loop, before the `for (let j…)`:
+            const tGlobal = xMax > xMin
+            ? (i - xMin) / (xMax - xMin)
+            : 0;                // clamp to [0,1] if needed
+            // interpolate top/bottom lengths for column i
+            const lenTop_i = lenTopFirst + (lenTopLast  - lenTopFirst) * tGlobal;
+            const lenBot_i = lenBotFirst + (lenBotLast  - lenBotFirst) * tGlobal;
+
+            // 5. For each row in this column, interpolate between top and bottom edge
+            for (let j = 0; j < dstH; j++) {
+
+                // normalized vertical pos
+                const s = dstH > 1 ? j/(dstH-1) : 0;
+
+                // compute 1/length weights
+                const wTop = (1 - s) / lenTop_i;
+                const wBot =        s   / lenBot_i;
+                const W    = wTop + wBot;
+
+                // source‐pixel coordinates
+                const srcX = (top.x * wTop + bot.x * wBot) / W;
+                const srcY = (top.y * wTop + bot.y * wBot) / W;
+
+                mapX.floatPtr(j, i)[0] = srcX;
+                mapY.floatPtr(j, i)[0] = srcY;
+            }
+        }
+
+        // Create an empty matrix to hold the output image
+        const dstMat = new cv.Mat();
+
+        // Apply the remap using the computed source coordinates
+        cv.remap(
+            src,        // input image
+            dstMat,     // output image
+            mapX,       // map of X coordinates
+            mapY,       // map of Y coordinates
+            inter,      // interpolation method
+            bMode,      // border mode
+            new cv.Scalar() // fill value for borders (default: black)
+        );
+
+        // Free memory used by remap matrices
+        mapX.delete();
+        mapY.delete();
+
+        // Return the rectified image
+        return dstMat;
+
+    }
+
 
     static rotate(canvas, clockwise)
     {
@@ -611,52 +790,89 @@ export class ImageProcessing
         }
     }
 
-    // display newImageMat below in the canvas, enlarging any is needed
-    static addCvMatToCanvas(newImageMat, canvas)
-    {
+    /**
+     * Appends newImageMat to the canvas, either below or to the right.
+     * Optionally preserves canvas size in the stacking direction.
+     *
+     * @param {cv.Mat} newImageMat
+     * @param {HTMLCanvasElement} canvas
+     * @param {"bottom"|"right"} [position="bottom"]
+     * @param {boolean} [preserveCanvasSize=false]
+     */
+    static addCvMatToCanvas(newImageMat, canvas, position = "bottom", preserveCanvasSize = false) {
         const ctx = canvas.getContext("2d");
 
-        // Get canvas content as cv.Mat BEFORE resizing
-        let canvasImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        let canvasMat = cv.matFromImageData(canvasImageData);
+        // 1) Get canvas content as cv.Mat
+        const canvasImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const canvasMat = cv.matFromImageData(canvasImageData);
 
-        // Determine target width
-        let targetWidth = Math.max(canvas.width, newImageMat.cols);
-        let scaleCanvas = targetWidth / canvas.width;
-        let scaleNewImage = targetWidth / newImageMat.cols;
+        const resizedCanvas = new cv.Mat();
+        const resizedNew    = new cv.Mat();
 
-        // Step 3: Resize both to match target width
-        let resizedCanvasMat = new cv.Mat();
-        cv.resize(canvasMat, resizedCanvasMat, new cv.Size(targetWidth, Math.round(canvas.height * scaleCanvas)));
+        let finalWidth, finalHeight;
 
-        let resizedNewImage = new cv.Mat();
-        cv.resize(newImageMat, resizedNewImage, new cv.Size(targetWidth, Math.round(newImageMat.rows * scaleNewImage)));
+        if (position === "bottom") {
+            const targetWidth = preserveCanvasSize ? canvas.width : Math.max(canvas.width, newImageMat.cols);
 
-        // Create final Mat
-        let finalHeight = resizedCanvasMat.rows + resizedNewImage.rows;
-        let finalMat = new cv.Mat();
-        finalMat.create(finalHeight, targetWidth, cv.CV_8UC4);
+            // Resize canvas to target width
+            const canvasScale = targetWidth / canvas.width;
+            const newScale    = targetWidth / newImageMat.cols;
 
-        // Copy both into finalMat
-        let topROI = finalMat.roi(new cv.Rect(0, 0, targetWidth, resizedCanvasMat.rows));
-        resizedCanvasMat.copyTo(topROI);
-        topROI.delete();
+            cv.resize(canvasMat, resizedCanvas,
+                new cv.Size(targetWidth, Math.round(canvas.height * canvasScale)));
 
-        let bottomROI = finalMat.roi(new cv.Rect(0, resizedCanvasMat.rows, targetWidth, resizedNewImage.rows));
-        resizedNewImage.copyTo(bottomROI);
-        bottomROI.delete();
+            cv.resize(newImageMat, resizedNew,
+                new cv.Size(targetWidth, Math.round(newImageMat.rows * newScale)));
 
-        // Resize canvas and display
-        canvas.width = targetWidth;
+            finalWidth  = targetWidth;
+            finalHeight = resizedCanvas.rows + resizedNew.rows;
+
+        } else if (position === "right") {
+            const targetHeight = preserveCanvasSize ? canvas.height : Math.max(canvas.height, newImageMat.rows);
+
+            // Resize canvas to target height
+            const canvasScale = targetHeight / canvas.height;
+            const newScale    = targetHeight / newImageMat.rows;
+
+            cv.resize(canvasMat, resizedCanvas,
+                new cv.Size(Math.round(canvas.width * canvasScale), targetHeight));
+
+            cv.resize(newImageMat, resizedNew,
+                new cv.Size(Math.round(newImageMat.cols * newScale), targetHeight));
+
+            finalWidth  = resizedCanvas.cols + resizedNew.cols;
+            finalHeight = targetHeight;
+
+        } else {
+            throw new Error(`Unsupported position "${position}". Use "bottom" or "right".`);
+        }
+
+        // 2) Create final Mat and copy both parts
+        const finalMat = new cv.Mat();
+        finalMat.create(finalHeight, finalWidth, cv.CV_8UC4);
+
+        const roiCanvas = finalMat.roi(new cv.Rect(0, 0, resizedCanvas.cols, resizedCanvas.rows));
+        resizedCanvas.copyTo(roiCanvas);
+        roiCanvas.delete();
+
+        const xOffset = position === "right" ? resizedCanvas.cols : 0;
+        const yOffset = position === "bottom" ? resizedCanvas.rows : 0;
+        const roiNew = finalMat.roi(new cv.Rect(xOffset, yOffset, resizedNew.cols, resizedNew.rows));
+        resizedNew.copyTo(roiNew);
+        roiNew.delete();
+
+        // 3) Resize canvas and display
+        canvas.width  = finalWidth;
         canvas.height = finalHeight;
         cv.imshow(canvas, finalMat);
 
-        // Cleanup
+        // 4) Cleanup
         canvasMat.delete();
-        resizedCanvasMat.delete();
-        resizedNewImage.delete();
+        resizedCanvas.delete();
+        resizedNew.delete();
         finalMat.delete();
     }
+
 
 }
 // Assign static property and static method at the end

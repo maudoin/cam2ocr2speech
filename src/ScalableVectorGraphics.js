@@ -148,22 +148,29 @@ export class ScalableVectorGraphics
       textElem.textContent = txt;
       svgElement.appendChild(textElem);
     }
+    static drawPolyLine(svgElement, points, color = "rgba(0, 255, 0, 0.5)")
+    {
+      if (points)
+      {
+        const poly = document.createElementNS(ScalableVectorGraphics.NS, "polygon");
+        poly.setAttribute("points", points.map(p => `${p.x},${p.y}`).join(" "));
+        poly.setAttribute("fill", color);
+        poly.setAttribute("stroke", "none");
+        svgElement.appendChild(poly);
+      }
+    }
     static drawTextAndPolyLine(svgElement, locations, indexToText, textHeight, color, getPolyline)
     {
         if (locations)
         {
             locations.forEach((loc, idx)=>{
-                let points = getPolyline(loc);
-                const poly = document.createElementNS(ScalableVectorGraphics.NS, "polygon");
-                poly.setAttribute("points", points.map(p => `${p.x},${p.y}`).join(" "));
-                poly.setAttribute("fill", "rgba(0, 255, 0, 0.5)");
-                poly.setAttribute("stroke", "none");
-                svgElement.appendChild(poly);
+                ScalableVectorGraphics.drawPolyLine(svgElement, getPolyline(loc), "rgba(0, 255, 0, 0.5)");
             });
 
             locations.forEach((p, idx)=>ScalableVectorGraphics.drawText(svgElement, p, indexToText(idx), textHeight, color));
         }
     }
+
 
     static async createMergedCanvas(canvas, {
       imageTopSrc,
