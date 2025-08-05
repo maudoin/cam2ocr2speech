@@ -628,12 +628,17 @@ function handleImageWithArucoMarkersBook(imgMat, markers)
   const {polygonTop, polygonBottom, polygonX} = getTopAndBottomLinesFromMarkers(markers);
   if (polygonTop && polygonBottom && polygonX)
   {
-    const cvImageMat = ImageProcessing.unwarpWithPerPixelMap(imgMat, polygonTop, polygonBottom, polygonX);
-    canvasInput.width = cvImageMat.cols;
-    canvasInput.height = cvImageMat.rows;
-    cv.imshow(canvasInput, cvImageMat);
-    cvImageMat.delete();
-    return true;
+    try
+    {
+      const cvImageMat = ImageProcessing.unwarpWithPerPixelMap(imgMat, polygonTop, polygonBottom, polygonX);
+      canvasInput.width = cvImageMat.cols;
+      canvasInput.height = cvImageMat.rows;
+      cv.imshow(canvasInput, cvImageMat);
+      cvImageMat.delete();
+      return true;
+    }
+    catch(e)
+    {}
   }
   return false;
 }
