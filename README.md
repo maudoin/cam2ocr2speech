@@ -31,18 +31,6 @@ This offline application supports individuals with "dys" disorders (e.g., dyslex
 
 ---
 
-## Mode webcam:
-## *Webcam mode:*
-![image](doc/webcamMode.jpg)
-
-## Mode image / redressement:
-## *Image / Deskewing mode:*
-![image](doc/imageMode.jpg)
-
-## Mode PDF / Lecture vocale:
-## *PDF / Read aloud mode:*
-![image](doc/pdfMode.jpg)
-
 ## Mode Redressement de livre:
 ## *Book de-skewing capture mode:*
 
@@ -60,6 +48,18 @@ This offline application supports individuals with "dys" disorders (e.g., dyslex
 | Passage automatique à la partie 2<br>*Automatic switch to part 2*                       | Cadrage de la partie 2<br>*Part 2 framing*                                              | Stabilisation de la partie 2 <br>*Part 2 focus*                                         | Ajustement de la suture<br>*Stitching adjustment*                          |
 | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | <img src="doc/arucoMode_4.jpg" alt="Placement des marqueurs de la page 2" width="200"/> | <img src="doc/arucoMode_5.jpg" alt="Placement des marqueurs de la page 2" width="200"/> | <img src="doc/arucoMode_6.jpg" alt="Placement des marqueurs de la page 2" width="200"/> | <img src="doc/arucoMode_7.jpg" alt="Ajustement de la suture" width="200"/> |
+
+## Mode PDF / Lecture vocale:
+## *PDF / Read aloud mode:*
+![image](doc/pdfMode.jpg)
+
+## Mode webcam:
+## *Webcam mode:*
+![image](doc/webcamMode.jpg)
+
+## Mode image / redressement:
+## *Image / Deskewing mode:*
+![image](doc/imageMode.jpg)
 
 ---
 
