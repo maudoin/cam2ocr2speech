@@ -204,6 +204,7 @@ function switchToWebcamMode()
   webcamSelect.style.display = "block";
   webcamFocus.style.display = "block";
   webcamAutoScan.style.display = "block";
+  webcamAutoScanPartSelect.style.display = "block";
   webcam2Img.style.display = "block";
   stitchWebcamCapture.style.display = (stitcher || arucoFirstStepScanMarkers) ? "block" : "none";
   webcam2Pdf.style.display = "block";
@@ -232,6 +233,7 @@ function switchToImagePreviewMode()
   webcamSelect.style.display = "none";
   webcamFocus.style.display = "none";
   webcamAutoScan.style.display = "none";
+  webcamAutoScanPartSelect.style.display = "none";
   webcam2Img.style.display = "none";
   stitchWebcamCapture.style.display = "none";
   webcam2Pdf.style.display = "none";
