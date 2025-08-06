@@ -57,9 +57,9 @@ This offline application supports individuals with "dys" disorders (e.g., dyslex
 | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | <img src="doc/arucoMode_1.jpg" alt="Mise en place de la page sur les marqueurs" width="200"/> | <img src="doc/arucoMode_2.jpg" alt="Placement des marqueurs" width="200"/> | <img src="doc/arucoMode_3.jpg" alt="Controle de netteté" width="200"/> |
 
-| Passage automatique à la partie 2<br>*Automatic switch to part 2*                       | Cadrage de la partie 2<br>*Part 2 framing*                                               | Stabilisation de la partie 2 <br>*Part 2 focus*                                         |
-| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| <img src="doc/arucoMode_4.jpg" alt="Placement des marqueurs de la page 2" width="200"/> | <img src="doc/arucoMode_5.jpg" alt="Placement des marqueurs de la page 2" width="200"/> | <img src="doc/arucoMode_6.jpg" alt="Placement des marqueurs de la page 2" width="200"/> |
+| Passage automatique à la partie 2<br>*Automatic switch to part 2*                       | Cadrage de la partie 2<br>*Part 2 framing*                                              | Stabilisation de la partie 2 <br>*Part 2 focus*                                         | Ajustement de la suture<br>*Stitching adjustment*                          |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| <img src="doc/arucoMode_4.jpg" alt="Placement des marqueurs de la page 2" width="200"/> | <img src="doc/arucoMode_5.jpg" alt="Placement des marqueurs de la page 2" width="200"/> | <img src="doc/arucoMode_6.jpg" alt="Placement des marqueurs de la page 2" width="200"/> | <img src="doc/arucoMode_7.jpg" alt="Ajustement de la suture" width="200"/> |
 
 ---
 
