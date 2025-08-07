@@ -5,7 +5,6 @@ import { OpticalCharacterRecognition } from "./OpticalCharacterRecognition.js";
 import { PdfView } from "./PdfView.js";
 import { Webcam } from "./Webcam.js";
 import { ScalableVectorGraphics } from "./ScalableVectorGraphics.js";
-import { CatmullRomSpline } from "./CatmullRomSpline.js";
 import { Localize } from "./Localize.js";
 
 Localize.setTitlesFromIds();
@@ -657,7 +656,7 @@ function getTopAndBottomLinesFromMarkers(markers)
 
 function drawImageWithArucoMarkersBook(markers)
 {
-  const lines = getTopAndBottomLinesFromMarkers(markers);
+  const lines = ImageProcessing.getTopAndBottomLinesFromArucoMarkers(markers);
   if (lines)
   {
     const polygon = lines.polygonTop.concat(lines.polygonBottom.reverse());
@@ -668,7 +667,7 @@ function drawImageWithArucoMarkersBook(markers)
 
 function handleImageWithArucoMarkersBook(imgMat, markers, linesOverride = null)
 {
-  const lines = linesOverride || getTopAndBottomLinesFromMarkers(markers);
+  const lines = linesOverride || ImageProcessing.getTopAndBottomLinesFromArucoMarkers(markers);
   if (lines)
   {
     try

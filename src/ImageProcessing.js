@@ -1,3 +1,5 @@
+import { CatmullRomSpline } from "./CatmullRomSpline.js";
+
 export class ImageProcessing
 {
     // import opencv asynchronously
@@ -272,9 +274,9 @@ export class ImageProcessing
      * It builds a pixel-wise mapping from the distorted image to a rectified one.
      *
      * @param {cv.Mat} src - The input image (e.g., a scanned curved page).
-     * @param {{x,y}[]} topPts - Array of points along the top edge of the page.
-     * @param {{x,y}[]} botPts - Array of points along the bottom edge of the page.
-     * @param {number[]} xTargets - Desired horizontal positions for each edge point.
+     * @param {{x,y}[]} topPts - Array of points along the top edge of the page (from getTopAndBottomLinesFromArucoMarkers).
+     * @param {{x,y}[]} botPts - Array of points along the bottom edge of the page (from getTopAndBottomLinesFromArucoMarkers).
+     * @param {number[]} xTargets - Desired horizontal positions for each edge point (from getTopAndBottomLinesFromArucoMarkers).
      * @param {int} [inter=cv.INTER_LINEAR] - Interpolation method for remapping.
      * @param {int} [bMode=cv.BORDER_CONSTANT] - Border mode for remapping.
      * @returns {cv.Mat} - The output image with straightened content.
@@ -788,6 +790,76 @@ export class ImageProcessing
             // Draw marker ID
             cv.putText(imageMat, i + ":" + m.id.toString(), new cv.Point(m.x, m.y), cv.FONT_HERSHEY_SIMPLEX, 0.5, new cv.Scalar(0, 0, 255), 2);
         }
+    }
+
+    /**  @returns {polygonTop, polygonBottom, polygonX} usable with unwarpWithPerPixelMap */
+    static getTopAndBottomLinesFromArucoMarkers(markers)
+    {
+        if (markers && markers.length > 4 && markers.length % 2 === 0)
+        {
+            let polygonTop = [];
+            let polygonBottom = [];
+            let markersSortedCorners = markers.map((m)=>ImageProcessing.sortPointClockwiseFromTopLeft(m.corners));
+            const n = markers.length/2;
+            const TOP_LEFT = 0;
+            const TOP_RIGHT = 1;
+            const BOTTOM_RIGHT = 2;
+            const BOTTOM_LEFT = 3;
+            let maxMarkerWidth = 0;
+            let maxMarkerSpacing = 0;
+            for (let i = 0; i < n; ++i) {
+            let top = markersSortedCorners[i];
+            let bottom = markersSortedCorners[markers.length-1-i];
+            maxMarkerWidth = Math.max(maxMarkerWidth,
+                Math.max(
+                ImageProcessing.dist(top[BOTTOM_LEFT], top[BOTTOM_RIGHT]),
+                ImageProcessing.dist(bottom[TOP_LEFT], bottom[TOP_RIGHT])));
+            if (i>0)
+            {
+                let prevTop = markersSortedCorners[i-1];
+                let prevBottom = markersSortedCorners[markers.length-i];
+                maxMarkerSpacing = Math.max(maxMarkerSpacing,
+                Math.max(
+                    ImageProcessing.dist(prevTop[BOTTOM_RIGHT], top[BOTTOM_LEFT]),
+                    ImageProcessing.dist(prevBottom[TOP_RIGHT], bottom[TOP_LEFT])));
+            }
+            }
+            let polygonX = [];
+            let x = 0;
+            for (let i = 0; i < n; ++i) {
+            let top = markersSortedCorners[i];
+            let bottom = markersSortedCorners[markers.length-1-i];
+            if (i>0)
+            {
+                let prevTop = markersSortedCorners[i-1];
+                let prevBottom = markersSortedCorners[markers.length-i];
+                const INTERMEDIATE_COUNT = 4;
+                const topPoints = CatmullRomSpline.chordalDistanceSplinePoints(prevTop[BOTTOM_LEFT], prevTop[BOTTOM_RIGHT], top[BOTTOM_LEFT], top[BOTTOM_RIGHT], INTERMEDIATE_COUNT);
+                const bottomPoints = CatmullRomSpline.chordalDistanceSplinePoints(prevBottom[TOP_LEFT], prevBottom[TOP_RIGHT], bottom[TOP_LEFT], bottom[TOP_RIGHT], INTERMEDIATE_COUNT);
+
+                const xStart = x;
+                for (let j = 0; j < topPoints.length; ++j) {
+                    x += maxMarkerSpacing/INTERMEDIATE_COUNT;
+                    polygonX.push(x);
+                    polygonTop.push(topPoints[j]);
+                    polygonBottom.push(bottomPoints[j]);
+                }
+                // avoid rounding errors
+                x = xStart + maxMarkerSpacing;
+            }
+
+            polygonX.push(x);
+            x += maxMarkerWidth;
+            polygonX.push(x);
+
+            polygonTop.push(top[BOTTOM_LEFT]);
+            polygonTop.push(top[BOTTOM_RIGHT]);
+            polygonBottom.push(bottom[TOP_LEFT]);
+            polygonBottom.push(bottom[TOP_RIGHT]);
+            }
+            return {polygonTop, polygonBottom, polygonX};
+        }
+        return null;
     }
 
     /**
