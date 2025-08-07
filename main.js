@@ -27,8 +27,9 @@ function createWindow() {
     }
   });
 
+  win.maximize();
   win.loadFile('src/app.html');
-  
+
   win.webContents.on('before-input-event', (_, input) => {
   if (
     input.type === 'keyDown' &&
