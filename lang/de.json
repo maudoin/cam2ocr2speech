@@ -11,6 +11,8 @@
     "openImage": "Vorhandene Bilddatei auswählen...",
     "rotateImgClockwise": "Nach rechts drehen",
     "rotateImgCounterClockwise": "Nach links drehen",
+    "deskewImageBtn":"Blattkonturerkennung",
+    "applyImageBtn":"Bild anhand der Kontur entzerren oder Naht validieren",
     "img2PdfBtn": "PDF mit Texterkennung erstellen",
     "imageOcrLangInput": "Sprache für Texterkennung auswählen",
     "imgSaveBtn": "Bild speichern...",

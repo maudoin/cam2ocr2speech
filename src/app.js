@@ -69,8 +69,8 @@ const webcam2Pdf = document.getElementById("webcam2Pdf");
 
 // image control elements
 const openImage = document.getElementById("openImage");
-const deskewImage = document.getElementById("deskewImage");
-const deskewImageLabel = document.getElementById("deskewImageLabel");
+const deskewImageBtn = document.getElementById("deskewImageBtn");
+const applyImageBtn = document.getElementById("applyImageBtn");
 const rotateImgClockwise = document.getElementById("rotateImgClockwise");
 const rotateImgCounterClockwise = document.getElementById("rotateImgCounterClockwise");
 const img2PdfBtn = document.getElementById("img2PdfBtn");
@@ -156,7 +156,8 @@ function enableActions()
   img2PdfBtn.onclick = imageToPdf;
   imgSaveBtn.onclick = imageSave;
   openImage.onclick = selectImage;
-  deskewImage.addEventListener("click", findImageContour);
+  deskewImageBtn.addEventListener("click", setupManualDeskewWithImageContour);
+  applyImageBtn.addEventListener("click", applyDeskewOrStitchingAdjustment);
   voiceOption.addEventListener("click", speakSelectedText);
 
   document.addEventListener("keydown", (event) => {
@@ -210,9 +211,10 @@ function switchToWebcamMode()
   webcam2Pdf.style.display = "block";
   img2PdfBtn.style.display = "none";
   imgSaveBtn.style.display = "none";
-  deskewImageLabel.style.display = "none";
   rotateImgClockwise.style.display = "none";
   rotateImgCounterClockwise.style.display = "none";
+  deskewImageBtn.style.display = "none";
+  applyImageBtn.style.display = "none";
   // display update
   video.style.display = "block";
   canvasInput.style.display = "none";
@@ -239,9 +241,10 @@ function switchToImagePreviewMode()
   webcam2Pdf.style.display = "none";
   img2PdfBtn.style.display = "block";
   imgSaveBtn.style.display = "block";
-  deskewImageLabel.style.display = "block";
   rotateImgClockwise.style.display = "block";
   rotateImgCounterClockwise.style.display = "block";
+  deskewImageBtn.style.display = "block";
+  applyImageBtn.style.display = "block";
   // display update
   video.style.display = "none";
   canvasInput.style.display = "block";
@@ -680,7 +683,44 @@ function handleImageWithArucoMarkersBook(imgMat, markers)
 }
 
 // read canvas input and update contour points
-function findImageContour()
+function setupManualDeskewWithImageContour()
+{
+  let imgMat = cv.imread(canvasInput);
+  currentContourPoints = ImageProcessing.detectContourPoints(imgMat);
+  if ( (!currentContourPoints) || (currentContourPoints.length !== 4) )
+  {
+    currentContourPoints = ImageProcessing.sortedPointClockwiseFromTopLeft(imgMat.cols, imgMat.rows);
+  }
+  ScalableVectorGraphics.init(svgOverlay, canvasInput.width, canvasInput.height);
+  ScalableVectorGraphics.setupEditablePoints(svgOverlay, currentContourPoints, canvasInput.width, canvasInput.height);
+  imgMat.delete();
+}
+
+// apply currentContourPoints to image
+function mayApplyManualDeskewAdjustment()
+{
+  if (currentContourPoints && currentContourPoints.length ===4 )
+  {
+    let imgMat = cv.imread(canvasInput);
+    const cvImageMat = ImageProcessing.fourPointTransform(imgMat, currentContourPoints);
+    imgMat.delete();
+    canvasInput.width = cvImageMat.cols;
+    canvasInput.height = cvImageMat.rows;
+    cv.imshow(canvasInput, cvImageMat);
+    cvImageMat.delete();
+    svgOverlay.innerHTML = "";
+  }
+}
+
+// apply currentContourPoints or stitching to image
+function applyDeskewOrStitchingAdjustment()
+{
+  mayValidateStitchingAdjustment();
+  mayApplyManualDeskewAdjustment();
+}
+
+// read canvas input and update contour points
+function mayDeskewWithArucoAndPrepareStitching()
 {
   let imgMat = cv.imread(canvasInput);
   const markers = ImageProcessing.detectAruco(imgMat);
@@ -688,10 +728,6 @@ function findImageContour()
   if (!handleImageWithArucoMarkers(imgMat, currentContourPointsAndIds) &&
       !handleImageWithArucoMarkersBook(imgMat, markers))
   {
-    // no aruco markers, use generic image contouring detection
-    currentContourPoints = (deskewImage.checked)?ImageProcessing.detectContourPoints(imgMat):[];
-    ScalableVectorGraphics.init(svgOverlay, canvasInput.width, canvasInput.height);
-    ScalableVectorGraphics.setupEditablePoints(svgOverlay, currentContourPoints, canvasInput.width, canvasInput.height);
     // generic pattern based stiching, better for images than text...
     stitcher = ImageProcessing.prepareStitch(canvasInput);
     arucoFirstStepScanMarkers = null;
@@ -728,7 +764,7 @@ function selectImage()
         const ctxInput = canvasInput.getContext("2d");
         ctxInput.drawImage(img, 0, 0, canvasInput.width, canvasInput.height);
 
-        findImageContour();
+        mayDeskewWithArucoAndPrepareStitching();
         switchToImagePreviewMode();
       };
       // Set the image source (can be a URL, data URL, or blob URL)
@@ -755,7 +791,7 @@ async function webcamCaptureToImage()
 {
   Webcam.captureToCanevas(video, canvasInput);
 
-  findImageContour();
+  mayDeskewWithArucoAndPrepareStitching();
   switchToImagePreviewMode();
 }
 
@@ -764,7 +800,7 @@ async function webcamCaptureToPdf()
 {
   Webcam.captureToCanevas(video, canvasInput);
 
-  findImageContour();
+  mayDeskewWithArucoAndPrepareStitching();
   imageToPdf();
 }
 
@@ -866,7 +902,7 @@ async function rotateClockwise()
   await mayValidateStitchingAdjustment();
 
   ImageProcessing.rotate(canvasInput, true);
-  findImageContour();
+  mayDeskewWithArucoAndPrepareStitching();
 }
 
 async function rotateCounterClockwise()
@@ -874,7 +910,7 @@ async function rotateCounterClockwise()
   await mayValidateStitchingAdjustment();
 
   ImageProcessing.rotate(canvasInput, false);
-  findImageContour();
+  mayDeskewWithArucoAndPrepareStitching();
 }
 
 // process image with OCR and display PDF

@@ -11,6 +11,8 @@
     "openImage": "Seleziona file immagine esistente...",
     "rotateImgClockwise": "Ruota a destra",
     "rotateImgCounterClockwise": "Ruota a sinistra",
+    "deskewImageBtn":"Rilevamento contorno del foglio",
+    "applyImageBtn":"Correggi l'inclinazione dell'immagine dal contorno o convalida la cucitura",
     "img2PdfBtn": "Genera PDF con riconoscimento del testo",
     "imageOcrLangInput": "Seleziona la lingua per il riconoscimento del testo",
     "imgSaveBtn": "Salva immagine...",

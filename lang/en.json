@@ -11,6 +11,8 @@
     "openImage":"Select existing image file...",
     "rotateImgClockwise":"Rotate on the right",
     "rotateImgCounterClockwise":"Rotate on the left",
+    "deskewImageBtn":"Sheet contour detection",
+    "applyImageBtn":"Deskew image from contour or validate stitching",
     "img2PdfBtn":"Generate PDF with text recognition",
     "imageOcrLangInput":"Select text recognition language",
     "imgSaveBtn":"Save image...",
