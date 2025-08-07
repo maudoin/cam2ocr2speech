@@ -1,7 +1,7 @@
 
 // import viewer
 const { PDFViewerApplication } = await import("../third-parties/pdf.js/v5.3.93/web/viewer.mjs");
-document.title = "VocalImage";
+document.title = "VocaPage";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";

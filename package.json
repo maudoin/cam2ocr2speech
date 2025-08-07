@@ -15,7 +15,7 @@
   },
   "build": {
     "productName": "VocaPage",
-    "appId": "com.maudoin.vocalimage",
+    "appId": "com.maudoin.vocapage",
     "icon": "resources/icon256px.ico",
     "win": {
       "target": "msi",
