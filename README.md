@@ -14,6 +14,7 @@ Cette application est conçue pour aider les personnes atteintes de troubles "dy
 - 📷 De capturer une image depuis une webcam ou d'importer une image depuis un fichier.
 - 🇫🇷 De choisir la langue de reconnaissance de texte et la voix parmi: français, anglais, allemand, italien et espagnol.
 - 🌐 Tout est calculé dans l'application **sans connexion internet**
+- 📗 [Manuel utilisateur](USAGE.fr.md)
 
 ## 📄 Overview
 
@@ -28,6 +29,7 @@ This offline application supports individuals with "dys" disorders (e.g., dyslex
 - 📷 Captures images using a webcam or loads images from files.
 - 🇬🇧 UI, OCR, and Voice are available in the following languages: French, English, German, Italian, and Spanish.
 - 🌐 Fully Offline
+- 📗 [User manual](USAGE.en.md)
 
 ---
 
@@ -98,6 +100,7 @@ Diese Offline-Anwendung unterstützt Personen mit „Dys“-Störungen (z. B. Dy
 - 📷 Erfasst Bilder mit einer Webcam oder lädt Bilder aus Dateien.
 - 🇩🇪 Benutzeroberfläche (UI), OCR und Sprache sind in den folgenden Sprachen verfügbar: Französisch, Englisch, Deutsch, Italienisch und Spanisch.
 - 🌐 Vollständig offline
+- 📗 [Benutzerhandbuch](USAGE.de.md)
 
 *Dieser Text wurde automatisch generiert.*
 
@@ -122,6 +125,7 @@ Questa applicazione offline supporta persone con disturbi “dys” (ad es. disl
 - 📷 Acquisisce immagini tramite webcam o carica file di immagini.
 - 🇮🇹 Interfaccia utente (UI), OCR e voce disponibili nelle seguenti lingue: francese, inglese, tedesco, italiano e spagnolo.
 - 🌐 Completamente offline
+- 📗 [Manuale utente](USAGE.it.md)
 
 *Questo testo è stato generato automaticamente.*
 
@@ -146,5 +150,6 @@ Esta aplicación offline ayuda a personas con trastornos “dys” (p. ej., disl
 - 📷 Captura imágenes con una cámara web o carga archivos de imagen.
 - 🇪🇸 Interfaz de usuario (UI), OCR y voz disponibles en los siguientes idiomas: francés, inglés, alemán, italiano y español.
 - 🌐 Totalmente offline
+- 📗 [Manual de usuario](USAGE.es.md)
 
 *Este texto ha sido generado automáticamente.*

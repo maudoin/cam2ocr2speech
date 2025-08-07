@@ -84,6 +84,7 @@ const imgSaveBtn = document.getElementById("imgSaveBtn");
 // pdf control elements
 const showPdfBtn = document.getElementById("showPdfBtn");
 const pdfOpenButton = document.getElementById("pdfOpenButton");
+const openHelpPdfBtn = document.getElementById("openHelpPdfBtn");
 const openPdfBtn = document.getElementById("openPdfBtn");
 const pdfToWebcamPreview = document.getElementById("pdfToWebcamPreview");
 const pdfToImagePreview = document.getElementById("pdfToImagePreview");
@@ -102,7 +103,8 @@ const canvasInput = document.getElementById("canvasInput");
 OpticalCharacterRecognition.setupSelectFromAvailableModels(imageOcrLangInput, path => myAPI.listFiles(path));
 TextToSpeech.setupSelectFromAvailableModels(voiceLangInput, path => myAPI.listFolders(path), path => myAPI.listFiles(path));
 imageOcrLangInput.addEventListener("change", function () {
-  Localize.setTitlesFromIds(this.value.slice(0, 2));
+  // warning, we use the ".textContent" which is the system lang, not ".value" which is the ocr file extension lang
+  Localize.setTitlesFromIds(this.options[this.selectedIndex].textContent);
 });
 webcamAutoScanPartSelect.addEventListener("change", function () {
   if ( webcamAutoScan.classList.contains("active") )
@@ -137,6 +139,7 @@ pdfToImagePreview.onclick = switchToImagePreviewMode;
 showPdfBtn.onclick = switchToPdfMode;
 openPdfBtn.onclick = selectPdf;
 pdfOpenButton.onclick = selectPdf;
+openHelpPdfBtn.onclick = openHelpPdf;
 stitchWebcamCapture.onclick = stitchCapture;
 rotateImgClockwise.onclick = rotateClockwise;
 rotateImgCounterClockwise.onclick = rotateCounterClockwise;
@@ -787,6 +790,14 @@ function selectPdf()
       switchToPdfMode();
     }
   });
+}
+
+function openHelpPdf()
+{
+  const langToFile = (lang)=>lang?"../manual/USAGE."+lang+".pdf":null;
+  // warning, we use the ".textContent" which is the system lang, not ".value" which is the ocr file extension lang
+  PdfView.openUrl(imageOcrLangInput.value?langToFile(imageOcrLangInput.options[imageOcrLangInput.selectedIndex].textContent):langToFile("fr"));
+  switchToPdfMode();
 }
 
 // webcam to canevas capture
