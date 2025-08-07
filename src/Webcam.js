@@ -11,7 +11,7 @@ export class Webcam
         }
 
         // handle webcam device selection change
-        webcamSelect.addEventListener("change", (event) => Webcam.startStream(event.target.value, capPerStream[defaultDeviceId], setupStream));
+        webcamSelect.addEventListener("change", (event) => Webcam.startStream(event.target.value, capPerStream[webcamSelect.value], setupStream));
 
         // setup webcam stream on page load
         Webcam.listWebcams().then(() => {
