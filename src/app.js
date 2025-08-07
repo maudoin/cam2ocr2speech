@@ -19,6 +19,7 @@ ImageProcessing.asyncImport().then(() => enableActions());
 let arucoFirstStepScanMarkers = null;
 let previousContourPoints = null;
 let previousContourPointsStableCount = 0;
+let skipNextAutoScanFramingTests = false;
 const STABLE_CONTOUR_SUCCESSIVE_FRAMES_THRESHOLD = 3;
 function stabilityIndicator(){
   return previousContourPointsStableCount + "/" + STABLE_CONTOUR_SUCCESSIVE_FRAMES_THRESHOLD;
@@ -27,6 +28,10 @@ function resetStabilityIndicator(){
   previousContourPointsStableCount = 0;
 }
 function isStable(canvasWidth, contourPoints){
+  if (skipNextAutoScanFramingTests)
+  {
+    return true;
+  }
   const STABLE_AVG_SQ_DISTANCE_PCT_WIDTH = (0.004); // allow only 0.4% of the canvas width
   const STABLE_AVG_SQ_DISTANCE = (canvasWidth) => (STABLE_AVG_SQ_DISTANCE_PCT_WIDTH*canvasWidth)**2; // allow only 5 pixels
   if (!previousContourPoints)
@@ -164,30 +169,19 @@ function enableActions()
     if (event.code === "Space" || event.key === " " || event.key === "Spacebar") {
       if (webcamPreview.classList.contains("activeMode"))
       {
-        if (stitchWebcamCapture.style.display != "none" || arucoFirstStepScanMarkers)
+        if (webcamAutoScan.classList.contains("active"))
         {
-          stitchCapture();
+          // in auto scan mode:
+          skipNextAutoScanFramingTests = true;
         }
-        else if (webcamAutoScan.classList.contains("active") && webcamAutoScanPartSelect.value > 1)
+        else if (stitchWebcamCapture.style.display != "none" || arucoFirstStepScanMarkers)
         {
-          // advance auto scan
-          const tempCanvas = document.createElement("canvas");
-          tempCanvas.width = video.videoWidth;
-          tempCanvas.height = video.videoHeight;
-          const tempCtx = tempCanvas.getContext("2d");
-          tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
-          const imgMat = cv.imread(tempCanvas);
-          const markers = ImageProcessing.detectAruco(imgMat);
-          const currentContourPointsAndIds = markersToContourPoints(markers, arucoFirstStepScanMarkers != null);
-          if (handleImageWithArucoMarkers(imgMat, currentContourPointsAndIds) )
-          {
-            updateArucoAutoDetectionButton();
-          }
+          // manual stitching is available:
+          stitchCapture();
         }
         else
         {
-          // capture
-          disableArucoAutoDetection();
+          // simple capture by default
           webcamCaptureToImage();
         }
         event.preventDefault(); // prevent scrolling
@@ -317,6 +311,7 @@ function enableArucoAutoDetection()
   webcamFocus.value = FOCUS_VALUE_WHEN_ENTERING_ARUCO_MODE;
   webcamFocus.dispatchEvent(new Event('input', { bubbles: true }));
   updateArucoAutoDetectionButton();
+  skipNextAutoScanFramingTests = false;
 }
 
 async function maySendVideoFrameToAutoDetection()
@@ -388,7 +383,7 @@ async function maySendVideoFrameToAutoDetection()
       const maximumArea = (tempCanvas.width * tempCanvas.height) ;
       const areaRatio = transformedSourcePolygonArea / maximumArea;
       const REQUIRED_AREA_RATIO = 0.68;// 68% of area is 82% or each side
-      if (areaRatio > REQUIRED_AREA_RATIO)
+      if (skipNextAutoScanFramingTests || areaRatio > REQUIRED_AREA_RATIO)
       {
         // are we scanning second part ?
         if (arucoFirstStepScanMarkers)
@@ -502,12 +497,22 @@ async function maySendVideoFrameToAutoDetection()
         }
         drawIncompleteBottomMarkers();
       }
-      else if (!drawImageWithArucoMarkersBook(markers) )
+      else
       {
-        drawIncompleteMarkers(markers);
+        const lines = drawImageWithArucoMarkersBook(markers);
+        if ( !lines )
+        {
+          drawIncompleteMarkers(markers);
+        }
+        else if (skipNextAutoScanFramingTests)
+        {
+          handleImageWithArucoMarkersBook(imgMat, markers);
+          switchToImagePreviewMode();
+        }
       }
     }
     imgMat.delete();
+    skipNextAutoScanFramingTests = false;
   }
 }
 
@@ -647,29 +652,28 @@ function getTopAndBottomLinesFromMarkers(markers)
     }
     return {polygonTop, polygonBottom, polygonX};
   }
-  return {polygonTop:null, polygonBottom:null, polygonX:null};
+  return null;
 }
 
 function drawImageWithArucoMarkersBook(markers)
 {
-  const {polygonTop, polygonBottom} = getTopAndBottomLinesFromMarkers(markers);
-  if (polygonTop && polygonBottom)
+  const lines = getTopAndBottomLinesFromMarkers(markers);
+  if (lines)
   {
-    const polygon = polygonTop.concat(polygonBottom.reverse());
+    const polygon = lines.polygonTop.concat(lines.polygonBottom.reverse());
     ScalableVectorGraphics.drawPolyLine(svgOverlay, polygon, "rgba(0, 255, 0, 0.5)");
-    return true;
   }
-  return false;
+  return lines;
 }
 
-function handleImageWithArucoMarkersBook(imgMat, markers)
+function handleImageWithArucoMarkersBook(imgMat, markers, linesOverride = null)
 {
-  const {polygonTop, polygonBottom, polygonX} = getTopAndBottomLinesFromMarkers(markers);
-  if (polygonTop && polygonBottom && polygonX)
+  const lines = linesOverride || getTopAndBottomLinesFromMarkers(markers);
+  if (lines)
   {
     try
     {
-      const cvImageMat = ImageProcessing.unwarpWithPerPixelMap(imgMat, polygonTop, polygonBottom, polygonX);
+      const cvImageMat = ImageProcessing.unwarpWithPerPixelMap(imgMat, lines.polygonTop, lines.polygonBottom, lines.polygonX);
       canvasInput.width = cvImageMat.cols;
       canvasInput.height = cvImageMat.rows;
       cv.imshow(canvasInput, cvImageMat);
