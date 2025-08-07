@@ -901,7 +901,9 @@ async function imageToPdf()
   {
     processedImg = canvasInput.toDataURL("image/png");
   }
+  ScalableVectorGraphics.startCharStreamAnimation(svgOverlay);
   const { data: { pdf } } = await OpticalCharacterRecognition.recognize(processedImg, imageOcrLangInput.value);
+  ScalableVectorGraphics.stopCharStreamAnimation(svgOverlay);
 
   // Display PDF
   const pdfBlob = new Blob([new Uint8Array(pdf)], { type: "application/pdf" });

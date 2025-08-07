@@ -311,6 +311,118 @@ export class ScalableVectorGraphics
     let clipRect = svgElement.querySelector("#"+ScalableVectorGraphics.SvgComparisonclipRectId);
     return clipRect ? parseFloat(clipRect.getAttribute("height")) : null;
   }
+
+  static createStream(svgElement, y, speed, fontSize, color, streamLength, chars) {
+    const group = document.createElementNS(ScalableVectorGraphics.NS, "g");
+    group.setAttribute("transform", `translate(0, ${y})`);
+    group.dataset.y = y;
+    group.dataset.x = 0;
+    group.dataset.speed = speed;
+    group.dataset.lastUpdate = 0;
+    group.dataset.fontSize = fontSize;
+    svgElement.appendChild(group);
+
+    for (let i = 0; i < streamLength; i++) {
+      const text = document.createElementNS(ScalableVectorGraphics.NS, "text");
+      text.setAttribute("x", i * fontSize);
+      text.setAttribute("y", 0);
+      text.setAttribute("class", "stream-text");
+      text.setAttribute("font-size", fontSize);
+      text.setAttribute("font-weight", "bold");
+      text.setAttribute("font-family", "Share Tech Mono");
+      text.setAttribute("fill", color);
+      text.textContent = chars[Math.floor(Math.random() * chars.length)];
+      text.setAttribute("opacity", ((i + 1) / streamLength).toFixed(2));
+      group.appendChild(text);
+    }
+  }
+
+  static updateStreams(svgElement, timestamp, color, chars, maxLength) {
+    const groups = svgElement.querySelectorAll("g");
+
+    groups.forEach(group => {
+      const speed = parseFloat(group.dataset.speed);
+      const lastUpdate = parseFloat(group.dataset.lastUpdate);
+      const fontSize = parseFloat(group.dataset.fontSize);
+      const x = parseFloat(group.dataset.x);
+      const y = parseFloat(group.dataset.y);
+
+      if (timestamp - lastUpdate > speed) {
+        const newChar = document.createElementNS(ScalableVectorGraphics.NS, "text");
+        newChar.setAttribute("x", group.children.length * fontSize);
+        newChar.setAttribute("y", 0);
+        newChar.setAttribute("class", "stream-text");
+        newChar.setAttribute("font-size", fontSize);
+        newChar.setAttribute("font-weight", "bold");
+        newChar.setAttribute("font-family", "Share Tech Mono");
+        newChar.setAttribute("fill", color);
+        newChar.textContent = chars[Math.floor(Math.random() * chars.length)];
+        group.appendChild(newChar);
+
+        if (group.children.length > maxLength) {
+          group.removeChild(group.firstChild);
+        }
+
+        [...group.children].forEach((char, i) => {
+          char.setAttribute("x", i * fontSize);
+          const opacity = ((i + 1) / group.children.length).toFixed(2);
+          char.setAttribute("opacity", opacity);
+        });
+
+        const newX = x + fontSize;
+        group.setAttribute("transform", `translate(${newX}, ${y})`);
+        group.dataset.x = newX;
+
+        if (newX > window.innerWidth + maxLength * fontSize) {
+          group.dataset.x = -maxLength * fontSize;
+          group.setAttribute("transform", `translate(${group.dataset.x}, ${y})`);
+        }
+
+        group.dataset.lastUpdate = timestamp;
+      }
+    });
+
+    if (svgElement.childElementCount > 0) {
+      requestAnimationFrame(ts => ScalableVectorGraphics.updateStreams(svgElement, ts, color, chars, maxLength));
+    }
+  }
+
+  static startCharStreamAnimation(svgElement, userConfig = {}) {
+    const defaultConfig = {
+      chars: "abcdefghijklmnopqrstuvwxyz 0123456789.ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      fontSize: 18,
+      color: "rgba(0, 64, 107, 1)",
+      streamLength: 20,
+      maxLength: 60
+    };
+
+    const config = Object.assign({}, defaultConfig, userConfig);
+    svgElement.innerHTML = "";
+
+    let height;
+    const viewBox = svgElement.getAttribute("viewBox");
+
+    if (viewBox) {
+      const parts = viewBox.split(/\s+/);
+      height = parseFloat(parts[3]); // viewBox = "minX minY width height"
+    } else {
+      height = svgElement.getBoundingClientRect().height;
+    }
+    const streamCount = Math.floor(height / (config.fontSize + 4));
+
+    for (let i = 0; i < streamCount; i++) {
+      const y = i * (config.fontSize + 4);
+      const speed = 5 + Math.random() * 15;
+      ScalableVectorGraphics.createStream(svgElement, y, speed, config.fontSize, config.color, config.streamLength, config.chars);
+    }
+
+    requestAnimationFrame(ts => ScalableVectorGraphics.updateStreams(svgElement, ts, config.color, config.chars, config.maxLength));
+  }
+
+  static stopCharStreamAnimation(svgElement) {
+    svgElement.innerHTML = "";
+  }
+
 }
 
 
