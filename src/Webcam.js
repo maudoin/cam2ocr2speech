@@ -13,14 +13,22 @@ export class Webcam
         // handle webcam device selection change
         webcamSelect.addEventListener("change", (event) => Webcam.startStream(event.target.value, capPerStream[webcamSelect.value], setupStream));
 
-        // setup webcam stream on page load
-        Webcam.listWebcams().then(() => {
-            const defaultDeviceId = webcamSelect.value;
-            if (defaultDeviceId) {
-                Webcam.startStream(defaultDeviceId, capPerStream[defaultDeviceId], setupStream);
-            }
+        let updateCameraListUI = () => {
+            Webcam.listWebcams().then(() => {
+                const defaultDeviceId = webcamSelect.value;
+                if (defaultDeviceId) {
+                    Webcam.startStream(defaultDeviceId, capPerStream[defaultDeviceId], setupStream);
+                }
+            });
+        };
+
+        // update when camera is plugged / unplugged
+        navigator.mediaDevices.addEventListener('devicechange', () => {
+            updateCameraListUI();
         });
 
+        // setup webcam stream
+        updateCameraListUI();
 
     }
 
