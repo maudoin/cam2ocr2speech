@@ -312,119 +312,155 @@ export class ScalableVectorGraphics
     return clipRect ? parseFloat(clipRect.getAttribute("height")) : null;
   }
 
-  static createStream(svgElement, y, speed, fontSize, color, streamLength, chars) {
-    const group = document.createElementNS(ScalableVectorGraphics.NS, "g");
-    group.setAttribute("transform", `translate(0, ${y})`);
-    group.dataset.y = y;
-    group.dataset.x = 0;
-    group.dataset.speed = speed;
-    group.dataset.lastUpdate = 0;
-    group.dataset.fontSize = fontSize;
-    svgElement.appendChild(group);
+  static createGradientMask(svg, idSuffix, width, height) {
+    const defs = svg.querySelector("defs") || document.createElementNS(ScalableVectorGraphics.NS, "defs");
 
-    for (let i = 0; i < streamLength; i++) {
-      const text = document.createElementNS(ScalableVectorGraphics.NS, "text");
-      text.setAttribute("x", i * fontSize);
-      text.setAttribute("y", 0);
-      text.setAttribute("class", "stream-text");
-      text.setAttribute("font-size", fontSize);
-      text.setAttribute("font-weight", "bold");
-      text.setAttribute("font-family", "Share Tech Mono");
-      text.setAttribute("fill", color);
-      text.textContent = chars[Math.floor(Math.random() * chars.length)];
-      text.setAttribute("opacity", ((i + 1) / streamLength).toFixed(2));
-      group.appendChild(text);
-    }
-  }
+    const gradientId = `fadeGradient-${idSuffix}`;
+    const maskId = `fadeMask-${idSuffix}`;
 
-  static updateStreams(svgElement, timestamp, color, chars, maxLength) {
-    const groups = svgElement.querySelectorAll("g");
+    const gradient = document.createElementNS(ScalableVectorGraphics.NS, "linearGradient");
+    gradient.setAttribute("id", gradientId);
+    gradient.setAttribute("x1", "0%");
+    gradient.setAttribute("y1", "0%");
+    gradient.setAttribute("x2", "100%");
+    gradient.setAttribute("y2", "0%");
 
-    groups.forEach(group => {
-      const speed = parseFloat(group.dataset.speed);
-      const lastUpdate = parseFloat(group.dataset.lastUpdate);
-      const fontSize = parseFloat(group.dataset.fontSize);
-      const x = parseFloat(group.dataset.x);
-      const y = parseFloat(group.dataset.y);
+    const stops = [
+      { offset: "0%", opacity: "0" },
+      { offset: "80%", opacity: "0.4" },
+      { offset: "90%", opacity: "1" },
+      { offset: "100%", opacity: "1" }
+    ];
 
-      if (timestamp - lastUpdate > speed) {
-        const newChar = document.createElementNS(ScalableVectorGraphics.NS, "text");
-        newChar.setAttribute("x", group.children.length * fontSize);
-        newChar.setAttribute("y", 0);
-        newChar.setAttribute("class", "stream-text");
-        newChar.setAttribute("font-size", fontSize);
-        newChar.setAttribute("font-weight", "bold");
-        newChar.setAttribute("font-family", "Share Tech Mono");
-        newChar.setAttribute("fill", color);
-        newChar.textContent = chars[Math.floor(Math.random() * chars.length)];
-        group.appendChild(newChar);
-
-        if (group.children.length > maxLength) {
-          group.removeChild(group.firstChild);
-        }
-
-        [...group.children].forEach((char, i) => {
-          char.setAttribute("x", i * fontSize);
-          const opacity = ((i + 1) / group.children.length).toFixed(2);
-          char.setAttribute("opacity", opacity);
-        });
-
-        const newX = x + fontSize;
-        group.setAttribute("transform", `translate(${newX}, ${y})`);
-        group.dataset.x = newX;
-
-        if (newX > window.innerWidth + maxLength * fontSize) {
-          group.dataset.x = -maxLength * fontSize;
-          group.setAttribute("transform", `translate(${group.dataset.x}, ${y})`);
-        }
-
-        group.dataset.lastUpdate = timestamp;
-      }
+    stops.forEach(stopInfo => {
+      const stop = document.createElementNS(ScalableVectorGraphics.NS, "stop");
+      stop.setAttribute("offset", stopInfo.offset);
+      stop.setAttribute("stop-color", "white");
+      stop.setAttribute("stop-opacity", stopInfo.opacity);
+      gradient.appendChild(stop);
     });
 
-    if (svgElement.childElementCount > 0) {
-      requestAnimationFrame(ts => ScalableVectorGraphics.updateStreams(svgElement, ts, color, chars, maxLength));
+    const mask = document.createElementNS(ScalableVectorGraphics.NS, "mask");
+    mask.setAttribute("id", maskId);
+
+    const rect = document.createElementNS(ScalableVectorGraphics.NS, "rect");
+    rect.setAttribute("x", "0");
+    rect.setAttribute("y", "0");
+    rect.setAttribute("width", width);
+    rect.setAttribute("height", height);
+    rect.setAttribute("fill", `url(#${gradientId})`);
+
+    mask.appendChild(rect);
+    defs.appendChild(gradient);
+    defs.appendChild(mask);
+
+    if (!svg.querySelector("defs")) {
+      svg.appendChild(defs);
     }
+
+    return maskId;
   }
 
-  static startCharStreamAnimation(svgElement, userConfig = {}) {
-    const defaultConfig = {
-      chars: "abcdefghijklmnopqrstuvwxyz 0123456789.ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-      fontSize: 18,
-      color: "rgba(0, 64, 107, 1)",
-      streamLength: 20,
-      maxLength: 60
+  static createStream(svg, y, fontSize, color, speed, idSuffix, chars, textLength) {
+    const streamText = Array.from({ length: textLength }, () =>
+      chars[Math.floor(Math.random() * chars.length)]
+    ).join("");
+
+    const text = document.createElementNS(ScalableVectorGraphics.NS, "text");
+    text.setAttribute("x", "0");
+    text.setAttribute("y", y);
+    text.setAttribute("font-size", fontSize);
+    text.setAttribute("fill", color);
+    text.setAttribute("font-family", "monospace");
+    text.textContent = streamText;
+
+    svg.appendChild(text);
+
+    const bbox = text.getBBox();
+    const maskId = ScalableVectorGraphics.createGradientMask(svg, idSuffix, bbox.width, bbox.height);
+    text.setAttribute("mask", `url(#${maskId})`);
+
+    return {
+      element: text,
+      x: -bbox.width,
+      speed: speed,
+      maskRect: svg.querySelector(`#${maskId} rect`),
+      y: y,
+      fontSize: fontSize,
+      color: color,
+      idSuffix: idSuffix,
+      chars: chars,
+      length: textLength
     };
+  }
 
-    const config = Object.assign({}, defaultConfig, userConfig);
-    svgElement.innerHTML = "";
+  static startCharStreamAnimation(svg, config = {}) {
+    const {
+      color = "rgba(0, 64, 107, 1)",
+      chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789 +-/*.>< abcdefghijklmnopqrstuvwxyz",
+      streamCount = 60,
+      streamSpacingRatio = 0.1,
+      speedRange = [7, 25],
+      frameRate = 20,
+      textLength = 30
+    } = config;
 
-    let height;
-    const viewBox = svgElement.getAttribute("viewBox");
+    const height = svg.getBoundingClientRect().height;
+    const fontSize = height * (1 + streamSpacingRatio) / streamCount;
+    const spacing = height / streamCount;
+    const frameDelay = 1000 / frameRate;
+    const speedMultiplier = 60 / frameRate;
 
-    if (viewBox) {
-      const parts = viewBox.split(/\s+/);
-      height = parseFloat(parts[3]); // viewBox = "minX minY width height"
-    } else {
-      height = svgElement.getBoundingClientRect().height;
-    }
-    const streamCount = Math.floor(height / (config.fontSize + 4));
+    const streams = [];
 
     for (let i = 0; i < streamCount; i++) {
-      const y = i * (config.fontSize + 4);
-      const speed = 5 + Math.random() * 15;
-      ScalableVectorGraphics.createStream(svgElement, y, speed, config.fontSize, config.color, config.streamLength, config.chars);
+      const y = (i + 1) * spacing;
+      const speed = (speedRange[0] + Math.random() * (speedRange[1] - speedRange[0])) * speedMultiplier;
+
+      const stream = ScalableVectorGraphics.createStream(svg, y, fontSize, color, speed, i, chars, textLength);
+      streams.push(stream);
     }
 
-    requestAnimationFrame(ts => ScalableVectorGraphics.updateStreams(svgElement, ts, config.color, config.chars, config.maxLength));
+    const intervalId = setInterval(() => {
+      if (!svg.querySelector("text")) {
+        clearInterval(intervalId);
+        return;
+      }
+
+      streams.forEach((stream, i) => {
+        stream.x += stream.speed;
+        const svgWidth = svg.getBoundingClientRect().width;
+
+        const newText = Array.from({ length: stream.length }, () =>
+          stream.chars[Math.floor(Math.random() * stream.chars.length)]
+        ).join("");
+        stream.element.textContent = newText;
+
+        if (stream.x > svgWidth) {
+          svg.removeChild(stream.element);
+          streams[i] = ScalableVectorGraphics.createStream(
+            svg,
+            stream.y,
+            stream.fontSize,
+            stream.color,
+            stream.speed,
+            stream.idSuffix,
+            stream.chars,
+            stream.length
+          );
+        } else {
+          stream.element.setAttribute("x", stream.x);
+          stream.maskRect.setAttribute("x", stream.x);
+          stream.maskRect.setAttribute("y", stream.y - stream.fontSize);
+        }
+      });
+    }, frameDelay);
   }
 
-  static stopCharStreamAnimation(svgElement) {
-    svgElement.innerHTML = "";
+  static stopCharStreamAnimation(svg) {
+    svg.innerHTML = "";
   }
-
 }
-
 
 ScalableVectorGraphics.NS = "http://www.w3.org/2000/svg";
 ScalableVectorGraphics.SvgComparisonclipRectId = "SvgComparisonclipRectId";
