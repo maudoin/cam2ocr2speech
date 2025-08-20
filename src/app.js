@@ -933,24 +933,18 @@ async function imageToPdf()
   await mayValidateStitchingAdjustment();
   // prepare image by using contour points to deskey image
   let processedImg;
-  let tempCanvas = document.createElement("canvas");
   if (currentContourPoints.length)
   {
     let imgMat = cv.imread(canvasInput);
     const cvImageMat = ImageProcessing.fourPointTransform(imgMat, currentContourPoints);
     imgMat.delete();
-    // Display the result in a temp canvas
-    tempCanvas = document.createElement("canvas");
-    tempCanvas.width = cvImageMat.cols;
-    tempCanvas.height = cvImageMat.rows;
-    cv.imshow(tempCanvas, cvImageMat);
+    // Display the result
+    canvasInput.width = cvImageMat.cols;
+    canvasInput.height = cvImageMat.rows;
+    cv.imshow(canvasInput, cvImageMat);
     cvImageMat.delete();
-    processedImg = tempCanvas.toDataURL("image/png");
   }
-  else
-  {
-    processedImg = canvasInput.toDataURL("image/png");
-  }
+  processedImg = canvasInput.toDataURL("image/png");
   ScalableVectorGraphics.init(svgOverlay, canvasInput.width, canvasInput.height);
   ScalableVectorGraphics.startCharStreamAnimation(svgOverlay);
   const { data: { pdf } } = await OpticalCharacterRecognition.recognize(processedImg, imageOcrLangInput.value);

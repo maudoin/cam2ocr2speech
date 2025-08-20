@@ -405,7 +405,8 @@ export class ScalableVectorGraphics
       textLength = 30
     } = config;
 
-    const height = svg.getBoundingClientRect().height;
+    const viewBox = svg.viewBox.baseVal;
+    const height = viewBox.height;
     const fontSize = height * (1 + streamSpacingRatio) / streamCount;
     const spacing = height / streamCount;
     const frameDelay = 1000 / frameRate;
@@ -429,7 +430,7 @@ export class ScalableVectorGraphics
 
       streams.forEach((stream, i) => {
         stream.x += stream.speed;
-        const svgWidth = svg.getBoundingClientRect().width;
+        const svgWidth = viewBox.width;
 
         const newText = Array.from({ length: stream.length }, () =>
           stream.chars[Math.floor(Math.random() * stream.chars.length)]
