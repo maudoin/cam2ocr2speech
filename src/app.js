@@ -74,6 +74,7 @@ const webcam2Pdf = document.getElementById("webcam2Pdf");
 // image control elements
 const openImage = document.getElementById("openImage");
 const deskewImageBtn = document.getElementById("deskewImageBtn");
+const cropImageBtn = document.getElementById("cropImageBtn");
 const applyImageBtn = document.getElementById("applyImageBtn");
 const rotateImgClockwise = document.getElementById("rotateImgClockwise");
 const rotateImgCounterClockwise = document.getElementById("rotateImgCounterClockwise");
@@ -127,6 +128,7 @@ Webcam.install(webcamSelect, (mediastream, caps)=>{
 video.addEventListener('play', () => requestAnimationFrame(processWebcamFrame));
 
 let currentContourPoints = [];
+let cropSelectionRectangle = [];
 const tts = new TextToSpeech();
 
 
@@ -164,6 +166,7 @@ function enableActions()
   imgSaveBtn.onclick = imageSave;
   openImage.onclick = selectImage;
   deskewImageBtn.addEventListener("click", setupManualDeskewWithImageContour);
+  cropImageBtn.addEventListener("click", setupRectangleSelection);
   applyImageBtn.addEventListener("click", applyDeskewOrStitchingAdjustment);
   voiceOption.addEventListener("click", speakSelectedText);
 
@@ -210,6 +213,7 @@ function switchToWebcamMode()
   rotateImgClockwise.style.display = "none";
   rotateImgCounterClockwise.style.display = "none";
   deskewImageBtn.style.display = "none";
+  cropImageBtn.style.display = "none";
   applyImageBtn.style.display = "none";
   // display update
   video.style.display = "block";
@@ -240,6 +244,7 @@ function switchToImagePreviewMode()
   rotateImgClockwise.style.display = "block";
   rotateImgCounterClockwise.style.display = "block";
   deskewImageBtn.style.display = "block";
+  cropImageBtn.style.display = "block";
   applyImageBtn.style.display = "block";
   // display update
   video.style.display = "none";
@@ -715,6 +720,37 @@ function mayApplyManualDeskewAdjustment()
     cv.imshow(canvasInput, cvImageMat);
     cvImageMat.delete();
     svgOverlay.innerHTML = "";
+    currentContourPoints = null;
+  }
+}
+
+// read canvas input and update contour points
+function setupRectangleSelection()
+{
+  let imgMat = cv.imread(canvasInput);
+  if ( (!cropSelectionRectangle) || (cropSelectionRectangle.length !== 2) )
+  {
+    cropSelectionRectangle = [{x:imgMat.cols/4, y:imgMat.rows/4}, {x:imgMat.cols*3/4, y:imgMat.rows*3/4}];
+  }
+  ScalableVectorGraphics.init(svgOverlay, canvasInput.width, canvasInput.height);
+  ScalableVectorGraphics.setupEditableRect(svgOverlay, cropSelectionRectangle, canvasInput.width, canvasInput.height);
+  imgMat.delete();
+}
+
+// apply rectangleSelection to image
+function mayApplyCropRectangleAdjustment()
+{
+  if (svgOverlay.innerHTML !== "" && cropSelectionRectangle && cropSelectionRectangle.length ===2 )
+  {
+    let imgMat = cv.imread(canvasInput);
+    const cvImageMat = ImageProcessing.cropFromTwoPoints(imgMat, cropSelectionRectangle);
+    imgMat.delete();
+    canvasInput.width = cvImageMat.cols;
+    canvasInput.height = cvImageMat.rows;
+    cv.imshow(canvasInput, cvImageMat);
+    cvImageMat.delete();
+    svgOverlay.innerHTML = "";
+    cropSelectionRectangle = null;
   }
 }
 
@@ -723,6 +759,9 @@ function applyDeskewOrStitchingAdjustment()
 {
   mayValidateStitchingAdjustment();
   mayApplyManualDeskewAdjustment();
+  mayApplyCropRectangleAdjustment();
+  currentContourPoints = [];
+  cropSelectionRectangle = null;
 }
 
 // read canvas input and update contour points

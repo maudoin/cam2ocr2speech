@@ -12,6 +12,7 @@
     "rotateImgClockwise":"Tourner à droite",
     "rotateImgCounterClockwise":"Tourner à gauche",
     "deskewImageBtn":"Detection de contour de page",
+    "cropImageBtn":"Recadrer l'image avec un rectangle",
     "applyImageBtn":"Redresser l'image avec le contour ou valider la suture",
     "img2PdfBtn":"Générer un PDF avec reconnaissance de caractères",
     "imageOcrLangInput":"Selection de la langue reconnaissance de caractères",

@@ -12,6 +12,7 @@
     "rotateImgClockwise": "Nach rechts drehen",
     "rotateImgCounterClockwise": "Nach links drehen",
     "deskewImageBtn":"Blattkonturerkennung",
+    "cropImageBtn":"Bild mit Rechteck zuschneiden",
     "applyImageBtn":"Bild anhand der Kontur entzerren oder Naht validieren",
     "img2PdfBtn": "PDF mit Texterkennung erstellen",
     "imageOcrLangInput": "Sprache für Texterkennung auswählen",

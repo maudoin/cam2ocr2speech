@@ -185,6 +185,45 @@ export class ImageProcessing
         return pointsFromTopLeft;
     }
 
+
+    /**
+     * Crop imgMat to the axis-aligned rectangle defined by any two corner points.
+     * @param {cv.Mat} imgMat                Source image
+     * @param {[{x:number,y:number},{x:number,y:number}]} pts
+     *        Two points (top-left and bottom-right in any order)
+     * @returns {cv.Mat}                     A new Mat containing the cropped region
+     */
+    static cropFromTwoPoints(imgMat, pts) {
+      if (!Array.isArray(pts) || pts.length !== 2) {
+        throw new Error("cropFromTwoPoints requires an array of exactly two points");
+      }
+
+      // 1) Compute min/max
+      const x0 = Math.min(pts[0].x, pts[1].x);
+      const y0 = Math.min(pts[0].y, pts[1].y);
+      const x1 = Math.max(pts[0].x, pts[1].x);
+      const y1 = Math.max(pts[0].y, pts[1].y);
+
+      // 2) Round to int and clamp inside image bounds
+      const x = Math.max(0, Math.floor(x0));
+      const y = Math.max(0, Math.floor(y0));
+      const w = Math.min(imgMat.cols  - x, Math.ceil(x1) - x);
+      const h = Math.min(imgMat.rows  - y, Math.ceil(y1) - y);
+
+      if (w <= 0 || h <= 0) {
+        throw new Error("Invalid crop rectangle: zero or negative area");
+      }
+
+      // 3) Extract ROI and clone to a new Mat
+      const roiRect = new cv.Rect(x, y, w, h);
+      const roiMat  = imgMat.roi(roiRect);
+      const cropped = roiMat.clone();
+
+      // 4) Cleanup and return
+      roiMat.delete();
+      return cropped;
+    }
+
     // apply detected skewed sheet to the original image to get a straightened image
     // canvas: input canvas element with the image to be straightened
     // points: array of 4 cv.Points in order [top-left, top-right, bottom-right, bottom-left]

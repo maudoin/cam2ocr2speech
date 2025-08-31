@@ -96,6 +96,185 @@ export class ScalableVectorGraphics
         svgElement.style.pointerEvents = "auto";
     }
 
+    /**
+     * Make a rubber-band rectangle editable by dragging its corners and edges.
+     * Edges are displayed as <line> segments instead of mid-point circles.
+     *
+     * @param {SVGSVGElement} svgElement   The SVG container
+     * @param {[{x:number,y:number},{x:number,y:number}]} points
+     *        Two points: [topLeft, bottomRight] (in any order)
+     * @param {number} originalWidth
+     * @param {number} originalHeight
+     */
+    static setupEditableRect(svgElement, points, originalWidth, originalHeight) {
+      const NS = ScalableVectorGraphics.NS;
+
+      // 1) Core <rect> element
+      const rect = document.createElementNS(NS, "rect");
+      rect.setAttribute("fill", "rgba(0,255,0,0.2)");
+      rect.setAttribute("stroke", "none"); // hide built-in stroke
+      svgElement.appendChild(rect);
+
+      // 2) Four edge <line> segments: top, right, bottom, left
+      const edgeLines = Array.from({length: 4}, () => {
+        const ln = document.createElementNS(NS, "line");
+        ln.setAttribute("stroke", "lime");
+        ln.setAttribute("stroke-width", 2);
+        ln.style.cursor = "pointer"; // will override per-edge in pointerdown
+        svgElement.appendChild(ln);
+        return ln;
+      });
+
+      // 3) Four corner handles
+      const cornerHandles = Array.from({length: 4}, () => {
+        const c = document.createElementNS(NS, "circle");
+        c.setAttribute("r", 5);
+        c.setAttribute("fill", "yellow");
+        c.setAttribute("stroke", "orange");
+        c.setAttribute("stroke-width", 2);
+        c.style.cursor = "nwse-resize";
+        c.style.pointerEvents = "auto";
+        svgElement.appendChild(c);
+        return c;
+      });
+
+      let activeHandle = null; // { type: "corner"|"edge", idx:0-3 }
+
+      function clamp(v, max) {
+        return Math.max(0, Math.min(max, v));
+      }
+
+      function toSVGPoint(evt) {
+        const pt = svgElement.createSVGPoint();
+        pt.x = evt.clientX; pt.y = evt.clientY;
+        const CTM = svgElement.getScreenCTM();
+        return pt.matrixTransform(CTM.inverse());
+      }
+
+      // Given points[], compute the four corners in TL,TR,BR,BL order
+      function getCorners() {
+        const [p0,p1] = points;
+        const x0 = Math.min(p0.x,p1.x), y0 = Math.min(p0.y,p1.y);
+        const x1 = Math.max(p0.x,p1.x), y1 = Math.max(p0.y,p1.y);
+        return [
+          {x:x0,y:y0}, // TL
+          {x:x1,y:y0}, // TR
+          {x:x1,y:y1}, // BR
+          {x:x0,y:y1}  // BL
+        ];
+      }
+
+      // Redraw rect, edges, handles
+      function updateAll() {
+        const corners = getCorners();
+        const [TL,TR,BR,BL] = corners;
+
+        // update <rect>
+        rect.setAttribute("x", TL.x);
+        rect.setAttribute("y", TL.y);
+        rect.setAttribute("width", TR.x - TL.x);
+        rect.setAttribute("height", BL.y - TL.y);
+
+        // update edges: top(0), right(1), bottom(2), left(3)
+        const edgeCoords = [
+          [TL, TR], // top
+          [TR, BR], // right
+          [BR, BL], // bottom
+          [BL, TL]  // left
+        ];
+        edgeLines.forEach((ln, i) => {
+          const [A,B] = edgeCoords[i];
+          ln.setAttribute("x1", A.x);
+          ln.setAttribute("y1", A.y);
+          ln.setAttribute("x2", B.x);
+          ln.setAttribute("y2", B.y);
+        });
+
+        // update corners
+        cornerHandles.forEach((c, i) => {
+          c.setAttribute("cx", corners[i].x);
+          c.setAttribute("cy", corners[i].y);
+        });
+      }
+
+      // handle pointermove during drag
+      function onPointerMove(evt) {
+        if (!activeHandle) return;
+        const p = toSVGPoint(evt);
+        const { type, idx } = activeHandle;
+
+        if (type === "corner") {
+          // Move corner → rebuild min/max points
+          const corners = getCorners();
+          corners[idx].x = clamp(p.x, originalWidth);
+          corners[idx].y = clamp(p.y, originalHeight);
+
+          // TL = corners[0], BR = corners[2]
+          const newTL = {
+            x: Math.min(corners[0].x, corners[2].x),
+            y: Math.min(corners[0].y, corners[2].y)
+          };
+          const newBR = {
+            x: Math.max(corners[0].x, corners[2].x),
+            y: Math.max(corners[0].y, corners[2].y)
+          };
+          points[0].x = newTL.x; points[0].y = newTL.y;
+          points[1].x = newBR.x; points[1].y = newBR.y;
+
+        } else if (type === "edge") {
+          // Move an edge in its perpendicular dir
+          // idx: 0=top,1=right,2=bottom,3=left
+          if (idx === 0) {        // top
+            points[0].y = clamp(p.y, originalHeight);
+          } else if (idx === 2) { // bottom
+            points[1].y = clamp(p.y, originalHeight);
+          } else if (idx === 1) { // right
+            points[1].x = clamp(p.x, originalWidth);
+          } else if (idx === 3) { // left
+            points[0].x = clamp(p.x, originalWidth);
+          }
+        }
+
+        updateAll();
+      }
+
+      // end drag
+      function onPointerUp() {
+        activeHandle = null;
+        svgElement.removeEventListener("pointermove", onPointerMove);
+        svgElement.removeEventListener("pointerup",   onPointerUp);
+      }
+
+      // attach corner drag
+      cornerHandles.forEach((circ, i) => {
+        circ.addEventListener("pointerdown", (e) => {
+          activeHandle = { type: "corner", idx: i };
+          circ.setPointerCapture(e.pointerId);
+          svgElement.addEventListener("pointermove", onPointerMove);
+          svgElement.addEventListener("pointerup",   onPointerUp);
+          e.preventDefault(); e.stopPropagation();
+        });
+      });
+
+      // attach edge drag
+      edgeLines.forEach((ln, i) => {
+        // set cursor by edge
+        const cursors = ["ns-resize", "ew-resize", "ns-resize", "ew-resize"];
+        ln.style.cursor = cursors[i];
+
+        ln.addEventListener("pointerdown", (e) => {
+          activeHandle = { type: "edge", idx: i };
+          ln.setPointerCapture(e.pointerId);
+          svgElement.addEventListener("pointermove", onPointerMove);
+          svgElement.addEventListener("pointerup",   onPointerUp);
+          e.preventDefault(); e.stopPropagation();
+        });
+      });
+
+      svgElement.style.pointerEvents = "auto";
+      updateAll();
+    }
+
 
     static drawArrows(svgElement, lines, headLength)
     {

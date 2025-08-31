@@ -12,6 +12,7 @@
     "rotateImgClockwise": "Ruota a destra",
     "rotateImgCounterClockwise": "Ruota a sinistra",
     "deskewImageBtn":"Rilevamento contorno del foglio",
+    "cropImageBtn":"Ritaglia l'immagine con un rettangolo",
     "applyImageBtn":"Correggi l'inclinazione dell'immagine dal contorno o convalida la cucitura",
     "img2PdfBtn": "Genera PDF con riconoscimento del testo",
     "imageOcrLangInput": "Seleziona la lingua per il riconoscimento del testo",
