@@ -279,10 +279,15 @@ async function processWebcamFrame(timestamp) {
   lastTimestamp = timestamp;
 
   // process frames only when enough time has accumulated to match the desired interval.
+  let process = true;
   while (accumulatedTime >= videoMediaStreamFrameIntervalMs) {
     // leftover time is carried forward, preventing drift.
     accumulatedTime -= videoMediaStreamFrameIntervalMs;
-    await maySendVideoFrameToAutoDetection();
+    process = false;
+  }
+  if (process)
+  {
+    maySendVideoFrameToAutoDetection();
   }
   requestAnimationFrame(processWebcamFrame);
 }
