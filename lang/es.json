@@ -1,6 +1,7 @@
 {
     "webcamPreview": "Modo cámara web",
     "webcamSelect": "Seleccionar dispositivo",
+    "webcamAutoFocus": "Enfoque automático",
     "webcamFocus": "Enfoque",
     "webcamAutoScan": "Iniciar recorte automático de una hoja A4 desde dos capturas parciales (requiere guías Aruco)",
     "webcamAutoScanPartSelect":"Número de partes sucesivas para la captura automática de una página A4 (botón anterior)",

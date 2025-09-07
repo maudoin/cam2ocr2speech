@@ -1,6 +1,7 @@
 {
     "webcamPreview":"Webcam mode",
     "webcamSelect":"Select device",
+    "webcamAutoFocus":"AutoFocus",
     "webcamFocus":"Focus",
     "webcamAutoScan":"Start automatic A4 cropping from two half sheets capture (requires aruco guides)",
     "webcamAutoScanPartSelect":"Number of successive parts for automatic A4 page capture (previous button)",

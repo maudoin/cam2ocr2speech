@@ -65,16 +65,36 @@ export class Webcam
             });
     }
 
-    static setupFocusSlider(mediastream, focusRange) {
+    static setupFocusSlider(mediastream, autoFocusButton, focusRange) {
 
         const track = mediastream.getVideoTracks()[0];
         const capabilities = track.getCapabilities();
 
         // Check whether focus distance is supported or not.
-        if (!capabilities.focusDistance) {
-            return;
+        if (!capabilities.focusDistance)
+        {
+            focusRange.hidden = true;
+            autoFocusButton.hidden = true;
         }
 
+        autoFocusButton.onclick = ()=>  {
+            if (focusRange.hidden)
+            {
+                focusRange.hidden = false;
+                focusRange.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            else
+            {
+                focusRange.hidden = true;
+                track.applyConstraints({
+                advanced: [
+                    {
+                        focusMode: "continuous"
+                    }
+                ]
+                });
+            }
+        };
         // Map focus distance to a slider element.
         focusRange.min = capabilities.focusDistance.min;
         focusRange.max = capabilities.focusDistance.max;
@@ -91,6 +111,7 @@ export class Webcam
             ]
             });
         };
+        autoFocusButton.hidden = false;
         focusRange.hidden = false;
     }
 
@@ -128,6 +149,12 @@ export class Webcam
             };
             check();
         });
+    }
+    static async changeResolution(mediastream, w, h)
+    {
+        const track = mediastream.getVideoTracks()[0];
+        track.applyConstraints({ width: w, height: h })
+        .catch(error => console.error("Resolution change failed:", error));
     }
     static async setMaxResolution(mediastream, caps)
     {

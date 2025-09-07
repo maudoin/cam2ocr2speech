@@ -1,6 +1,7 @@
 {
     "webcamPreview": "Modalità webcam",
     "webcamSelect": "Seleziona dispositivo",
+    "webcamAutoFocus": "Messa a fuoco automatica",
     "webcamFocus": "Messa a fuoco",
     "webcamAutoScan": "Avvia il ritaglio automatico di una pagina A4 da due mezze immagini (richiede guide Aruco)",
     "webcamAutoScanPartSelect":"Numero di parti successive per la cattura automatica di una pagina A4 (pulsante precedente)",

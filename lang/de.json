@@ -1,6 +1,7 @@
 {
     "webcamPreview": "Webcam-Modus",
     "webcamSelect": "Gerät auswählen",
+    "webcamAutoFocus": "Automatischer Fokus",
     "webcamFocus": "Fokus",
     "webcamAutoScan": "Automatisches Zuschneiden einer A4-Seite aus zwei Halbseiten starten (benötigt Aruco-Markierungen)",
     "webcamAutoScanPartSelect":"Anzahl aufeinanderfolgender Teile für die automatische Erfassung einer A4-Seite (vorherige Schaltfläche)",

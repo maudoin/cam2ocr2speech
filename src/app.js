@@ -58,10 +58,9 @@ function isStable(canvasWidth, contourPoints){
   return previousContourPointsStableCount >= STABLE_CONTOUR_SUCCESSIVE_FRAMES_THRESHOLD;
 };
 
-const FOCUS_VALUE_WHEN_ENTERING_ARUCO_MODE = 10;
-
 // webcam control elements
 const webcamSelect = document.getElementById("webcamSelect");
+const webcamAutoFocus = document.getElementById("webcamAutoFocus");
 const webcamFocus = document.getElementById("webcamFocus");
 const webcamAutoScan = document.getElementById("webcamAutoScan");
 const webcamAutoScanPartSelect = document.getElementById("webcamAutoScanPartSelect");
@@ -121,7 +120,7 @@ Webcam.install(webcamSelect, (mediastream, caps)=>{
   videoMediaStream = mediastream;
   videoMediaStreamCaps = caps;
   video.srcObject = mediastream;
-  Webcam.setupFocusSlider(mediastream, webcamFocus);
+  Webcam.setupFocusSlider(mediastream, webcamAutoFocus, webcamFocus);
   videoMediaStreamFrameIntervalMs = 1000./Webcam.getFps(mediastream);
 });
 
@@ -202,6 +201,7 @@ function switchToWebcamMode()
   imagePreview.classList.remove("activeMode");
   webcamPreview.classList.add("activeMode");
   webcamSelect.style.display = "block";
+  webcamAutoFocus.style.display = "block";
   webcamFocus.style.display = "block";
   webcamAutoScan.style.display = "block";
   webcamAutoScanPartSelect.style.display = "block";
@@ -233,6 +233,7 @@ function switchToImagePreviewMode()
   imagePreview.classList.add("activeMode");
   webcamPreview.classList.remove("activeMode");
   webcamSelect.style.display = "none";
+  webcamAutoFocus.style.display = "none";
   webcamFocus.style.display = "none";
   webcamAutoScan.style.display = "none";
   webcamAutoScanPartSelect.style.display = "none";
@@ -315,8 +316,6 @@ function enableArucoAutoDetection()
     arucoFirstStepScanMarkers = null;
   }
   webcamAutoScan.classList.add("active");
-  webcamFocus.value = FOCUS_VALUE_WHEN_ENTERING_ARUCO_MODE;
-  webcamFocus.dispatchEvent(new Event('input', { bubbles: true }));
   updateArucoAutoDetectionButton();
   skipNextAutoScanFramingTests = false;
 }

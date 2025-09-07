@@ -1,6 +1,7 @@
 {
     "webcamPreview":"Mode webcam",
     "webcamSelect":"Changer d'appareil",
+    "webcamAutoFocus":"Mise au point Automatique",
     "webcamFocus":"Mise au point",
     "webcamAutoScan":"Démarrer le cadrage automatique d'une page A4 en captures successives (nécessite des guides aruco)",
     "webcamAutoScanPartSelect":"Nombre de parties successives pour la capture automatique d'une page A4 (bouton précédent)",
