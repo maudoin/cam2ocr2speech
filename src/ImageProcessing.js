@@ -834,12 +834,12 @@ export class ImageProcessing
     /**  @returns {polygonTop, polygonBottom, polygonX} usable with unwarpWithPerPixelMap */
     static getTopAndBottomLinesFromArucoMarkers(markers)
     {
-        if (markers && markers.length > 4 && markers.length % 2 === 0)
+        if (markers && markers.length >= 6)
         {
             let polygonTop = [];
             let polygonBottom = [];
             let markersSortedCorners = markers.map((m)=>ImageProcessing.sortPointClockwiseFromTopLeft(m.corners));
-            const n = markers.length/2;
+            const n = markers.length %2 === 0 ? markers.length/2 : (markers.length-1)/2;
             const TOP_LEFT = 0;
             const TOP_RIGHT = 1;
             const BOTTOM_RIGHT = 2;
