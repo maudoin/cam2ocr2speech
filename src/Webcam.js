@@ -43,6 +43,8 @@ export class Webcam
         // Stop the stream to release the camera
         track.stop();
 
+        // console.log(capabilities);
+
         return capabilities;
     }
 
@@ -127,8 +129,8 @@ export class Webcam
         const constraints = {
             video: {
                 deviceId: { exact: deviceId } ,
-                width: caps.width.max,
-                height: caps.height.max,
+                width: 3264,//caps.width.max,
+                height: 2448,//caps.height.max,
                 // frameRate: caps.frameRate.max,
                 // sharpness: 255
             }
